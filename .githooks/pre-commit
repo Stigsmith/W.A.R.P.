@@ -1,0 +1,17 @@
+#!/bin/sh
+# Local checks before every commit: formatting, lints, tests, UI types.
+# Enable once per clone:  git config core.hooksPath .githooks
+set -e
+export PATH="$HOME/.cargo/bin:$PATH"
+
+echo "pre-commit: cargo fmt"
+cargo fmt --all -- --check
+
+echo "pre-commit: cargo clippy"
+cargo clippy --workspace --all-targets --quiet -- -D warnings
+
+echo "pre-commit: cargo test"
+cargo test --workspace --quiet
+
+echo "pre-commit: svelte-check"
+(cd app && npx --no-install svelte-check --tsconfig ./tsconfig.json --threshold error --output human)

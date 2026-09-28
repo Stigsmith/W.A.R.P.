@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand};
+use warp_core::install::Install;
 use warp_core::knowledge::KnowledgeBase;
 use warp_core::library::Library;
 use warp_core::mp::{self, ShareList};
@@ -74,6 +75,26 @@ enum Command {
     },
     /// Refresh Steam metadata for every mod in the library.
     SteamRefresh,
+    /// Read the installed game: subscriptions, installed versions, and what's inside every pack.
+    Sync {
+        /// Don't ask Steam for metadata of new or updated mods.
+        #[arg(long)]
+        offline: bool,
+    },
+    /// Show which packs in a profile override each other's files.
+    Conflicts {
+        profile: String,
+        /// Also list the overridden files.
+        #[arg(long)]
+        files: bool,
+    },
+    /// Start the game with a profile.
+    Play {
+        profile: String,
+        /// Write the modlist but don't start the game.
+        #[arg(long)]
+        dry_run: bool,
+    },
     /// Write sample data for running the app UI in a browser (development only).
     #[command(hide = true)]
     DevFixture { out: PathBuf },
@@ -164,6 +185,54 @@ fn main() -> Result<()> {
             println!("Refreshed {n} mods from Steam");
         }
         Command::DevFixture { out } => dev_fixture(&lib, &out)?,
+        Command::Sync { offline } => {
+            let install = Install::locate()?;
+            let started = std::time::Instant::now();
+            let s = lib.sync_install(&install, !offline)?;
+            println!("Game: {}", install.game_dir.display());
+            println!(
+                "{} mods installed; {} new, {} unsubscribed, {} resubscribed",
+                s.installed,
+                s.new_mods.len(),
+                s.unsubscribed.len(),
+                s.resubscribed.len()
+            );
+            println!(
+                "Packs: {} indexed, {} unchanged; Steam details refreshed for {} ({:.1}s)",
+                s.packs_indexed,
+                s.packs_cached,
+                s.steam_refreshed,
+                started.elapsed().as_secs_f64()
+            );
+            for (path, err) in &s.pack_errors {
+                println!("! couldn't read {path}: {err}");
+            }
+        }
+        Command::Conflicts { profile, files } => {
+            let r = lib.conflicts(&profile_def(&lib, &profile)?)?;
+            print_conflicts(&r, files);
+        }
+        Command::Play { profile, dry_run } => {
+            let install = Install::locate()?;
+            let def = profile_def(&lib, &profile)?;
+            if dry_run {
+                let entries = lib.mod_list_entries(&def, &install)?;
+                let path = warp_core::launch::write_mod_list(&install, &entries)?;
+                println!(
+                    "Wrote {} ({} packs). Game not started.",
+                    path.display(),
+                    entries.len()
+                );
+                println!(
+                    "Start it yourself with: \"{}\" {}",
+                    install.game_exe().display(),
+                    warp_core::launch::game_args(None).join(" ")
+                );
+            } else {
+                let path = lib.play(&def, &install, None)?;
+                println!("Started the game with {}", path.display());
+            }
+        }
     }
     Ok(())
 }
@@ -348,11 +417,13 @@ fn dev_fixture(lib: &Library, out: &Path) -> Result<()> {
     let profiles = lib.store.profiles()?;
     let first = profiles.first().context("the library has no profiles")?;
     let mut resolved = serde_json::Map::new();
+    let mut conflicts = serde_json::Map::new();
     for p in &profiles {
         resolved.insert(
             p.name.clone(),
             serde_json::to_value(lib.resolve_profile(p)?)?,
         );
+        conflicts.insert(p.name.clone(), serde_json::to_value(lib.conflicts(p)?)?);
     }
 
     let mut mine = lib.share_list(first)?;
@@ -381,15 +452,76 @@ fn dev_fixture(lib: &Library, out: &Path) -> Result<()> {
             "mod_count": lib.store.mods()?.len(),
             "data_dir": r"C:\Users\you\AppData\Roaming\WARP",
             "kaedrin_dir": r"C:\Users\you\AppData\Roaming\Kaedrin Mod Manager\Profiles\Warhammer3",
+            "install": { "Ok": {
+                "game_dir": r"C:\Program Files (x86)\Steam\steamapps\common\Total War WARHAMMER III",
+                "workshop_dir": r"C:\Program Files (x86)\Steam\steamapps\workshop\content\1142710",
+                "manifest": r"C:\Program Files (x86)\Steam\steamapps\workshop\appworkshop_1142710.acf",
+            } },
         },
         "library": lib.entries()?,
         "sets": lib.store.sets()?,
         "profiles": profiles,
         "resolved": resolved,
+        "conflicts": conflicts,
         "share": { "list": lib.share_list(first)?, "code": mp::encode(&lib.share_list(first)?) },
         "compare": { "code": code, "result": { "diff": diff, "a": mine, "b": theirs } },
     });
     std::fs::write(out, serde_json::to_string(&fixture)?)?;
     println!("Wrote {}", out.display());
     Ok(())
+}
+
+fn print_conflicts(r: &warp_core::conflicts::ConflictReport, show_files: bool) {
+    use warp_core::conflicts::Severity;
+    let problems: Vec<_> = r.pairs.iter().filter(|p| !p.intended).collect();
+    let count = |sev: Severity| problems.iter().filter(|p| p.severity == sev).count();
+    println!(
+        "{} overlaps: {} high, {} medium, {} low risk; {} intended (a patch over its parent)",
+        r.pairs.len(),
+        count(Severity::High),
+        count(Severity::Medium),
+        count(Severity::Low),
+        r.pairs.len() - problems.len()
+    );
+    for p in &r.pairs {
+        let kinds: Vec<String> = p
+            .by_kind
+            .iter()
+            .map(|(k, n)| format!("{n} {k:?}"))
+            .collect();
+        let tag = if p.intended {
+            "intended".to_owned()
+        } else {
+            format!("{:?}", p.severity).to_uppercase()
+        };
+        println!(
+            "  [{tag:>8}] {}  over  {}  ({})",
+            p.winner,
+            p.loser,
+            kinds.join(", ")
+        );
+        if show_files {
+            for f in p.files.iter().take(10) {
+                println!("               {f}");
+            }
+        }
+    }
+    if !r.shadowed.is_empty() {
+        println!("Mostly or fully overridden packs:");
+        for s in &r.shadowed {
+            println!(
+                "  {}  {}/{} files overridden by {}",
+                s.pack,
+                s.overridden,
+                s.files,
+                s.by.join(", ")
+            );
+        }
+    }
+    if !r.not_indexed.is_empty() {
+        println!(
+            "Not indexed (run `warp sync`): {}",
+            r.not_indexed.join(", ")
+        );
+    }
 }

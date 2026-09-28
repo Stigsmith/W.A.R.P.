@@ -50,7 +50,10 @@
     <div class="meta faint mono">{entry.packs.join(", ") || "no pack known"}</div>
     <div class="links">
       <button class="small" onclick={() => openSteam(entry.info.id)}>Open in Steam</button>
-      {#if !entry.subscribed}<span class="chip warn">unsubscribed</span>{/if}
+      {#if !entry.subscribed}<span class="chip warn">not installed</span>{/if}
+      {#if entry.subscribed && entry.installed_version !== null && entry.installed_version < entry.info.time_updated}
+        <span class="chip warn" title="Steam has a newer version than the one on disk. In multiplayer, both players need the same one.">update pending</span>
+      {/if}
       {#if !entry.info.available}<span class="chip danger">removed from Workshop</span>{/if}
     </div>
   </div>
@@ -119,7 +122,11 @@
     <span class="label">About</span>
     <div class="facts faint">
       <span>Updated {date(entry.info.time_updated)}</span>
+      {#if entry.installed_version !== null && entry.installed_version !== entry.info.time_updated}
+        <span>installed copy {date(entry.installed_version)}</span>
+      {/if}
       <span>{size(entry.info.file_size)}</span>
+      {#if entry.files}<span>{entry.files.toLocaleString()} files</span>{/if}
       <span>{entry.info.subscriptions.toLocaleString()} subscribers</span>
     </div>
     {#if entry.info.description}
@@ -228,7 +235,8 @@
 
   .facts {
     display: flex;
-    gap: 14px;
+    flex-wrap: wrap;
+    gap: 4px 14px;
     font-size: 12.5px;
   }
 

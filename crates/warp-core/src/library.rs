@@ -2,15 +2,21 @@
 //! app and CLI are built on.
 
 use std::collections::{BTreeSet, HashMap, HashSet};
+use std::path::PathBuf;
 
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::Error;
+use crate::conflicts::{self, ConflictReport};
 use crate::import_v1::V1Import;
+use crate::install::Install;
 use crate::knowledge::{self, KnowledgeBase, ModKnowledge, Resolved};
+use crate::launch::{self, ModListEntry};
 use crate::model::{ModInfo, WorkshopId, pack_key};
 use crate::mp::{self, ListDiff, ShareEntry, ShareList};
 use crate::order::{self, OrderItem, OrderResult};
+use crate::pack_index::{self, PackIndex};
 use crate::steam;
 use crate::store::{ModSet, ProfileDef, Store};
 use crate::taxonomy::Taxonomy;
@@ -33,6 +39,10 @@ pub struct LibraryEntry {
     /// What the community knowledge base says, if anything.
     pub community: Option<ModKnowledge>,
     pub sets: Vec<String>,
+    /// Version on disk (Steam's `time_updated` when downloaded); `None` if not installed.
+    pub installed_version: Option<i64>,
+    /// Files across the mod's packs, once indexed.
+    pub files: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -49,6 +59,19 @@ pub struct ResolvedProfile {
     pub missing_requirements: Vec<(WorkshopId, WorkshopId)>,
     /// Pairs in the profile that are known not to work together.
     pub incompatibilities: Vec<(WorkshopId, WorkshopId)>,
+}
+
+/// What a sync with the installed game found and did.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SyncSummary {
+    pub installed: usize,
+    pub new_mods: Vec<WorkshopId>,
+    pub unsubscribed: Vec<WorkshopId>,
+    pub resubscribed: Vec<WorkshopId>,
+    pub packs_indexed: usize,
+    pub packs_cached: usize,
+    pub pack_errors: Vec<(String, String)>,
+    pub steam_refreshed: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,6 +95,9 @@ impl Library {
     pub fn entries(&self) -> Result<Vec<LibraryEntry>, Error> {
         let packs = self.store.packs()?;
         let user = self.store.user_knowledge()?;
+        let installed = self.store.installed()?;
+        let summaries = self.store.pack_summaries()?;
+        let declared = self.declared_requires(&packs)?;
         let mut sets_of: HashMap<WorkshopId, Vec<String>> = HashMap::new();
         for set in self.store.sets()? {
             for id in set.members {
@@ -85,23 +111,58 @@ impl Library {
             .map(|(info, subscribed)| {
                 let id = info.id;
                 let packs = packs.get(&id).cloned().unwrap_or_default();
-                let heuristic = knowledge::heuristic(&info, &packs);
+                let mut derived = knowledge::heuristic(&info, &packs);
+                derived.requires = declared.get(&id).cloned().unwrap_or_default();
                 LibraryEntry {
                     knowledge: knowledge::resolve(
                         &self.taxonomy,
                         user.get(&id),
                         self.kb.mods.get(&id),
-                        &heuristic,
+                        &derived,
                     ),
                     user: user.get(&id).cloned(),
                     community: self.kb.mods.get(&id).cloned(),
                     sets: sets_of.remove(&id).unwrap_or_default(),
+                    installed_version: installed.get(&id).copied(),
+                    files: packs
+                        .iter()
+                        .filter_map(|p| summaries.get(&pack_key(p)))
+                        .map(|(n, _)| n)
+                        .sum(),
                     info,
                     packs,
                     subscribed,
                 }
             })
             .collect())
+    }
+
+    /// Mods each mod needs according to its packs' own headers (vanilla packs ignored).
+    fn declared_requires(
+        &self,
+        packs: &HashMap<WorkshopId, Vec<String>>,
+    ) -> Result<HashMap<WorkshopId, Vec<WorkshopId>>, Error> {
+        let owner: HashMap<String, WorkshopId> = packs
+            .iter()
+            .flat_map(|(id, names)| names.iter().map(move |n| (pack_key(n), *id)))
+            .collect();
+        let mut out: HashMap<WorkshopId, Vec<WorkshopId>> = HashMap::new();
+        for (pack, deps) in self.store.pack_dependencies()? {
+            let Some(&id) = owner.get(&pack) else {
+                continue;
+            };
+            for dep in deps
+                .iter()
+                .filter_map(|d| owner.get(&pack_key(d)))
+                .filter(|&&d| d != id)
+            {
+                let list = out.entry(id).or_default();
+                if !list.contains(dep) {
+                    list.push(*dep);
+                }
+            }
+        }
+        Ok(out)
     }
 
     /// Works out a profile's mods and their load order.
@@ -275,13 +336,17 @@ impl Library {
         Ok(d)
     }
 
+    /// The version each mod is at: the installed copy when there is one (that's what the
+    /// game will load), else Steam's latest.
     fn time_updated(&self) -> Result<HashMap<WorkshopId, i64>, Error> {
-        Ok(self
+        let mut out: HashMap<WorkshopId, i64> = self
             .store
             .mods()?
             .into_iter()
             .map(|(m, _)| (m.id, m.time_updated))
-            .collect())
+            .collect();
+        out.extend(self.store.installed()?);
+        Ok(out)
     }
 
     /// Saves the user's knowledge for a mod, keeping only what differs from the community KB.
@@ -325,13 +390,30 @@ impl Library {
             })
             .collect();
 
+        // The workbook is a snapshot from the past: it fills gaps but never overwrites
+        // what a sync with the installed game (or Steam) already knows.
+        let known: HashMap<WorkshopId, ModInfo> = self
+            .store
+            .mods()?
+            .into_iter()
+            .map(|(m, _)| (m.id, m))
+            .collect();
+        let has_packs = self.store.packs()?;
+        let synced = !self.store.installed()?.is_empty();
         self.store.transaction(|tx| {
             for m in &import.mods {
-                tx.upsert_mod(&m.info)?;
-                if !m.pack.is_empty() {
+                let fresher = known
+                    .get(&m.info.id)
+                    .is_some_and(|k| !k.title.is_empty() && k.time_updated >= m.info.time_updated);
+                if !fresher {
+                    tx.upsert_mod(&m.info)?;
+                }
+                if !m.pack.is_empty() && !has_packs.contains_key(&m.info.id) {
                     tx.set_packs(m.info.id, std::slice::from_ref(&m.pack))?;
                 }
-                tx.set_subscribed(m.info.id, !m.archived)?;
+                if !synced {
+                    tx.set_subscribed(m.info.id, !m.archived)?;
+                }
             }
             for set in &sets {
                 tx.save_set(set)?;
@@ -387,6 +469,220 @@ impl Library {
             Ok(())
         })?;
         Ok(fresh.len())
+    }
+
+    /// Brings the library in line with what's installed: subscriptions, installed
+    /// versions, packs, and the pack index. With `check_steam`, also refreshes Steam
+    /// metadata for new mods and ones that changed.
+    pub fn sync_install(
+        &mut self,
+        install: &Install,
+        check_steam: bool,
+    ) -> Result<SyncSummary, Error> {
+        let items = install.installed_items()?;
+        let known: HashMap<WorkshopId, (ModInfo, bool)> = self
+            .store
+            .mods()?
+            .into_iter()
+            .map(|(m, sub)| (m.id, (m, sub)))
+            .collect();
+        let installed_ids: HashSet<WorkshopId> = items.iter().map(|i| i.id).collect();
+
+        let mut summary = SyncSummary {
+            installed: items.len(),
+            ..SyncSummary::default()
+        };
+        self.store.transaction(|tx| {
+            for item in &items {
+                match known.get(&item.id) {
+                    None => {
+                        let mut info = ModInfo::unknown(item.id);
+                        info.time_updated = item.time_updated;
+                        tx.upsert_mod(&info)?;
+                        summary.new_mods.push(item.id);
+                    }
+                    Some((_, false)) => summary.resubscribed.push(item.id),
+                    Some(_) => {}
+                }
+                let names: Vec<String> = item
+                    .packs
+                    .iter()
+                    .filter_map(|p| p.file_name())
+                    .map(|n| n.to_string_lossy().into_owned())
+                    .collect();
+                tx.set_packs(item.id, &names)?;
+                tx.set_subscribed(item.id, true)?;
+            }
+            for (id, (_, subscribed)) in &known {
+                if *subscribed && !installed_ids.contains(id) {
+                    tx.set_subscribed(*id, false)?;
+                    summary.unsubscribed.push(*id);
+                }
+            }
+            let rows: Vec<(WorkshopId, i64, u64)> = items
+                .iter()
+                .map(|i| (i.id, i.time_updated, i.size))
+                .collect();
+            tx.replace_installed(&rows)
+        })?;
+
+        // Pack X-ray: re-read only packs whose size or modification time changed.
+        let stamps = self.store.pack_index_stamps()?;
+        let wanted: Vec<(WorkshopId, PathBuf)> = items
+            .iter()
+            .flat_map(|i| i.packs.iter().map(move |p| (i.id, p.clone())))
+            .collect();
+        let stale: Vec<&(WorkshopId, PathBuf)> = wanted
+            .iter()
+            .filter(|(_, path)| {
+                let stamp = std::fs::metadata(path)
+                    .ok()
+                    .map(|m| (m.len(), pack_index::modified_secs(&m)));
+                stamp.is_none()
+                    || stamp != stamps.get(&path.to_string_lossy().into_owned()).copied()
+            })
+            .collect();
+        let read: Vec<(WorkshopId, String, Result<PackIndex, Error>)> = stale
+            .par_iter()
+            .map(|(id, path)| {
+                (
+                    *id,
+                    path.to_string_lossy().into_owned(),
+                    pack_index::read(path),
+                )
+            })
+            .collect();
+        let keep: HashSet<String> = wanted
+            .iter()
+            .map(|(_, p)| p.to_string_lossy().into_owned())
+            .collect();
+        self.store.transaction(|tx| {
+            for (id, path, result) in &read {
+                match result {
+                    Ok(index) => {
+                        tx.put_pack_index(path, Some(*id), index)?;
+                        summary.packs_indexed += 1;
+                    }
+                    Err(e) => summary.pack_errors.push((path.clone(), e.to_string())),
+                }
+            }
+            tx.retain_pack_index(&keep).map(drop)
+        })?;
+        summary.packs_cached = wanted.len() - stale.len();
+
+        if check_steam {
+            // New mods, and ones whose installed copy is newer than what Steam last told us.
+            let to_fetch: Vec<WorkshopId> = items
+                .iter()
+                .filter(|i| {
+                    known
+                        .get(&i.id)
+                        .is_none_or(|(m, _)| m.title.is_empty() || m.time_updated < i.time_updated)
+                })
+                .map(|i| i.id)
+                .collect();
+            if !to_fetch.is_empty() {
+                summary.steam_refreshed = self.refresh_from_steam(Some(&to_fetch))?;
+            }
+        }
+        Ok(summary)
+    }
+
+    /// The conflict map for a profile's load order.
+    pub fn conflicts(&self, def: &ProfileDef) -> Result<ConflictReport, Error> {
+        let resolved = self.resolve_profile(def)?;
+        let order: Vec<String> = resolved
+            .order
+            .placements
+            .iter()
+            .map(|p| p.pack.clone())
+            .collect();
+        let indexes = self.store.pack_indexes(&order)?;
+
+        // Who is meant to override whom: known relations between the mods, or a pack
+        // naming the other as a dependency in its header.
+        let entries: HashMap<WorkshopId, LibraryEntry> = self
+            .entries()?
+            .into_iter()
+            .map(|e| (e.info.id, e))
+            .collect();
+        let mod_of: HashMap<String, WorkshopId> = resolved
+            .order
+            .placements
+            .iter()
+            .filter_map(|p| Some((pack_key(&p.pack), p.workshop_id?)))
+            .collect();
+        let intended = |winner: &str, loser: &str| {
+            let declared = indexes.get(&pack_key(winner)).is_some_and(|i| {
+                i.dependencies
+                    .iter()
+                    .any(|d| pack_key(d) == pack_key(loser))
+            });
+            let related = match (mod_of.get(&pack_key(winner)), mod_of.get(&pack_key(loser))) {
+                (Some(w), Some(l)) => entries.get(w).is_some_and(|e| {
+                    e.knowledge.requires.contains(l) || e.knowledge.patches.contains(l)
+                }),
+                _ => false,
+            };
+            declared || related
+        };
+        Ok(conflicts::analyze(&order, &indexes, &intended))
+    }
+
+    /// The modlist for a profile: every pack in load order with the folder it's in.
+    pub fn mod_list_entries(
+        &self,
+        def: &ProfileDef,
+        install: &Install,
+    ) -> Result<Vec<ModListEntry>, Error> {
+        let resolved = self.resolve_profile(def)?;
+        Ok(resolved
+            .order
+            .placements
+            .iter()
+            .map(|p| {
+                let dir = p
+                    .workshop_id
+                    .map(|id| install.workshop_dir.join(id.to_string()))
+                    .filter(|d| d.join(&p.pack).is_file());
+                ModListEntry {
+                    pack: p.pack.clone(),
+                    dir,
+                }
+            })
+            .collect())
+    }
+
+    /// Writes the profile's modlist and starts the game. Returns the modlist path.
+    pub fn play(
+        &self,
+        def: &ProfileDef,
+        install: &Install,
+        continue_save: Option<&str>,
+    ) -> Result<PathBuf, Error> {
+        let entries = self.mod_list_entries(def, install)?;
+        let missing: Vec<&str> = entries
+            .iter()
+            .filter(|e| e.dir.is_none() && !install.data_dir().join(&e.pack).is_file())
+            .map(|e| e.pack.as_str())
+            .collect();
+        if !missing.is_empty() {
+            return Err(Error::Invalid(format!(
+                "{} pack(s) in this profile aren't installed: {}",
+                missing.len(),
+                missing
+                    .iter()
+                    .take(5)
+                    .copied()
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )));
+        }
+        let path = launch::write_mod_list(install, &entries)?;
+        launch::launch(install, continue_save)?;
+        let packs: Vec<String> = entries.into_iter().map(|e| e.pack).collect();
+        self.store.record_launch(&def.name, &packs)?;
+        Ok(path)
     }
 }
 
@@ -533,6 +829,68 @@ mod tests {
         let stored = &lib.store.user_knowledge().unwrap()[&WorkshopId(1)];
         assert_eq!(stored.tier.as_deref(), Some("battle"));
         assert_eq!(stored.role, None);
+    }
+
+    #[test]
+    fn importing_v1_after_a_sync_only_fills_gaps() {
+        use crate::import_v1::{V1Import, V1Mod};
+        let mut lib = lib_with(&[(1, "real.pack", "ui", "content")], &[]);
+        let mut fresh = ModInfo::unknown(WorkshopId(1));
+        fresh.title = "Fresh from Steam".into();
+        fresh.time_updated = 2_000;
+        lib.store
+            .transaction(|tx| {
+                tx.upsert_mod(&fresh)?;
+                tx.replace_installed(&[(WorkshopId(1), 2_000, 10)])
+            })
+            .unwrap();
+
+        let old = |id: u64, title: &str, pack: &str| V1Mod {
+            info: ModInfo {
+                title: title.into(),
+                time_updated: 1_000,
+                ..ModInfo::unknown(WorkshopId(id))
+            },
+            pack: pack.into(),
+            knowledge: ModKnowledge::default(),
+            component: Some("Base".into()),
+            archived: true,
+            source_category: String::new(),
+            source_subcategory: String::new(),
+        };
+        let import = V1Import {
+            mods: vec![
+                old(1, "Old title", "old.pack"),
+                old(2, "Only in the workbook", "two.pack"),
+            ],
+            profile: None,
+            unresolved_dependencies: vec![],
+        };
+        lib.import_v1(&import).unwrap();
+
+        let mods: HashMap<WorkshopId, (ModInfo, bool)> = lib
+            .store
+            .mods()
+            .unwrap()
+            .into_iter()
+            .map(|(m, s)| (m.id, (m, s)))
+            .collect();
+        assert_eq!(mods[&WorkshopId(1)].0.title, "Fresh from Steam");
+        assert!(
+            mods[&WorkshopId(1)].1,
+            "subscription state from the sync is kept"
+        );
+        assert_eq!(lib.store.packs().unwrap()[&WorkshopId(1)], ["real.pack"]);
+        assert_eq!(
+            mods[&WorkshopId(2)].0.title,
+            "Only in the workbook",
+            "gaps are filled"
+        );
+        assert_eq!(
+            lib.store.sets().unwrap()[0].members.len(),
+            2,
+            "sets still come across"
+        );
     }
 
     #[test]

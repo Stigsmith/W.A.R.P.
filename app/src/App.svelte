@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { api, isDesktop } from "./lib/api";
+  import { isDesktop } from "./lib/api";
   import { app } from "./lib/state.svelte";
   import Library from "./views/Library.svelte";
   import Profiles from "./views/Profiles.svelte";
@@ -10,7 +10,6 @@
   type View = "library" | "profiles" | "multiplayer";
   let view = $state<View>("profiles");
   let error = $state<string | null>(null);
-  let refreshing = $state(false);
 
   const nav: { key: View; label: string; hint: string }[] = [
     { key: "profiles", label: "Profiles", hint: "Build load orders" },
@@ -22,15 +21,6 @@
     app.load().catch((e) => (error = String(e)));
   });
 
-  async function refreshSteam() {
-    refreshing = true;
-    const n = await app.attempt(async () => (await api()).refreshSteam());
-    refreshing = false;
-    if (n !== undefined) {
-      await app.refresh();
-      app.notify(`Updated ${n} mods from Steam`);
-    }
-  }
 </script>
 
 <div class="shell">
@@ -56,12 +46,14 @@
 
     <div class="foot">
       {#if app.loaded && app.library.length > 0}
-        <button class="ghost small" onclick={refreshSteam} disabled={refreshing}>
-          {refreshing ? "Asking Steam…" : "Refresh from Steam"}
+        <button class="sync" onclick={() => app.sync()} disabled={app.syncing || !app.install} title={app.installError ?? "Read your installed mods and what's inside them"}>
+          <span class="dot" class:busy={app.syncing}></span>
+          {app.syncing ? "Syncing…" : "Sync with game"}
         </button>
       {/if}
       <div class="faint small-print">
-        {app.library.length} mods{#if !isDesktop}&nbsp;· browser preview{/if}
+        {#if app.install}Game found{:else if app.loaded}Game not found{/if}
+        · {app.library.length} mods{#if !isDesktop}&nbsp;· preview{/if}
       </div>
     </div>
   </aside>
@@ -102,8 +94,9 @@
     flex-direction: column;
     gap: 22px;
     padding: 18px 12px;
-    border-right: 1px solid var(--border);
-    background: linear-gradient(180deg, #0e120c 0%, var(--bg) 60%);
+    border-right: 1px solid var(--brass-dim);
+    background: linear-gradient(180deg, rgb(17 22 15 / 0.95) 0%, rgb(11 14 10 / 0.9) 70%);
+    box-shadow: inset -1px 0 0 rgb(0 0 0 / 0.6);
   }
 
   .brand {
@@ -166,7 +159,7 @@
   }
 
   .nav.active {
-    background: var(--surface-2);
+    background: linear-gradient(90deg, var(--ok-dim), transparent);
     border-left-color: var(--accent);
   }
 
@@ -185,6 +178,32 @@
 
   .small-print {
     font-size: 11.5px;
+  }
+
+  .sync {
+    width: 100%;
+    justify-content: center;
+    border-color: var(--brass-dim);
+    background: var(--surface);
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .dot.busy {
+    animation: pulse 0.9s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse {
+    to {
+      opacity: 0.25;
+      box-shadow: 0 0 2px var(--accent);
+    }
   }
 
   main {

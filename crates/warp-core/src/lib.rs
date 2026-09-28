@@ -3,15 +3,21 @@
 //! - [`order`]: the load-order solver
 //! - [`mp`]: multiplayer share codes and list comparison
 //! - [`knowledge`]: tiers, roles and relations, merged from user, community and heuristics
+//! - [`pack_index`] / [`conflicts`]: what's inside packs and which ones collide
+//! - [`install`] / [`launch`]: the game on disk, and starting it with a modlist
 //! - [`library`]: the user's mods, sets and profiles, tying it all together
 
+pub mod conflicts;
 pub mod import_v1;
+pub mod install;
 pub mod kaedrin;
 pub mod knowledge;
+pub mod launch;
 pub mod library;
 pub mod model;
 pub mod mp;
 pub mod order;
+pub mod pack_index;
 pub mod steam;
 pub mod store;
 pub mod taxonomy;
@@ -36,6 +42,10 @@ pub enum Error {
     Steam(String),
     #[error("workbook: {0}")]
     Excel(String),
+    #[error("{0}")]
+    Install(String),
+    #[error("pack: {0}")]
+    Pack(String),
 }
 
 /// The community knowledge base this build ships with.

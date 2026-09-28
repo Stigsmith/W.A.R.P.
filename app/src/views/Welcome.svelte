@@ -29,18 +29,23 @@
     <div class="option">
       <div>
         <h3>Import a W.A.R.P. v1 workbook</h3>
-        <p class="muted">Brings in your mods, Components (as sets) and your Profile Builder profile.</p>
+        <p class="muted">Brings in your hand-sorted categories, Components (as sets) and your Profile Builder profile.</p>
       </div>
-      <button class="primary" onclick={importWorkbook} disabled={busy}>
+      <button onclick={importWorkbook} disabled={busy}>
         {busy ? "Importing…" : "Choose workbook…"}
       </button>
     </div>
-    <div class="option soon">
+    <div class="option">
       <div>
-        <h3>Read my Steam subscriptions</h3>
-        <p class="muted">Finds every Warhammer III mod you're subscribed to. Needs the game installed.</p>
+        <h3>Read my installed mods</h3>
+        <p class="muted">
+          {#if app.install}Finds every Warhammer III mod Steam has installed and reads what's inside each one.
+          {:else}The game wasn't found{app.installError ? `: ${app.installError}` : ""}.{/if}
+        </p>
       </div>
-      <span class="chip">coming soon</span>
+      <button class="primary" onclick={() => app.sync()} disabled={!app.install || app.syncing}>
+        {app.syncing ? "Reading…" : "Read mods"}
+      </button>
     </div>
   </div>
 
@@ -97,7 +102,4 @@
     font-size: 13px;
   }
 
-  .soon {
-    opacity: 0.7;
-  }
 </style>

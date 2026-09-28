@@ -5,6 +5,7 @@
 import type {
   Bootstrap,
   CompareResult,
+  ConflictReport,
   FileFilter,
   ImportSummary,
   LibraryEntry,
@@ -14,6 +15,7 @@ import type {
   ProfileDef,
   ResolvedProfile,
   ShareList,
+  SyncSummary,
   WorkshopId,
 } from "./types";
 
@@ -37,6 +39,10 @@ export interface Api {
   exportKaedrin(packs: string[], name: string, path?: string): Promise<string>;
   importV1(path: string): Promise<ImportSummary>;
   refreshSteam(): Promise<number>;
+  syncInstall(checkSteam: boolean): Promise<SyncSummary>;
+  conflicts(profile: ProfileDef): Promise<ConflictReport>;
+  /** Writes the profile's modlist and starts the game; resolves to the modlist path. */
+  play(profile: ProfileDef): Promise<string>;
   // Platform
   pickFile(filters: FileFilter[]): Promise<string | null>;
   pickSavePath(defaultName: string, filters: FileFilter[]): Promise<string | null>;
@@ -70,6 +76,9 @@ async function tauriApi(): Promise<Api> {
     exportKaedrin: (packs, name, path) => invoke("export_kaedrin", { packs, name, path: path ?? null }),
     importV1: (path) => invoke("import_v1", { path }),
     refreshSteam: () => invoke("refresh_steam"),
+    syncInstall: (checkSteam) => invoke("sync_install", { checkSteam }),
+    conflicts: (profile) => invoke("conflicts", { profile }),
+    play: (profile) => invoke("play", { profile }),
     pickFile: async (filters) => {
       const picked = await dialog.open({ multiple: false, directory: false, filters });
       return typeof picked === "string" ? picked : null;

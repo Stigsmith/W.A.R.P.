@@ -26,13 +26,21 @@ export function workshopUrl(id: WorkshopId): string {
 }
 
 /**
- * Colour for a tier band: bright warp-green at the top of the load order,
- * fading to bronze at the foundation.
+ * Colour for a tier band: warpstone green at the top of the load order, through
+ * brass, down to rust at the foundation.
  */
 export function tierColor(priority: number, maxPriority: number): string {
-  const t = maxPriority > 0 ? priority / maxPriority : 0;
-  const hue = 28 + t * 80;
-  const sat = 45 + t * 25;
-  const light = 48 + t * 8;
-  return `hsl(${hue.toFixed(0)} ${sat.toFixed(0)}% ${light.toFixed(0)}%)`;
+  const t = maxPriority > 0 ? Math.min(1, Math.max(0, priority / maxPriority)) : 0;
+  // [position, hue, saturation, lightness]
+  const stops: [number, number, number, number][] = [
+    [0, 14, 58, 47], // rust
+    [0.45, 38, 52, 52], // brass
+    [1, 86, 84, 58], // warpstone
+  ];
+  const i = t <= stops[1][0] ? 0 : 1;
+  const [p0, h0, s0, l0] = stops[i];
+  const [p1, h1, s1, l1] = stops[i + 1];
+  const f = (t - p0) / (p1 - p0);
+  const mix = (a: number, b: number) => (a + (b - a) * f).toFixed(0);
+  return `hsl(${mix(h0, h1)} ${mix(s0, s1)}% ${mix(l0, l1)}%)`;
 }

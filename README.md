@@ -40,6 +40,12 @@ npm --prefix app install
 npm --prefix app run tauri dev        # the desktop app
 ```
 
+Checks run locally before every commit (format, lints, tests, UI types). Turn them on once per clone:
+
+```sh
+git config core.hooksPath .githooks
+```
+
 See [docs/architecture.md](docs/architecture.md) for how the pieces fit.
 
 ## License

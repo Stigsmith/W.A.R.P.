@@ -171,6 +171,67 @@ pub fn decode(text: &str) -> Result<ShareList, Error> {
     Ok(ShareList { name, entries })
 }
 
+/// Reads whatever list a friend pasted: a WARP code, or a WH3 Mod Manager share string.
+pub fn decode_any(text: &str) -> Result<ShareList, Error> {
+    if text.contains(CODE_PREFIX) {
+        return decode(text);
+    }
+    decode_wh3mm(text)
+        .ok_or_else(|| bad("that isn't a WARP code or a WH3 Mod Manager share string"))
+}
+
+/// Parses WH3 Mod Manager's shared modlist: entries in load order joined by `|`, each
+/// a workshop id or `local:<url-encoded pack>[:<workshop id>]`, optionally `;<position>`.
+pub fn decode_wh3mm(text: &str) -> Option<ShareList> {
+    let text = text.trim();
+    if text.is_empty() || text.contains(char::is_whitespace) {
+        return None;
+    }
+    let mut entries = Vec::new();
+    for raw in text.split('|').filter(|e| !e.is_empty()) {
+        let identifier = raw.split_once(';').map_or(raw, |(id, _)| id);
+        let entry = if let Some(local) = identifier.strip_prefix("local:") {
+            let (name, id) = match local.rsplit_once(':') {
+                Some((name, id)) if !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit()) => {
+                    (name, id.parse().ok())
+                }
+                _ => (local, None),
+            };
+            ShareEntry::new(percent_decode(name), id.map(WorkshopId), 0)
+        } else if !identifier.is_empty() && identifier.bytes().all(|b| b.is_ascii_digit()) {
+            ShareEntry::new("", Some(WorkshopId(identifier.parse().ok()?)), 0)
+        } else {
+            return None;
+        };
+        entries.push(entry);
+    }
+    (!entries.is_empty()).then(|| ShareList {
+        name: "WH3 Mod Manager list".into(),
+        entries,
+    })
+}
+
+fn percent_decode(s: &str) -> String {
+    let bytes = s.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%'
+            && i + 2 < bytes.len()
+            && let Some(b) = std::str::from_utf8(&bytes[i + 1..i + 3])
+                .ok()
+                .and_then(|h| u8::from_str_radix(h, 16).ok())
+        {
+            out.push(b);
+            i += 3;
+        } else {
+            out.push(bytes[i]);
+            i += 1;
+        }
+    }
+    String::from_utf8_lossy(&out).into_owned()
+}
+
 #[derive(Serialize, Deserialize)]
 struct WarpFile {
     warp: u32,
@@ -577,6 +638,30 @@ mod tests {
         let got = decode(&encode(&l)).unwrap();
         assert_eq!(got.entries[0].pack, "a.pack");
         assert_eq!(got.entries[1].pack, "b.pack");
+    }
+
+    #[test]
+    fn reads_wh3mm_share_strings() {
+        let l = decode_any(
+            "2789853654|local:My%20Mod.pack:3100000001;4|local:only_local.pack|2791113369;7",
+        )
+        .unwrap();
+        let got: Vec<(&str, Option<u64>)> = l
+            .entries
+            .iter()
+            .map(|e| (e.pack.as_str(), e.workshop_id.map(|i| i.0)))
+            .collect();
+        assert_eq!(
+            got,
+            [
+                ("", Some(2_789_853_654)),
+                ("My Mod.pack", Some(3_100_000_001)),
+                ("only_local.pack", None),
+                ("", Some(2_791_113_369))
+            ]
+        );
+        assert!(decode_any("hello there").is_err());
+        assert!(decode_wh3mm("12|abc").is_none());
     }
 
     #[test]

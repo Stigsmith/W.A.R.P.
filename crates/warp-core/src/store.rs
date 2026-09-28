@@ -1,5 +1,6 @@
 //! Per-user storage (SQLite): the Steam metadata cache, packs, subscriptions,
-//! the user's knowledge overrides, sets and profiles.
+//! installed versions, the pack index, the user's knowledge overrides, sets,
+//! profiles and launches.
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -10,11 +11,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::Error;
 use crate::knowledge::ModKnowledge;
-use crate::model::{ModInfo, WorkshopId};
+use crate::model::{ModInfo, WorkshopId, pack_key};
 use crate::order::Pin;
+use crate::pack_index::{self, PackIndex};
 
 /// Schema migrations, applied in order. Never edit a released entry; append a new one.
-const MIGRATIONS: &[&str] = &[r"
+const MIGRATIONS: &[&str] = &[
+    r"
     CREATE TABLE mods (
         id          INTEGER PRIMARY KEY,
         info        TEXT NOT NULL,
@@ -43,7 +46,36 @@ const MIGRATIONS: &[&str] = &[r"
         data        TEXT NOT NULL,
         updated_at  INTEGER NOT NULL
     );
-"];
+",
+    r"
+    -- The version of each mod actually on disk, from Steam's workshop manifest.
+    CREATE TABLE installed (
+        mod_id        INTEGER PRIMARY KEY,
+        time_updated  INTEGER NOT NULL,
+        size          INTEGER NOT NULL
+    );
+    -- Pack X-ray cache, keyed by file path; stale when size or mtime change.
+    CREATE TABLE pack_index (
+        path          TEXT PRIMARY KEY,
+        name          TEXT NOT NULL,
+        mod_id        INTEGER,
+        size          INTEGER NOT NULL,
+        modified      INTEGER NOT NULL,
+        version       INTEGER NOT NULL,
+        kind          TEXT NOT NULL,
+        dependencies  TEXT NOT NULL,
+        file_count    INTEGER NOT NULL,
+        files         BLOB NOT NULL
+    );
+    CREATE INDEX pack_index_name ON pack_index (name COLLATE NOCASE);
+    CREATE TABLE launches (
+        id       INTEGER PRIMARY KEY,
+        at       INTEGER NOT NULL,
+        profile  TEXT NOT NULL,
+        packs    TEXT NOT NULL
+    );
+",
+];
 
 /// A named, reusable group of mods (v1 called these Components).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -243,6 +275,113 @@ impl Store {
             .execute("DELETE FROM profiles WHERE name = ?1", params![name])?;
         Ok(())
     }
+
+    /// The installed version (`time_updated`) of each mod on disk.
+    pub fn installed(&self) -> Result<HashMap<WorkshopId, i64>, Error> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT mod_id, time_updated FROM installed")?;
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?)))?;
+        rows.map(|row| {
+            let (id, t) = row?;
+            Ok((WorkshopId(id as u64), t))
+        })
+        .collect()
+    }
+
+    /// (size, modified) of every indexed pack, by path, to tell which need re-reading.
+    /// Only entries written by the current index format count; older ones get re-read.
+    pub fn pack_index_stamps(&self) -> Result<HashMap<String, (u64, i64)>, Error> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT path, size, modified FROM pack_index WHERE version = ?1")?;
+        let rows = stmt.query_map([pack_index::INDEX_VERSION], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                (r.get::<_, i64>(1)? as u64, r.get::<_, i64>(2)?),
+            ))
+        })?;
+        rows.map(|row| Ok(row?)).collect()
+    }
+
+    /// Declared dependencies of every indexed pack, by lowercase pack name. Cheap: no file lists.
+    pub fn pack_dependencies(&self) -> Result<HashMap<String, Vec<String>>, Error> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT name, dependencies FROM pack_index")?;
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?;
+        rows.map(|row| {
+            let (name, deps) = row?;
+            let deps: Vec<String> =
+                serde_json::from_str(&deps).map_err(|e| Error::Format(e.to_string()))?;
+            Ok((pack_key(&name), deps))
+        })
+        .collect()
+    }
+
+    /// Full indexes (with file lists) for the named packs, by lowercase name.
+    pub fn pack_indexes(&self, names: &[String]) -> Result<HashMap<String, PackIndex>, Error> {
+        let wanted: std::collections::HashSet<String> = names.iter().map(|n| pack_key(n)).collect();
+        let mut stmt = self
+            .conn
+            .prepare("SELECT name, size, modified, kind, dependencies, files FROM pack_index")?;
+        let rows = stmt.query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, i64>(1)?,
+                r.get::<_, i64>(2)?,
+                r.get::<_, String>(3)?,
+                r.get::<_, String>(4)?,
+                r.get::<_, Vec<u8>>(5)?,
+            ))
+        })?;
+        let mut out = HashMap::new();
+        for row in rows {
+            let (name, size, modified, kind, deps, files) = row?;
+            let key = pack_key(&name);
+            if !wanted.contains(&key) {
+                continue;
+            }
+            let index = PackIndex {
+                name,
+                size: size as u64,
+                modified,
+                kind,
+                dependencies: serde_json::from_str(&deps)
+                    .map_err(|e| Error::Format(e.to_string()))?,
+                files: PackIndex::files_from_blob(&files)?,
+            };
+            out.insert(key, index);
+        }
+        Ok(out)
+    }
+
+    /// Per-pack summaries (no file lists): name, file count, kind.
+    pub fn pack_summaries(&self) -> Result<HashMap<String, (usize, String)>, Error> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT name, file_count, kind FROM pack_index")?;
+        let rows = stmt.query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, i64>(1)? as usize,
+                r.get::<_, String>(2)?,
+            ))
+        })?;
+        rows.map(|row| {
+            let (name, count, kind) = row?;
+            Ok((pack_key(&name), (count, kind)))
+        })
+        .collect()
+    }
+
+    pub fn record_launch(&self, profile: &str, packs: &[String]) -> Result<(), Error> {
+        self.conn.execute(
+            "INSERT INTO launches (at, profile, packs) VALUES (?1, ?2, ?3)",
+            params![now(), profile, to_json(&packs)],
+        )?;
+        Ok(())
+    }
 }
 
 /// Write operations, usable inside [`Store::transaction`].
@@ -309,6 +448,66 @@ impl Tx<'_> {
             params![profile.name.trim(), to_json(profile), now()],
         )?;
         Ok(())
+    }
+
+    /// Replaces the record of what's installed.
+    pub fn replace_installed(&self, items: &[(WorkshopId, i64, u64)]) -> Result<(), Error> {
+        self.0.execute("DELETE FROM installed", [])?;
+        for (id, time_updated, size) in items {
+            self.0.execute(
+                "INSERT INTO installed (mod_id, time_updated, size) VALUES (?1, ?2, ?3)",
+                params![id.0 as i64, time_updated, *size as i64],
+            )?;
+        }
+        Ok(())
+    }
+
+    pub fn put_pack_index(
+        &self,
+        path: &str,
+        mod_id: Option<WorkshopId>,
+        index: &PackIndex,
+    ) -> Result<(), Error> {
+        self.0.execute(
+            "INSERT INTO pack_index (path, name, mod_id, size, modified, kind, dependencies, file_count, files, version)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
+             ON CONFLICT (path) DO UPDATE SET name = excluded.name, mod_id = excluded.mod_id,
+                size = excluded.size, modified = excluded.modified, kind = excluded.kind,
+                version = excluded.version,
+                dependencies = excluded.dependencies, file_count = excluded.file_count, files = excluded.files",
+            params![
+                path,
+                index.name,
+                mod_id.map(|id| id.0 as i64),
+                index.size as i64,
+                index.modified,
+                index.kind,
+                to_json(&index.dependencies),
+                index.files.len() as i64,
+                index.files_blob(),
+                pack_index::INDEX_VERSION,
+            ],
+        )?;
+        Ok(())
+    }
+
+    /// Drops index entries for packs that are no longer on disk.
+    pub fn retain_pack_index(
+        &self,
+        paths: &std::collections::HashSet<String>,
+    ) -> Result<usize, Error> {
+        let existing: Vec<String> = self
+            .0
+            .prepare("SELECT path FROM pack_index")?
+            .query_map([], |r| r.get::<_, String>(0))?
+            .collect::<Result<_, _>>()?;
+        let mut removed = 0;
+        for path in existing.iter().filter(|p| !paths.contains(*p)) {
+            removed += self
+                .0
+                .execute("DELETE FROM pack_index WHERE path = ?1", params![path])?;
+        }
+        Ok(removed)
     }
 }
 

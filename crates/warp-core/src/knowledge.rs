@@ -139,15 +139,16 @@ pub fn resolve(
     let (role, role_source) = pick(|k| k.role.as_ref(), &|v| taxonomy.role(v).is_some())
         .unwrap_or_else(|| (taxonomy.default_role().key.clone(), Source::Default));
 
-    // Lists: the highest layer that says anything wins.
-    let list = |get: fn(&ModKnowledge) -> &Vec<WorkshopId>| {
-        layers
-            .iter()
-            .filter_map(|(l, _)| *l)
-            .map(get)
-            .find(|v| !v.is_empty())
-            .cloned()
-            .unwrap_or_default()
+    // Relations are facts from any source (a pack's own header, the community, the
+    // user), so they add up. Descriptive lists come from the highest layer that has one.
+    let union = |get: fn(&ModKnowledge) -> &Vec<WorkshopId>| {
+        let mut out: Vec<WorkshopId> = Vec::new();
+        for id in layers.iter().filter_map(|(l, _)| *l).flat_map(get) {
+            if !out.contains(id) {
+                out.push(*id);
+            }
+        }
+        out
     };
     let strings = |get: fn(&ModKnowledge) -> &Vec<String>| {
         layers
@@ -167,9 +168,9 @@ pub fn resolve(
         tags: strings(|k| &k.tags),
         factions: strings(|k| &k.factions),
         units: strings(|k| &k.units),
-        requires: list(|k| &k.requires),
-        patches: list(|k| &k.patches),
-        incompatible_with: list(|k| &k.incompatible_with),
+        requires: union(|k| &k.requires),
+        patches: union(|k| &k.patches),
+        incompatible_with: union(|k| &k.incompatible_with),
     }
 }
 
@@ -246,6 +247,25 @@ mod tests {
             (r.role.as_str(), r.role_source),
             ("submod", Source::Community)
         );
+    }
+
+    #[test]
+    fn relations_add_up_across_layers() {
+        let t = Taxonomy::builtin();
+        let user = ModKnowledge {
+            requires: vec![WorkshopId(1)],
+            ..Default::default()
+        };
+        let community = ModKnowledge {
+            requires: vec![WorkshopId(2), WorkshopId(1)],
+            ..Default::default()
+        };
+        let derived = ModKnowledge {
+            requires: vec![WorkshopId(3)],
+            ..Default::default()
+        };
+        let r = resolve(&t, Some(&user), Some(&community), &derived);
+        assert_eq!(r.requires, [WorkshopId(1), WorkshopId(2), WorkshopId(3)]);
     }
 
     #[test]

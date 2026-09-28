@@ -1,7 +1,7 @@
 // App-wide state, loaded once and refreshed after changes.
 
 import { api } from "./api";
-import type { LibraryEntry, ModSet, ProfileDef, Role, Taxonomy, Tier, WorkshopId } from "./types";
+import type { Install, LibraryEntry, ModSet, ProfileDef, Role, SyncSummary, Taxonomy, Tier, WorkshopId } from "./types";
 
 type Toast = { text: string; kind: "ok" | "error" };
 
@@ -12,6 +12,10 @@ class AppState {
   profiles = $state<ProfileDef[]>([]);
   dataDir = $state("");
   kaedrinDir = $state<string | null>(null);
+  /** The installed game, or why it wasn't found. */
+  install = $state<Install | null>(null);
+  installError = $state<string | null>(null);
+  syncing = $state(false);
   loaded = $state(false);
   toast = $state<Toast | null>(null);
 
@@ -26,6 +30,8 @@ class AppState {
     this.taxonomy = boot.taxonomy;
     this.dataDir = boot.data_dir;
     this.kaedrinDir = boot.kaedrin_dir;
+    if ("Ok" in boot.install) this.install = boot.install.Ok;
+    else this.installError = boot.install.Err;
     await this.refresh();
     this.loaded = true;
   }
@@ -36,6 +42,26 @@ class AppState {
     this.library = library;
     this.sets = sets;
     this.profiles = profiles;
+  }
+
+  /** Reads the installed game (subscriptions, versions, pack contents), then reloads. */
+  async sync(checkSteam = true): Promise<SyncSummary | undefined> {
+    this.syncing = true;
+    try {
+      const summary = await this.attempt(async () => (await api()).syncInstall(checkSteam));
+      if (summary) {
+        await this.refresh();
+        const changes = [
+          summary.new_mods.length && `${summary.new_mods.length} new`,
+          summary.unsubscribed.length && `${summary.unsubscribed.length} unsubscribed`,
+          summary.packs_indexed && `${summary.packs_indexed} packs read`,
+        ].filter(Boolean);
+        this.notify(`Synced ${summary.installed} installed mods${changes.length ? ` · ${changes.join(", ")}` : " · nothing changed"}`);
+      }
+      return summary;
+    } finally {
+      this.syncing = false;
+    }
   }
 
   tier(key: string): Tier | undefined {

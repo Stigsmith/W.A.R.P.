@@ -6,6 +6,7 @@ import type { Api } from "../api";
 import type {
   Bootstrap,
   CompareResult,
+  ConflictReport,
   LibraryEntry,
   ModSet,
   ProfileDef,
@@ -19,6 +20,7 @@ interface Fixture {
   sets: ModSet[];
   profiles: ProfileDef[];
   resolved: Record<string, ResolvedProfile>;
+  conflicts: Record<string, ConflictReport>;
   share: { list: ShareList; code: string };
   compare: { code: string; result: CompareResult };
 }
@@ -29,11 +31,13 @@ const EMPTY: Fixture = {
     mod_count: 0,
     data_dir: "(mock)",
     kaedrin_dir: null,
+    install: { Err: "mock: no game" },
   },
   library: [],
   sets: [],
   profiles: [],
   resolved: {},
+  conflicts: {},
   share: { list: { name: "", entries: [] }, code: "" },
   compare: { code: "", result: { diff: { identical: true, common: 0, only_in_a: [], only_in_b: [], moves: [], version_mismatches: [] }, a: { name: "", entries: [] }, b: { name: "", entries: [] }, titles: {} } },
 };
@@ -94,6 +98,16 @@ export async function mockApi(): Promise<Api> {
     exportKaedrin: async (_packs, name) => `${fx.bootstrap.kaedrin_dir}\\profile_${name}.txt`,
     importV1: () => delay({ mods: fx.library.length, sets: fx.sets.map((s) => s.name), profile: fx.profiles[0]?.name ?? null, overrides: 0, unresolved_dependencies: [] }, 600),
     refreshSteam: () => delay(fx.library.length, 800),
+    syncInstall: () =>
+      delay(
+        { installed: 428, new_mods: [], unsubscribed: [], resubscribed: [], packs_indexed: 0, packs_cached: 428, pack_errors: [], steam_refreshed: 0 },
+        900,
+      ),
+    conflicts: (p) => delay(fx.conflicts[p.name] ?? Object.values(fx.conflicts)[0] ?? { pairs: [], shadowed: [], not_indexed: [] }, 300),
+    play: async () => {
+      console.info("mock: would start the game");
+      return "Ok" in fx.bootstrap.install ? `${fx.bootstrap.install.Ok.game_dir}/warp_mods.txt` : "warp_mods.txt";
+    },
     pickFile: async () => "C:\\demo\\WARP Database.zip",
     pickSavePath: async (name) => `C:\\demo\\${name}`,
     confirm: async (message) => window.confirm(message),

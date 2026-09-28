@@ -6,9 +6,11 @@ use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use tauri::State;
+use warp_core::conflicts::ConflictReport;
+use warp_core::install::Install;
 use warp_core::kaedrin;
 use warp_core::knowledge::ModKnowledge;
-use warp_core::library::{ImportSummary, Library, LibraryEntry, ResolvedProfile};
+use warp_core::library::{ImportSummary, Library, LibraryEntry, ResolvedProfile, SyncSummary};
 use warp_core::model::WorkshopId;
 use warp_core::mp::{self, ListDiff, ShareList};
 use warp_core::store::{ModSet, ProfileDef, Store};
@@ -36,6 +38,8 @@ struct Bootstrap {
     mod_count: usize,
     data_dir: String,
     kaedrin_dir: Option<String>,
+    /// Where the game is, or why it wasn't found.
+    install: Result<Install, String>,
 }
 
 #[tauri::command]
@@ -48,8 +52,28 @@ async fn bootstrap(state: State<'_, AppState>) -> CmdResult<Bootstrap> {
             kaedrin_dir: kaedrin::profiles_dir()
                 .filter(|d| d.is_dir())
                 .map(|d| d.display().to_string()),
+            install: Install::locate().map_err(|e| e.to_string()),
         })
     })
+}
+
+/// Reads the installed game: subscriptions, installed versions and the pack index.
+#[tauri::command]
+async fn sync_install(state: State<'_, AppState>, check_steam: bool) -> CmdResult<SyncSummary> {
+    let install = Install::locate().map_err(|e| e.to_string())?;
+    with_lib(&state, |lib| lib.sync_install(&install, check_steam))
+}
+
+#[tauri::command]
+async fn conflicts(state: State<'_, AppState>, profile: ProfileDef) -> CmdResult<ConflictReport> {
+    with_lib(&state, |lib| lib.conflicts(&profile))
+}
+
+/// Writes the profile's modlist and starts the game; returns the modlist path.
+#[tauri::command]
+async fn play(state: State<'_, AppState>, profile: ProfileDef) -> CmdResult<String> {
+    let install = Install::locate().map_err(|e| e.to_string())?;
+    with_lib(&state, |lib| lib.play(&profile, &install, None)).map(|p| p.display().to_string())
 }
 
 #[tauri::command]
@@ -139,7 +163,7 @@ enum ListSource {
 #[tauri::command]
 async fn load_list(state: State<'_, AppState>, source: ListSource) -> CmdResult<ShareList> {
     with_lib(&state, |lib| match source {
-        ListSource::Code { text } => mp::decode(&text),
+        ListSource::Code { text } => mp::decode_any(&text),
         ListSource::File { path } => {
             let path = PathBuf::from(path);
             let text = std::fs::read_to_string(&path)?;
@@ -281,6 +305,9 @@ pub fn run() {
             export_kaedrin,
             import_v1,
             refresh_steam,
+            sync_install,
+            conflicts,
+            play,
         ])
         .run(tauri::generate_context!())
         .expect("W.A.R.P. failed to start");

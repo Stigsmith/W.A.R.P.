@@ -10,3 +10,6 @@ desktop.ini
 Thumbs.db
 app/src/lib/mock/fixture.json
 .claude/
+
+# Third-party reference art (Games Workshop / SEGA) - inspiration only, never shipped
+assets/skaven art/

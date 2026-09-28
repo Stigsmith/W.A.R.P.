@@ -1,24 +1,34 @@
+/* Palette: Clan Skryre. Smoky green-black, warpstone glow, brass fittings, rust. */
 :root {
-  --bg: #0a0c09;
-  --surface: #10140e;
-  --surface-2: #161b13;
-  --surface-3: #1d2419;
-  --border: #232d1e;
-  --border-strong: #33412b;
-  --text: #dde8d4;
-  --muted: #8d9c84;
-  --faint: #5e6b57;
-  --accent: #82e043;
-  --accent-strong: #a5f06d;
-  --accent-dim: #2f4d1c;
-  --accent-glow: rgb(130 224 67 / 0.22);
-  --danger: #f06552;
-  --danger-dim: rgb(240 101 82 / 0.12);
-  --warn: #e8b64c;
-  --warn-dim: rgb(232 182 76 / 0.12);
-  --info: #62b8e3;
-  --info-dim: rgb(98 184 227 / 0.12);
-  --ok-dim: rgb(130 224 67 / 0.1);
+  --bg: #0b0e0a;
+  --surface: #11160f;
+  --surface-2: #171d14;
+  --surface-3: #1f271b;
+  --border: #242d1f;
+  --border-strong: #37432d;
+  --text: #e3e7d3;
+  --muted: #98a18a;
+  --faint: #626b58;
+
+  /* Warpstone: the only thing that glows. */
+  --accent: #a6f03c;
+  --accent-strong: #c6ff66;
+  --accent-dim: #36531b;
+  --accent-glow: rgb(166 240 60 / 0.26);
+  --ok-dim: rgb(166 240 60 / 0.09);
+
+  /* Brass and bronze: frames, trims, secondary emphasis. */
+  --brass: #c79b4b;
+  --brass-dim: rgb(199 155 75 / 0.35);
+  --brass-faint: rgb(199 155 75 / 0.12);
+
+  /* Rust and blood: danger. */
+  --danger: #d8503a;
+  --danger-dim: rgb(216 80 58 / 0.14);
+  --warn: #e6a93c;
+  --warn-dim: rgb(230 169 60 / 0.13);
+  --info: #74b8a9;
+  --info-dim: rgb(116 184 169 / 0.13);
 
   --radius: 8px;
   --radius-sm: 5px;
@@ -47,7 +57,11 @@ body,
 }
 
 body {
-  background: var(--bg);
+  /* A faint warp glow bleeding in from the top right, like the lightning in the art. */
+  background:
+    radial-gradient(1200px 520px at 100% -8%, rgb(166 240 60 / 0.07), transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, rgb(199 155 75 / 0.05), transparent 60%),
+    var(--bg);
   overflow: hidden;
 }
 
@@ -83,9 +97,9 @@ a {
 .label {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--brass);
 }
 
 .muted {
@@ -124,7 +138,7 @@ button,
 
 button:hover:not(:disabled) {
   background: var(--surface-3);
-  border-color: var(--faint);
+  border-color: var(--brass-dim);
 }
 
 button:focus-visible,
@@ -143,7 +157,7 @@ button:disabled {
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #0b1406;
+  color: #0d1605;
   font-weight: 600;
 }
 
@@ -209,6 +223,12 @@ textarea {
   color: var(--muted);
   background: var(--surface);
   white-space: nowrap;
+}
+
+.chip.brass {
+  color: var(--brass);
+  border-color: var(--brass-dim);
+  background: var(--brass-faint);
 }
 
 .chip.accent {

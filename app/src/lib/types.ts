@@ -52,6 +52,10 @@ export interface LibraryEntry {
   user: ModKnowledge | null;
   community: ModKnowledge | null;
   sets: string[];
+  /** Version on disk (Steam's time_updated when downloaded); null if not installed. */
+  installed_version: number | null;
+  /** Files across the mod's packs, once indexed. */
+  files: number;
 }
 
 export interface Tier {
@@ -182,11 +186,56 @@ export interface ImportSummary {
   unresolved_dependencies: [string, string][];
 }
 
+export interface Install {
+  game_dir: string;
+  workshop_dir: string;
+  manifest: string;
+}
+
 export interface Bootstrap {
   taxonomy: Taxonomy;
   mod_count: number;
   data_dir: string;
   kaedrin_dir: string | null;
+  /** Where the game is, or why it wasn't found. */
+  install: { Ok: Install } | { Err: string };
+}
+
+export interface SyncSummary {
+  installed: number;
+  new_mods: WorkshopId[];
+  unsubscribed: WorkshopId[];
+  resubscribed: WorkshopId[];
+  packs_indexed: number;
+  packs_cached: number;
+  pack_errors: [string, string][];
+  steam_refreshed: number;
+}
+
+export type Severity = "low" | "medium" | "high";
+export type ContentKind = "db_table" | "startpos" | "script" | "text" | "map" | "ui" | "art" | "other";
+
+export interface PairConflict {
+  winner: string;
+  loser: string;
+  severity: Severity;
+  intended: boolean;
+  total: number;
+  by_kind: Partial<Record<ContentKind, number>>;
+  files: string[];
+}
+
+export interface Shadowed {
+  pack: string;
+  files: number;
+  overridden: number;
+  by: string[];
+}
+
+export interface ConflictReport {
+  pairs: PairConflict[];
+  shadowed: Shadowed[];
+  not_indexed: string[];
 }
 
 export type ListSource =

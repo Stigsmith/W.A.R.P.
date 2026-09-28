@@ -63,7 +63,12 @@
             {@const t = app.tier(e.knowledge.tier)}
             <tr class:active={e.info.id === selectedId} class:off={!e.subscribed} onclick={() => (selectedId = e.info.id)}>
               <td class="mod">
-                <span class="title">{e.info.title || e.packs[0]}</span>
+                <span class="title">
+                  {e.info.title || e.packs[0]}
+                  {#if e.subscribed && e.installed_version !== null && e.installed_version < e.info.time_updated}
+                    <span class="chip warn" title="Steam has a newer version than the one installed">update pending</span>
+                  {/if}
+                </span>
                 <span class="mono faint">{e.packs[0] ?? "—"}</span>
               </td>
               <td>
