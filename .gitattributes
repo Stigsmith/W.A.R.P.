@@ -1,0 +1,6 @@
+* text=auto eol=lf
+# Kaedrin profiles are CRLF on disk; keep fixtures byte-identical.
+*.txt -text
+*.png binary
+*.ico binary
+*.icns binary

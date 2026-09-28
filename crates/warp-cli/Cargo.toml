@@ -1,0 +1,21 @@
+[package]
+name = "warp-cli"
+description = "Command-line interface for W.A.R.P."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "warp"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+dirs.workspace = true
+serde_json.workspace = true
+warp-core.workspace = true
+
+[lints]
+workspace = true

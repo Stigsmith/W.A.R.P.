@@ -1,0 +1,4575 @@
+{
+  "format": 1,
+  "mods": {
+    "2789853654": {
+      "title": "AI Recruitment & Army Compositions (Updated 4-18-25)",
+      "tier": "campaign",
+      "tags": [
+        "AI behaviour"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2789854789": {
+      "title": "Disable startup splash screens / intros",
+      "tier": "core",
+      "tags": [
+        "Misc"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2789857474": {
+      "title": "The Motherland",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ]
+    },
+    "2789857945": {
+      "title": "Legendary Lore",
+      "tier": "campaign",
+      "tags": [
+        "QoL"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2789858755": {
+      "title": "Better Camera Mod",
+      "tier": "core",
+      "tags": [
+        "Misc"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2789865576": {
+      "title": "Less buff and effect VFX 3",
+      "tier": "graphics",
+      "tags": [
+        "General VFX",
+        "Less VFX"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2789865816": {
+      "title": "Resized Lords Heroes 3",
+      "tier": "units",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "2789867720": {
+      "title": "DAN's Monogod Roster Expansion",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "2789877676": {
+      "title": "Settlement Capture Pictures",
+      "tier": "ui",
+      "tags": [
+        "General"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2789881693": {
+      "title": "ULTIMATE PORTRAITS",
+      "tier": "ui",
+      "tags": [
+        "General"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2789887182": {
+      "title": "More Character Names (For all 24 races)",
+      "tier": "campaign",
+      "tags": [
+        "QoL"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2789893818": {
+      "title": "Miscast Mod - Big Loud Exciting Miscasts",
+      "tier": "battle",
+      "tags": [
+        "Mechanics",
+        "Miscasts"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2789896451": {
+      "title": "One Button Respec",
+      "tier": "campaign",
+      "role": "framework",
+      "tags": [
+        "Respecs"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2789903784": {
+      "title": "[DEER24/震旦] 与龙同行 (Cathay Units Patch：Walk with the Dragon）",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Cathay"
+      ]
+    },
+    "2789914172": {
+      "title": "Alternative Unit Cards",
+      "tier": "ui",
+      "tags": [
+        "General",
+        "Unit Cards"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2789952296": {
+      "title": "999 Settlement Multiplayer Victory",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics",
+        "Victory Conditions"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2789978667": {
+      "title": "Hooveric Reskin (HV Reskin)",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2789999528": {
+      "title": "Toggle Fog Of War",
+      "tier": "campaign_map",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "2789999718": {
+      "title": "Unique Faction UI",
+      "tier": "ui",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "2790007728": {
+      "title": "Building Progression Icons III",
+      "tier": "ui",
+      "tags": [
+        "General",
+        "Settlement Buildings"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2790044269": {
+      "title": "No supply lines mod",
+      "tier": "campaign",
+      "tags": [
+        "QoL",
+        "Supply Lines"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2790046660": {
+      "title": "Terracotta Automatons and Panda Riders",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Cathay"
+      ]
+    },
+    "2790147047": {
+      "title": "No More AI Attrition Immunity",
+      "tier": "campaign",
+      "role": "fix",
+      "factions": [
+        "All"
+      ]
+    },
+    "2790444477": {
+      "title": "New Legendary Lord and Hero Artefacts Warhammer 3 (Updated for 6.1)",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics",
+        "Artifacts"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2790475311": {
+      "title": "Double Skill Points & Skill Dump For Lords",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2790566124": {
+      "title": "EXPERIENCE RANKS",
+      "tier": "ui",
+      "tags": [
+        "General"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2790657080": {
+      "title": "Belakor 4K ULTRA HD",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ],
+      "units": [
+        "Be'lakor"
+      ]
+    },
+    "2790774407": {
+      "title": "High Resolution UI Improvements",
+      "tier": "ui",
+      "tags": [
+        "General"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2791113369": {
+      "title": "Chaos Visual Overhaul",
+      "tier": "units",
+      "tags": [
+        "Faction Reskin"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "2791241084": {
+      "title": "Console Commands (Modding Tool), the mod works 100000% please just use it and enable the script break warning",
+      "tier": "core",
+      "role": "framework",
+      "tags": [
+        "Tooling"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2791465729": {
+      "title": "Decline Diplomacy",
+      "tier": "campaign",
+      "role": "framework",
+      "tags": [
+        "Diplomacy"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2791636543": {
+      "title": "@moz_more_variants_khorne.pack",
+      "tier": "units",
+      "tags": [
+        "Variants"
+      ],
+      "factions": [
+        "Chaos | Khorne"
+      ]
+    },
+    "2792727547": {
+      "title": "Speedy Turn Camera",
+      "tier": "campaign",
+      "role": "framework",
+      "tags": [
+        "Turn Camera"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2792731173": {
+      "title": "SFO: Grimhammer III",
+      "tier": "core",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "2793127003": {
+      "title": "Rotate Lords and Heroes (v6.0)",
+      "tier": "ui",
+      "tags": [
+        "General"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2794064207": {
+      "title": "Fudging Vassals",
+      "tier": "campaign",
+      "tags": [
+        "AI behaviour"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2794696516": {
+      "title": "Landmarks of Legend",
+      "tier": "campaign_map",
+      "tags": [
+        "POI",
+        "Landmarks"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2794874144": {
+      "title": "Armoured Maneaters",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "2794880709": {
+      "title": "Armoured Tyrants",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "2796669123": {
+      "title": "Ascopa Unitpack - English translation",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "2797285526": {
+      "title": "Calm's Gnoblar Reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "2797285619": {
+      "title": "Ogre Goldtooth Faction Colours",
+      "tier": "units",
+      "tags": [
+        "Faction Reskin"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "2797285695": {
+      "title": "Calm's Greasus Reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "2797285787": {
+      "title": "Calm's Tyrant Reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "2798635540": {
+      "title": "Better Defined/Brighter Borders",
+      "tier": "campaign_map",
+      "tags": [
+        "UI",
+        "Borders"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2798690094": {
+      "title": "More Animation",
+      "tier": "animations",
+      "role": "submod",
+      "factions": [
+        "All"
+      ],
+      "patches": [
+        "2895227844"
+      ]
+    },
+    "2798804755": {
+      "title": "Tabletop Caps - Unique Lord & Faction Rules - Submod",
+      "tier": "campaign",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "2799316652": {
+      "title": "AI General 3",
+      "tier": "core",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "2802194489": {
+      "title": "Extreme Smoke & Flash",
+      "tier": "graphics",
+      "tags": [
+        "Fog",
+        "Smoke"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2802810577": {
+      "title": "Mixu's Legendary Lords",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2802811244": {
+      "title": "Mixu's Legendary Lords: Asset Pack",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "All"
+      ]
+    },
+    "2805560084": {
+      "title": "The first demon prince, Be'lakor reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ],
+      "units": [
+        "Be'lakor"
+      ]
+    },
+    "2807916893": {
+      "title": "Daemon Prince 4K ULTRA HD",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos Deamons"
+      ]
+    },
+    "2809686435": {
+      "title": "Cho's Basic Traits Rebalanced",
+      "tier": "campaign",
+      "tags": [
+        "Traits & Technologies"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2812165190": {
+      "title": "Tabletop Caps Compatibility Patch (Various)",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "All"
+      ]
+    },
+    "2825728189": {
+      "title": "Gnoblar Hordes - The Unwashed Masses",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Gnoblar Hordes"
+      ]
+    },
+    "2826711095": {
+      "title": "Skarbrand Retexture",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos | Khorne"
+      ]
+    },
+    "2826930183": {
+      "title": "Legendary Characters",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2827883046": {
+      "title": "Softer Corruption Graphics",
+      "tier": "campaign_map",
+      "tags": [
+        "Terrain",
+        "Corruption"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2833346568": {
+      "title": "Just a Smidge - Slightly More Allied Recruitment Slots",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics",
+        "Allied Recruitment"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2834367065": {
+      "title": "Slaanbulls & Trojan",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos | Slaanesh"
+      ]
+    },
+    "2834381558": {
+      "title": "-BR- Ultimate Elven Lords + Variety Pack III 精灵",
+      "tier": "units",
+      "tags": [
+        "Variants"
+      ],
+      "factions": [
+        "High Elves"
+      ],
+      "units": [
+        "Lords"
+      ]
+    },
+    "2835008680": {
+      "title": "Siege Battle Vanguard Deployment",
+      "tier": "campaign",
+      "role": "submod",
+      "tags": [
+        "07_Battle"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2838941228": {
+      "title": "Rotblood Tribe",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Chaos | Nurgle"
+      ]
+    },
+    "2840690836": {
+      "title": "Calm's Slaughtermaster Reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "2842834772": {
+      "title": "Brighter Borders",
+      "tier": "campaign_map",
+      "tags": [
+        "UI",
+        "Borders"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2845365747": {
+      "title": "Chaosbulls",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "2846905075": {
+      "title": "Chaosbulls SFO Submod",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "2847248411": {
+      "title": "Immersive Exalted Lord of Change Animation",
+      "tier": "units",
+      "tags": [
+        "Unit Overhaul"
+      ],
+      "factions": [
+        "Chaos | Tzeentch"
+      ]
+    },
+    "2847264545": {
+      "title": "Bound Spell Greater Blue Fire of Tzeentch",
+      "tier": "units",
+      "tags": [
+        "Unit Overhaul"
+      ],
+      "factions": [
+        "Chaos | Tzeentch"
+      ]
+    },
+    "2852872304": {
+      "title": "Dwarf Thunderbarge MKII",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Dwarfs"
+      ]
+    },
+    "2853032321": {
+      "title": "Greasus Goldtooth - The Overtyrant",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "2853194971": {
+      "title": "Fog Outta Here!",
+      "tier": "campaign_map",
+      "tags": [
+        "Fog"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2853205515": {
+      "title": "Ascopa`s Bretonia Pack",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "2853239091": {
+      "title": "Warband Upgrade Ultimate",
+      "tier": "overhaul",
+      "tags": [
+        "General Overhaul"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2853358833": {
+      "title": "Spear Gunners",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Vampire Coast"
+      ]
+    },
+    "2854249783": {
+      "title": "Improved Campaign Camera",
+      "tier": "campaign_map",
+      "tags": [
+        "Camera"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2854346056": {
+      "title": "Immortal Landmarks",
+      "tier": "campaign_map",
+      "role": "framework",
+      "tags": [
+        "Landmarks"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2854819509": {
+      "title": "Recruit Defeated Legendary Lords",
+      "tier": "campaign",
+      "role": "framework",
+      "tags": [
+        "Legendary Lords"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2854889880": {
+      "title": "[HN] Clear Skies",
+      "tier": "campaign_map",
+      "tags": [
+        "Fog"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2855023219": {
+      "title": "Valkia 7thEd Makeover",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos | Khorne"
+      ],
+      "units": [
+        "Valkia"
+      ]
+    },
+    "2855132698": {
+      "title": "Red Eyed Skaven 2.0 Reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Skaven"
+      ]
+    },
+    "2855238321": {
+      "title": "Unique Steam Tanks",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "2855268026": {
+      "title": "Vlad von Carstein Restored",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Vampire Counts"
+      ]
+    },
+    "2855728883": {
+      "title": "High Contrast Border Colors (All Campaigns) [6.2]",
+      "tier": "campaign_map",
+      "tags": [
+        "Camera"
+      ]
+    },
+    "2855837519": {
+      "title": "Unique Faction Currencies",
+      "tier": "campaign",
+      "role": "framework",
+      "tags": [
+        "Currencies"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2856019044": {
+      "title": "Improved LOD",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "All"
+      ],
+      "patches": [
+        "2789978667"
+      ]
+    },
+    "2856024846": {
+      "title": "More Warband Upgrades for Warriors of Chaos",
+      "tier": "overhaul",
+      "role": "submod",
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "2856202634": {
+      "title": "Legendary Lords Defeat Traits Rework by Mortrau",
+      "tier": "campaign",
+      "tags": [
+        "Traits & Technologies"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2856221562": {
+      "title": "More allied units (x8)",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics",
+        "Allied Recruitment"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2856414648": {
+      "title": "Exalted Daemons for Champions of Chaos - A Warband Expansion",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "2856628979": {
+      "title": "Champions of Chaos Expanded",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "2856717088": {
+      "title": "Toned-down faction colours",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "All"
+      ],
+      "patches": [
+        "2789978667"
+      ]
+    },
+    "2857177478": {
+      "title": "Cultists for Champions of Chaos",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos"
+      ]
+    },
+    "2857187582": {
+      "title": "Moulder's Menagerie (Chimaerats, Stormfiends, and More!)",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Skaven"
+      ]
+    },
+    "2857203588": {
+      "title": "Bonepilla Championz",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Greenskins"
+      ]
+    },
+    "2857702902": {
+      "title": "Azhag - The Scourge of Red Eye Mountain",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Greenskins"
+      ]
+    },
+    "2858037598": {
+      "title": "Imperial Armoury - Unit Upgrades for the Empire",
+      "tier": "campaign",
+      "role": "framework",
+      "factions": [
+        "Empire"
+      ]
+    },
+    "2858061592": {
+      "title": "Alternate Festus",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos | Nurgle"
+      ]
+    },
+    "2858227807": {
+      "title": "Remove glowing VFX (visual effects) for Bretonnia",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "2858832821": {
+      "title": "Reloading Animations",
+      "tier": "animations",
+      "role": "framework",
+      "factions": [
+        "All"
+      ],
+      "requires": [
+        "2895227844"
+      ]
+    },
+    "2858853254": {
+      "title": "Super Scenic Campaign Camera",
+      "tier": "campaign_map",
+      "tags": [
+        "Camera"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2858955442": {
+      "title": "Warhammer 3 LOD Distance Enhanced",
+      "tier": "graphics",
+      "tags": [
+        "LOD"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2859526891": {
+      "title": "No Campaign Map Fog (with some small campaign camera tweaks)",
+      "tier": "campaign_map",
+      "tags": [
+        "Fog"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2859718528": {
+      "title": "Patron Gods (Updated for 6.1)",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "2859831333": {
+      "title": "More Difficult Autoresolver Mod",
+      "tier": "campaign",
+      "tags": [
+        "Calculations"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2859968660": {
+      "title": "MIXER - Mixu's Unlocker",
+      "tier": "core",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "2860177033": {
+      "title": "Points of Interest with Pictures",
+      "tier": "campaign",
+      "tags": [
+        "QoL",
+        "Lore"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2860185842": {
+      "title": "Sword of Khaine as a Talisman(Updated)",
+      "tier": "campaign",
+      "role": "submod",
+      "factions": [
+        "All"
+      ]
+    },
+    "2860213243": {
+      "title": "[Deer24 Walk with the Dragon] English Patch",
+      "tier": "overhaul",
+      "role": "submod",
+      "factions": [
+        "Cathay"
+      ]
+    },
+    "2860291758": {
+      "title": "Dark Land Warboss",
+      "tier": "units",
+      "tags": [
+        "Lords / Heroes"
+      ],
+      "factions": [
+        "Greenskins"
+      ]
+    },
+    "2860327071": {
+      "title": "Spooky's Dark Elves Compilation - Expanded Variants",
+      "tier": "units",
+      "tags": [
+        "Variants"
+      ],
+      "factions": [
+        "Dark Elves"
+      ]
+    },
+    "2860643235": {
+      "title": "Blessings of the Lady - Unit Upgrades for Bretonnia",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "2860849124": {
+      "title": "Be'lakor Instant Rituals",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "2861599189": {
+      "title": "Empire Master Engineers III",
+      "tier": "units",
+      "tags": [
+        "Lords / Heroes"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "2862873158": {
+      "title": "Grimgor Ironhide - Da Alpha Orc",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Greenskins"
+      ]
+    },
+    "2865767736": {
+      "title": "Warriors Of Chaos Outpost Enhanced",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "2866600381": {
+      "title": "No Notification Zoom",
+      "tier": "campaign_map",
+      "tags": [
+        "QoL"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2867684489": {
+      "title": "Extra Scenic Campaign Camera",
+      "tier": "campaign_map",
+      "tags": [
+        "Camera"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2869080193": {
+      "title": "Talismans of the Dark Gods - Unit Upgrades for Norsca",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics"
+      ],
+      "factions": [
+        "Norsca"
+      ]
+    },
+    "2871223500": {
+      "title": "Nico's Reskin: Bretonnian Peasants (Vol.1)",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "2871612719": {
+      "title": "[LIG] Reskin - Damsel",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "2871833351": {
+      "title": "Chaosworriors and Be'lakor Tech-tree",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "2872603338": {
+      "title": "Bertrand the Brigand & the Bowmen of Bergerac",
+      "tier": "units",
+      "tags": [
+        "Lords / Heroes"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "2873961274": {
+      "title": "OvN Lost Factions: Albion",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Albion"
+      ]
+    },
+    "2875306483": {
+      "title": "Nico's Reskin: Bretonnian Knights (Vol.2)",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "2875762119": {
+      "title": "Ranged units for ogre kingdoms",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "2877014709": {
+      "title": "less VFX",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "All"
+      ],
+      "patches": [
+        "2789978667"
+      ]
+    },
+    "2877071147": {
+      "title": "Outdated (5.x Dwarf) Guns, Smoke & Spectacle",
+      "tier": "graphics",
+      "tags": [
+        "Fog"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2878211101": {
+      "title": "Smoke Transparency Fix",
+      "tier": "graphics",
+      "role": "submod",
+      "factions": [
+        "All"
+      ],
+      "patches": [
+        "2877071147"
+      ]
+    },
+    "2878654975": {
+      "title": "Kratch Doomclaw, Supreme Warlord of Crookback Peak",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Skaven"
+      ]
+    },
+    "2879757612": {
+      "title": "Versatile Engineers 1 ( Vanilla 6.X ) ( REQUIRES ASSET PACK )",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Dwarfs"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "2881998935": {
+      "title": "ZC EMPIRE COMMAND GROUP",
+      "tier": "units",
+      "tags": [
+        "Unit Overhaul"
+      ],
+      "factions": [
+        "Empire"
+      ],
+      "requires": [
+        "3256148905"
+      ]
+    },
+    "2882754062": {
+      "title": "@moz_more_variants_greenskins_reskin.pack",
+      "tier": "units",
+      "tags": [
+        "Variants"
+      ],
+      "factions": [
+        "Greenskins"
+      ]
+    },
+    "2883357983": {
+      "title": "Rune Golems ( Vanilla 6.X ) ( MCT Support ) (REQUIRES ASSET PACK)",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Dwarfs"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "2887441253": {
+      "title": "Technology Affects Allied Recruitment",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics",
+        "Allied Recruitment"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2887458135": {
+      "title": "Greenskins Reskin by Storeslem",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Greenskins"
+      ]
+    },
+    "2888171970": {
+      "title": "Variant Selector",
+      "tier": "ui",
+      "tags": [
+        "General"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2890463744": {
+      "title": "[BETA] Sigmar's Heirs, an Empire Overhaul",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "2890463783": {
+      "title": "Sigmar's Heirs, an Empire Overhaul - Assets",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "2893400779": {
+      "title": "Khorne Reskin by Storeslem",
+      "tier": "units",
+      "tags": [
+        "Faction Reskin"
+      ],
+      "factions": [
+        "Chaos | Khorne"
+      ]
+    },
+    "2894065437": {
+      "title": "Legendary Tag",
+      "tier": "ui",
+      "tags": [
+        "General",
+        "Card tags"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2895227844": {
+      "title": "Custom Matched Combat Animations",
+      "tier": "animations",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "2895834334": {
+      "title": "Dwarf Polearms ( Vanilla 6.X ) ( MCT Support ) ( REQUIRES ASSET PACK )",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Dwarfs"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "2896264280": {
+      "title": "Matched Combat + Reload Animations Submod",
+      "tier": "animations",
+      "role": "submod",
+      "factions": [
+        "All"
+      ],
+      "patches": [
+        "2858832821"
+      ]
+    },
+    "2898083134": {
+      "title": "Spooky's Dark Elf Faction Re-color",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Dark Elves"
+      ]
+    },
+    "2899955636": {
+      "title": "OvN Lost Factions: Fimir",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Fimir"
+      ]
+    },
+    "2903384963": {
+      "title": "ZC EMPIRE DEATH HEADS ROR [BETA]",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Empire"
+      ],
+      "requires": [
+        "3256148905"
+      ]
+    },
+    "2903535243": {
+      "title": "Skaven Asset Pack",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "Skaven"
+      ]
+    },
+    "2909192970": {
+      "title": "Trajann's Khorne Mods Compilation",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Chaos | Khorne"
+      ]
+    },
+    "2910606131": {
+      "title": "Mixu units use Imperial Armoury and Blessings of the Lady submod (NEW MOD REQUIRED)",
+      "tier": "experimental",
+      "factions": [
+        "Empire",
+        "Bretonnia"
+      ]
+    },
+    "2917016624": {
+      "title": "High Elves Variants (All in one)",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "High Elves"
+      ]
+    },
+    "2919542060": {
+      "title": "Dark Land Orcs",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Dark Land Orcs"
+      ]
+    },
+    "2920803021": {
+      "title": "Demon Engine",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos"
+      ]
+    },
+    "2922534576": {
+      "title": "ULTIMATE LIGHTING 2.0",
+      "tier": "graphics",
+      "role": "framework",
+      "tags": [
+        "Lighting"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2923584440": {
+      "title": "[QoL] Always Show Unequipped Items by Default",
+      "tier": "ui",
+      "tags": [
+        "QoL"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2923824825": {
+      "title": "Slaanbulls & Trojan SFO submod",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "2925581299": {
+      "title": "Sir Geg of Wainfleet, The Peasant Knight - Legendary Grail Knight Hero for Bretonnia",
+      "tier": "units",
+      "tags": [
+        "Lords / Heroes"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "2926465239": {
+      "title": "Braganza's Besiegers, Regiments of Renown Series (RoR)",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "2926733791": {
+      "title": "Dismemberment Overhaul: Ultimate All-In-One",
+      "tier": "graphics",
+      "tags": [
+        "General"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2927296206": {
+      "title": "Cataph's Southern Realms (TEB)",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Southern Realms"
+      ]
+    },
+    "2927955021": {
+      "title": "Mod Configuration Tool - v0.9 Beta",
+      "tier": "core",
+      "role": "framework",
+      "tags": [
+        "Tooling"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2931087074": {
+      "title": "Heroes of Legend: Lords of Time Update",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2935808581": {
+      "title": "Marauder mono's reskin all in one pack",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos"
+      ]
+    },
+    "2937288929": {
+      "title": "Campaign Colours Correction (BETA)",
+      "tier": "campaign_map",
+      "role": "framework",
+      "tags": [
+        "Graphics",
+        "Colours"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2942751638": {
+      "title": "Tzeentch Reskin by Storeslem",
+      "tier": "units",
+      "tags": [
+        "Faction Reskin"
+      ],
+      "factions": [
+        "Chaos | Tzeentch"
+      ]
+    },
+    "2949836536": {
+      "title": "Bertrand and the Survivors of Bergerac (Sub-mod for Mixer)",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "2950121489": {
+      "title": "OvN Lost Factions: Citadel of Dusk",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Citadel of Dusk"
+      ]
+    },
+    "2954808071": {
+      "title": "ZC EMPIRE RESKIN Submod - The Rise Of The Floppy Hat. - Middenland Greatswords update",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Empire"
+      ]
+    },
+    "2955600452": {
+      "title": "Slaanesh Marauder reskin",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Chaos | Slaanesh"
+      ]
+    },
+    "2958113532": {
+      "title": "Execute (useless) Lords & Heroes",
+      "tier": "campaign",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "2961860864": {
+      "title": "Legendary Characters Assets",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "All"
+      ]
+    },
+    "2962326909": {
+      "title": "Greater Garrisons",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics",
+        "Garrisons"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2964101252": {
+      "title": "The Return of the Ironskin Tribe",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "2964841140": {
+      "title": "A Railway System Extension",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics",
+        "Economy"
+      ],
+      "factions": [
+        "(Chaos) Dwarfs"
+      ]
+    },
+    "2965136773": {
+      "title": "Hashut's Polearms ( Vanilla 6.X.X ) ( REQUIRES ASSET PACK )",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos Dwarves"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "2968554980": {
+      "title": "Submod hub for Dirty Dan's Upgrades",
+      "tier": "experimental",
+      "factions": [
+        "All"
+      ]
+    },
+    "2968899280": {
+      "title": "@moz_more_variants_nurgle_redone.pack",
+      "tier": "units",
+      "tags": [
+        "Variants"
+      ],
+      "factions": [
+        "Chaos | Nurgle"
+      ]
+    },
+    "2969242283": {
+      "title": "Map Replacer Framework (With Extra Assets)",
+      "tier": "core",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "2969600810": {
+      "title": "Greater Chaos Spawn of Nurgle",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos"
+      ]
+    },
+    "2970502834": {
+      "title": "ZC BRETONNIA RESKIN",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Bretonnia"
+      ],
+      "requires": [
+        "3256148905"
+      ]
+    },
+    "2975851444": {
+      "title": "Dwarf Flamethrower VFX",
+      "tier": "graphics",
+      "tags": [
+        "Misc"
+      ],
+      "factions": [
+        "Dwarfs"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "2976336868": {
+      "title": "Restricted AutoResolve 65/40",
+      "tier": "campaign",
+      "role": "fix",
+      "factions": [
+        "All"
+      ]
+    },
+    "2976564799": {
+      "title": "Balanced AI Caravans",
+      "tier": "campaign",
+      "role": "fix",
+      "factions": [
+        "All"
+      ]
+    },
+    "2978043725": {
+      "title": "Distinct Faction Towers",
+      "tier": "battle",
+      "tags": [
+        "QoL",
+        "Defensive Towers"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2978535578": {
+      "title": "Bretonnian Royal Lake Guard - New Elite Units for Bretonnia",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "2978779730": {
+      "title": "DeepWar AI",
+      "tier": "campaign",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "2979144091": {
+      "title": "Expanded Roster - Norsca - SFO",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Norsca"
+      ]
+    },
+    "2979155544": {
+      "title": "(Decky) Tech-Tree Compilation SFO Submod [SFO 1.36 Update]",
+      "tier": "campaign",
+      "role": "submod",
+      "factions": [
+        "All"
+      ]
+    },
+    "2979295747": {
+      "title": "【Deer24】与龙同行sub:SFO适配补丁（Sum for SFO）",
+      "tier": "overhaul",
+      "role": "submod",
+      "tags": [
+        "SFO"
+      ],
+      "factions": [
+        "Cathay"
+      ]
+    },
+    "2981258481": {
+      "title": "!@moz_more_variants_khorne_anim_sub.pack",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Chaos | Khorne"
+      ]
+    },
+    "2981307217": {
+      "title": "!@moz_more_variants_nurgle_redone_anim_sub.pack",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Chaos | Nurgle"
+      ]
+    },
+    "2981528163": {
+      "title": "Garrison Training - Rank 9 max",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2982719387": {
+      "title": "The Dukes of Bretonnia [BETA]",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "2982826671": {
+      "title": "OVN Lost Factions: Albion SFO Submod (UPDATED 6.1)",
+      "tier": "overhaul",
+      "role": "submod",
+      "factions": [
+        "Albion"
+      ]
+    },
+    "2984034634": {
+      "title": "Old World Rites - WH3 Edition [BETA]",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2985769307": {
+      "title": "Variant Selector Support for Mixu's mods",
+      "tier": "ui",
+      "role": "submod",
+      "tags": [
+        "Variant Selector"
+      ],
+      "factions": [
+        "All"
+      ],
+      "patches": [
+        "2888171970"
+      ]
+    },
+    "2986543735": {
+      "title": "Skaven Clans - Blood for the Blood God!",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Skaven"
+      ]
+    },
+    "2986804665": {
+      "title": "[DEER24/震旦] 与龙同行 派系包(Faction leader)",
+      "tier": "units",
+      "tags": [
+        "Lords / Heroes"
+      ],
+      "factions": [
+        "Cathay"
+      ]
+    },
+    "2987536840": {
+      "title": "Dynamic World",
+      "tier": "campaign_map",
+      "tags": [
+        "Terrain",
+        "Factions"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2989710828": {
+      "title": "OvN Lost Factions: Grudgebringers",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Grudgebringers"
+      ]
+    },
+    "2990520226": {
+      "title": "[DEER24/震旦] 美化合集 （Cathay Reskin Collection)",
+      "tier": "units",
+      "tags": [
+        "Faction Reskin"
+      ],
+      "factions": [
+        "Cathay"
+      ]
+    },
+    "2991431203": {
+      "title": "Dynasty of the Damned [6.0]",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Dynasty of the Damned"
+      ]
+    },
+    "2998525410": {
+      "title": "Local Recruitment for Warriors of Chaos",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics"
+      ],
+      "factions": [
+        "Chaos"
+      ]
+    },
+    "2998630271": {
+      "title": "Campaign Weather Overhaul (The Old World Map Update!)",
+      "tier": "graphics",
+      "tags": [
+        "General",
+        "Weather"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "2999414952": {
+      "title": "Supreme Sorceress Variants",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "2999893352": {
+      "title": "Nurgle Reskin by Storeslem",
+      "tier": "units",
+      "tags": [
+        "Faction Reskin"
+      ],
+      "factions": [
+        "Chaos | Nurgle"
+      ]
+    },
+    "3001584333": {
+      "title": "The Great Ogre-haul",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "3005809423": {
+      "title": "ZC EMPIRE RESKIN (2.0) - Middenland Greatswords update",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Empire"
+      ],
+      "units": [
+        "All"
+      ]
+    },
+    "3007344936": {
+      "title": "-BR- More Beautiful Zhao Ming! 金属龙",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Cathay"
+      ],
+      "units": [
+        "Zhao Ming"
+      ]
+    },
+    "3007996493": {
+      "title": "Immortal Empires Expanded [Requires Mixer!]",
+      "tier": "core",
+      "role": "framework",
+      "tags": [
+        "Game mode",
+        "IEE"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3012547051": {
+      "title": "Aspiring Champions of Chaos",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ],
+      "units": [
+        "Aspiring Champions"
+      ]
+    },
+    "3012971124": {
+      "title": "Aspiring champions of Chaos [SFO]",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "3013629875": {
+      "title": "Teclis Retexture",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "High Elves"
+      ]
+    },
+    "3015140379": {
+      "title": "Trajann's Sentinels Compilation",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Tomb Kings"
+      ]
+    },
+    "3016830682": {
+      "title": "OvN Lost Factions: Dread King Legions",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Dread King Legions"
+      ]
+    },
+    "3019056952": {
+      "title": "Coatl Reborn - the Feathered Serpent",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Lizardmen"
+      ]
+    },
+    "3022054734": {
+      "title": "Champions Of Undeath: Conquest Of The Blood Dragons - Updated for 6.1",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Vampire Counts"
+      ]
+    },
+    "3025510782": {
+      "title": "Landmarks of Eternity",
+      "tier": "campaign_map",
+      "tags": [
+        "POI",
+        "Landmarks"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3025917877": {
+      "title": "Trajann's Aurelion",
+      "tier": "units",
+      "tags": [
+        "Lords / Heroes"
+      ],
+      "factions": [
+        "Empire"
+      ],
+      "units": [
+        "Aurelion"
+      ]
+    },
+    "3029371933": {
+      "title": "(BBB) Brutus's Big Battlefields Project - 2nd map released",
+      "tier": "battle_maps",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "3029586263": {
+      "title": "Regiments of Renown Compilation",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3029800597": {
+      "title": "Remove characters traits limit",
+      "tier": "campaign",
+      "role": "framework",
+      "tags": [
+        "Traits"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3030581654": {
+      "title": "nic moding assets",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "All"
+      ]
+    },
+    "3030581703": {
+      "title": "nic texture assets",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "All"
+      ]
+    },
+    "3030619117": {
+      "title": "Waka's Campaign Land Battles (WCLB) Map Pack",
+      "tier": "battle_maps",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "3030996759": {
+      "title": "SCM Marienburg (6.2)",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Marienburg"
+      ]
+    },
+    "3033057524": {
+      "title": "Nat's Minotaurs Of Khorne for The Warriors Of Chaos",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "3033684436": {
+      "title": "Marked Chaos Giants - Diversify Your Monsters",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos"
+      ]
+    },
+    "3036272368": {
+      "title": "Aekold Helbrass - Reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos | Tzeentch"
+      ]
+    },
+    "3044691047": {
+      "title": "Landmarks of Eternity: SFO submod",
+      "tier": "campaign_map",
+      "role": "submod",
+      "tags": [
+        "Landmarks"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3045685843": {
+      "title": "Grimpire: Crypt Horrors Reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Vampire Counts"
+      ],
+      "units": [
+        "Crypt Horrors"
+      ]
+    },
+    "3047257657": {
+      "title": "Permanent VFX",
+      "tier": "graphics",
+      "tags": [
+        "Experimental",
+        "Permanent Impacts"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3047798343": {
+      "title": "Dwarf UHD",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Dwarfs"
+      ]
+    },
+    "3049489371": {
+      "title": "Immortal Empires Expanded and Old World Rites Compatibility Submod",
+      "tier": "campaign",
+      "role": "submod",
+      "factions": [
+        "All"
+      ]
+    },
+    "3050061684": {
+      "title": "More dust",
+      "tier": "graphics",
+      "tags": [
+        "Dust"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3054249433": {
+      "title": "Reasonable Trade (No Datacore)",
+      "tier": "campaign",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "3058402104": {
+      "title": "Patron Gods - SFO Submod (Reupload)",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "3064165524": {
+      "title": "Skaven Esoterica",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Skaven"
+      ]
+    },
+    "3066410796": {
+      "title": "Grand Campaign Camera",
+      "tier": "campaign_map",
+      "tags": [
+        "Camera"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3072327935": {
+      "title": "Nico's Reskin: Ascopa's Bretonnia 2.0",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "3072328163": {
+      "title": "Nico's Reskin: Lily's Overhaul 2.0",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "3072424619": {
+      "title": "Expanded Roster - Chaos Dwarfs SFO",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Chaos Dwarfs"
+      ]
+    },
+    "3072440695": {
+      "title": "Greater Chaos Spawn of Khorne",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos | Khorne"
+      ],
+      "units": [
+        "Greater Chaos Spawn"
+      ]
+    },
+    "3076386236": {
+      "title": "The Motherland - Winter is coming SFO",
+      "tier": "campaign",
+      "role": "submod"
+    },
+    "3079850881": {
+      "title": "Lost Calm: Jurassic Normal (updated for Patch 6.1)",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Lizardmen"
+      ]
+    },
+    "3081800026": {
+      "title": "The Old World Campaign",
+      "tier": "core",
+      "role": "framework",
+      "tags": [
+        "Game mode"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3082390369": {
+      "title": "Just Good Babysitter",
+      "tier": "campaign",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "3082390624": {
+      "title": "Just Good Battle UI",
+      "tier": "ui",
+      "tags": [
+        "General"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3091079691": {
+      "title": "Smart Throgg Voice Pack",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "Norsca"
+      ],
+      "units": [
+        "Throgg"
+      ]
+    },
+    "3102232129": {
+      "title": "Greenskins Expanded Hero Skill Trees",
+      "tier": "campaign",
+      "tags": [
+        "Experimental",
+        "Skilltrees"
+      ],
+      "factions": [
+        "Greenskins"
+      ]
+    },
+    "3102783940": {
+      "title": "Living World Expanded: Total Map Overhaul",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics",
+        "Map"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3103509908": {
+      "title": "Old World Victory Objectives & Crises",
+      "tier": "core",
+      "tags": [
+        "Misc"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3117083206": {
+      "title": "Tech-Tree Compilation (New Version)",
+      "tier": "campaign",
+      "tags": [
+        "Traits & Technologies"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3120727074": {
+      "title": "Legendary Lore - The Old World",
+      "tier": "campaign_map",
+      "tags": [
+        "POI",
+        "Lore"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3121694491": {
+      "title": "Champions Of Undeath: Bloodline Agents - Updated for 6.1",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Vampire Counts"
+      ]
+    },
+    "3125672716": {
+      "title": "Units of the Imperial Provinces I: Averland",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "3128711066": {
+      "title": "Turn Skipper",
+      "tier": "core",
+      "tags": [
+        "Misc"
+      ]
+    },
+    "3134922105": {
+      "title": "OvN Lost Factions: Araby",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Araby"
+      ]
+    },
+    "3140200173": {
+      "title": "Victory Conditions Overhaul",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics",
+        "Victory Conditions"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3147193969": {
+      "title": "Units of the Imperial Provinces II: Ostermark",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "3149445431": {
+      "title": "Audio Mixer",
+      "tier": "core",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "3152655939": {
+      "title": "OvN Lost Factions: Araby  SFO Submod",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Araby"
+      ]
+    },
+    "3157105199": {
+      "title": "Warband UI Framework",
+      "tier": "core",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "3166223310": {
+      "title": "Audio Dev Pack - Updated for 6.0",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "All"
+      ]
+    },
+    "3166858548": {
+      "title": "Beasts Most Foul Complete",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Beastmen"
+      ]
+    },
+    "3174823302": {
+      "title": "Custom Siege Maps for Campaigns Compilation",
+      "tier": "battle_maps",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "3182752128": {
+      "title": "Agent Hero Forever - The Green Knight",
+      "tier": "units",
+      "tags": [
+        "Unit Overhaul"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "3193247363": {
+      "title": "OvN Lost Factions: Grudgebringers SFO Submod",
+      "tier": "overhaul",
+      "role": "submod",
+      "factions": [
+        "Grudgebringers"
+      ]
+    },
+    "3199454107": {
+      "title": "OvN Lost Factions: Citadel of Dusk SFO Submod",
+      "tier": "overhaul",
+      "role": "submod",
+      "factions": [
+        "Citadel of Dusk"
+      ]
+    },
+    "3201737768": {
+      "title": "Campaign Camera Tweak",
+      "tier": "campaign_map",
+      "tags": [
+        "Camera"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3209123287": {
+      "title": "Belakor's Shadow - Corrupted Daemon Princes overhaul (MCT Support)",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "3212062676": {
+      "title": "GCCM: Beta",
+      "tier": "battle_maps",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "3215474218": {
+      "title": "Immortal Landmarks SFO Submod",
+      "tier": "campaign",
+      "role": "submod"
+    },
+    "3218720437": {
+      "title": "Regiments of Renown - (Compilation SFO Submod Temp Fix) (Waiting on main mod update)",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "All"
+      ]
+    },
+    "3219568788": {
+      "title": "Ancient Treeman Variants",
+      "tier": "units",
+      "tags": [
+        "Variants"
+      ],
+      "factions": [
+        "Wood Elves"
+      ]
+    },
+    "3221540814": {
+      "title": "Units of the Imperial Provinces III: Hochland",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "3231024410": {
+      "title": "Landmarks of Legend SFO Submod",
+      "tier": "campaign_map",
+      "role": "submod",
+      "tags": [
+        "Landmarks"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3234385695": {
+      "title": "SCM: Tribes of the North SFO Submod",
+      "tier": "campaign",
+      "role": "submod"
+    },
+    "3236566964": {
+      "title": "SCM: Tribes of the North (6.1)",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Norsca"
+      ]
+    },
+    "3236567583": {
+      "title": "SCM's LCCP, 15 new factions for IEE! (6.2)",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3237873696": {
+      "title": "Warhammer 1 Texture Update Project",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "All"
+      ]
+    },
+    "3243268491": {
+      "title": "Warrior Priest of Morr",
+      "tier": "units",
+      "tags": [
+        "Lords / Heroes"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "3243498636": {
+      "title": "[SACRED] RANGED HERO - Chaos Sorcerer",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "3244046096": {
+      "title": "Derpy's Dwarf Asset Pack ( 6.X.X )",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "Dwarfs"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3244046996": {
+      "title": "Dawi Gunships ( Vanilla 6.X.X ) ( MCT & TTC ) (REQUIRES ASSET PACK)",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Dwarfs"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3244295546": {
+      "title": "UI Slider",
+      "tier": "ui",
+      "tags": [
+        "General"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3244980225": {
+      "title": "Seasons and Holidays [compatible with battle weather mods!]",
+      "tier": "graphics",
+      "tags": [
+        "Weather"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3245227175": {
+      "title": "Cad's Chaos Draugr for Norsca",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Norsca"
+      ],
+      "units": [
+        "Chaos Draugr"
+      ]
+    },
+    "3245473896": {
+      "title": "Goblin Zeppelin",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Greenskins"
+      ],
+      "units": [
+        "Goblin Zeppelin"
+      ]
+    },
+    "3248385858": {
+      "title": "Vampire Coast Expansion: Pirate Life",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Vampire Coast"
+      ]
+    },
+    "3252910848": {
+      "title": "Closer to the fig Vilitch the curseling",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos | Tzeentch"
+      ]
+    },
+    "3254914600": {
+      "title": "Louen Leoncoeur - Royal Lake Guard Skin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "3255424120": {
+      "title": "Dawi Gunpowder Units ( Vanilla 6.X ) ( MCT/TTC Support ) ( REQUIRES ASSET PACK )",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Dwarfs"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3256066718": {
+      "title": "Secrets of Nagash for Legions of Nagash",
+      "tier": "overhaul",
+      "role": "submod",
+      "factions": [
+        "Tomb Kings"
+      ]
+    },
+    "3256148905": {
+      "title": "ZC MODDING ASSETS",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "All"
+      ]
+    },
+    "3256221896": {
+      "title": "[6.1] Grandolph's Simple Dynamic Settlements Reborn",
+      "tier": "campaign_map",
+      "tags": [
+        "POI",
+        "Settlements"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3261132178": {
+      "title": "Chaos Ogres",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Chaos Ogres"
+      ]
+    },
+    "3266001533": {
+      "title": "Wood Elves Expanded Hero Skill Trees",
+      "tier": "campaign",
+      "tags": [
+        "Experimental",
+        "Skilltrees"
+      ],
+      "factions": [
+        "Wood Elves"
+      ]
+    },
+    "3272857291": {
+      "title": "Abilities and Spells for Garrison Heroes - 6.1 Update",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics",
+        "Garrisons"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3275175490": {
+      "title": "Dawi Ironclad Mount ( Vanilla 6.X ) (STANDALONE)",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Dwarfs"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3276065270": {
+      "title": "Warhammer 1 Update Project Model Fixes",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "All"
+      ],
+      "requires": [
+        "3237873696"
+      ]
+    },
+    "3278320763": {
+      "title": "Be'lakor the Dark Master *Reskin*",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ],
+      "units": [
+        "Be'lakor"
+      ]
+    },
+    "3279560591": {
+      "title": "vampire coasttt ships",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Vampire Coast"
+      ]
+    },
+    "3280043989": {
+      "title": "Expanded Roster - Greenskins - Goblin Pack - SFO",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Greenskins"
+      ]
+    },
+    "3280044035": {
+      "title": "Expanded Roster - Greenskins - Orc Pack - SFO",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Greenskins"
+      ]
+    },
+    "3280044105": {
+      "title": "Expanded Roster - Vampire Counts - SFO",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Vampire Counts"
+      ]
+    },
+    "3281249977": {
+      "title": "Victory Conditions Overhaul SFO Submod",
+      "tier": "campaign",
+      "role": "submod",
+      "factions": [
+        "All"
+      ]
+    },
+    "3281925347": {
+      "title": "vampire coast artillery",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Vampire Coast"
+      ]
+    },
+    "3285143427": {
+      "title": "More Characters in Recruit Pools & Fast Refresh (Lords & Heroes Recruitment) [6.1]",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics",
+        "Recruit Pool"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3286047803": {
+      "title": "Expanded Roster - Dwarfs - SFO",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Dwarfs"
+      ]
+    },
+    "3287245285": {
+      "title": "Expanded Hero Skill Trees Compilation",
+      "tier": "campaign",
+      "tags": [
+        "Experimental",
+        "Skilltrees"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3287447453": {
+      "title": "Snow Expansion for the Old World",
+      "tier": "campaign_map",
+      "tags": [
+        "Terrain",
+        "Snow"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3288406989": {
+      "title": "World Map for Old World",
+      "tier": "core",
+      "role": "submod",
+      "factions": [
+        "All"
+      ]
+    },
+    "3289953899": {
+      "title": "SFO Expanded Roster - Dark Elves",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Dark Elves"
+      ]
+    },
+    "3291116635": {
+      "title": "OvN Lost World",
+      "tier": "campaign_map",
+      "role": "framework",
+      "tags": [
+        "Settlements"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3293001739": {
+      "title": "Legions of Nagash (6.1)",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Tomb Kings"
+      ]
+    },
+    "3293711426": {
+      "title": "The Changeling in Cathay - Start Position Change",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Chaos | Tzeentch"
+      ]
+    },
+    "3294688805": {
+      "title": "The return of the Ironskin + The Great Ogre-haul - Compatibility Patch",
+      "tier": "overhaul",
+      "role": "submod",
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "3295714381": {
+      "title": "@moz_more_variants_dwarfs.pack",
+      "tier": "units",
+      "tags": [
+        "Variants"
+      ],
+      "factions": [
+        "Dwarfs"
+      ]
+    },
+    "3296549245": {
+      "title": "Legendary Characters SFO Submod(Updated for 6.0)",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "All"
+      ]
+    },
+    "3296618760": {
+      "title": "Dynasty of the Damned SFO Submod",
+      "tier": "overhaul",
+      "role": "submod",
+      "factions": [
+        "Dynasty of the Damned"
+      ]
+    },
+    "3297169329": {
+      "title": "!@moz_more_variants_dwarfs_anim_sub.pack",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Dwarfs"
+      ]
+    },
+    "3297467336": {
+      "title": "Fay Folk of Athel Loren (Wood Elves)",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Wood Elves"
+      ]
+    },
+    "3297605217": {
+      "title": "Derpy's Chaos Dwarf Asset Pack ( 6.X.X )",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "Chaos Dwarves"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3297606032": {
+      "title": "Hashut's Gunpowder Units ( Vanilla 6.X.X ) ( MCT/TTC )( REQURES CHD ASSET PACK )",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos Dwarves"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3299689828": {
+      "title": "The Uglies - Tamurkan chieftains",
+      "tier": "units",
+      "tags": [
+        "Unit Overhaul"
+      ],
+      "factions": [
+        "Chaos | Nurgle"
+      ]
+    },
+    "3301093524": {
+      "title": "Dynamic Naval Movement Range",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3303009031": {
+      "title": "Legions of Nagash SFO Submod(Updated for 6.0)",
+      "tier": "overhaul",
+      "role": "submod",
+      "factions": [
+        "Tomb Kings"
+      ]
+    },
+    "3304559565": {
+      "title": "Lily's Bretonnia Mod Compilation: All-in-one",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "3305738526": {
+      "title": "Conqueror: Chivalrous Animation",
+      "tier": "animations",
+      "tags": [
+        "Secondary"
+      ],
+      "factions": [
+        "All"
+      ],
+      "requires": [
+        "2895227844"
+      ]
+    },
+    "3306362184": {
+      "title": "Conqueror: Chivalrous Animation With Effect",
+      "tier": "animations",
+      "tags": [
+        "Secondary"
+      ],
+      "factions": [
+        "All"
+      ],
+      "requires": [
+        "2895227844"
+      ]
+    },
+    "3314618468": {
+      "title": "Expanded Roster Compilation",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3315278110": {
+      "title": "Zhatan The Black Reskin (Character / Faction Color)",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos Dwarves"
+      ],
+      "units": [
+        "All"
+      ]
+    },
+    "3323554182": {
+      "title": "[Beta]Legendary Urbania",
+      "tier": "campaign_map",
+      "role": "submod",
+      "tags": [
+        "Settlements"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3330344405": {
+      "title": "All Will Burn - Fire Damage Overhaul by Lily",
+      "tier": "battle",
+      "tags": [
+        "QoL",
+        "Fire"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3331667376": {
+      "title": "Warhammer 1+2 Cinematics (CAVEAT - READ DESCRIPTION!)",
+      "tier": "core",
+      "tags": [
+        "Video"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3333868527": {
+      "title": "Chaos Marauder Expansion",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos"
+      ]
+    },
+    "3334803139": {
+      "title": "Dawi Additional GP Units ( Vanilla 6.X.X ) ( MCT & TTC ) ( NEEDS ASSET PACK )",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Dwarfs"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3334908464": {
+      "title": "Gunfire of abyssal（vampire coast unit pack）",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Vampire Coast"
+      ]
+    },
+    "3338099710": {
+      "title": "Dawi-Zharr Castellan Tank Mount ( Vanilla 6.X.X ) ( STANDALONE )",
+      "tier": "units",
+      "tags": [
+        "Unit Overhaul"
+      ],
+      "factions": [
+        "Chaos Dwarves"
+      ],
+      "units": [
+        "Castellan Tank mounts"
+      ]
+    },
+    "3338324931": {
+      "title": "Warriors of Chaos Expanded Hero Skill Trees",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "3341513338": {
+      "title": "Derpy's UMGI Asset Pack ( 6.X.X )",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "Greenskins"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3341513607": {
+      "title": "Empire Tanks ( Vanilla 6.X.X ) ( MCT ) (NEEDS ASSET PACK)",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Empire"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3342057212": {
+      "title": "Congreve Rockets for Vampire Coast updated",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Vampire Coast"
+      ]
+    },
+    "3343169828": {
+      "title": "Deck Cleaners",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Vampire Coast"
+      ]
+    },
+    "3343351457": {
+      "title": "Kislev Tanks ( Vanilla 6.X.X ) ( MCT ) (NEEDS ASSET PACK)",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Kislev"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3345400180": {
+      "title": "Animated Banner for Repanse",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "3345927335": {
+      "title": "War Elephants Reskin - OvN Araby submod",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Araby"
+      ]
+    },
+    "3346253596": {
+      "title": "Chaos Dwarf Sorcerer Tank Mount ( Vanilla 6.X.X ) ( STANDALONE )",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos Dwarves"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3346700478": {
+      "title": "Ribauldequin",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Vampire Coast"
+      ]
+    },
+    "3348616922": {
+      "title": "Embedded editor for Tabletop Caps",
+      "tier": "core",
+      "role": "framework",
+      "tags": [
+        "Tooling",
+        "Editor"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3350322809": {
+      "title": "Azazel - Reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos | Slaanesh"
+      ],
+      "units": [
+        "Azazel"
+      ]
+    },
+    "3352318969": {
+      "title": "No Real Time Building Reborn (Deployment phase only in Siege & Settlement Battles) [6.1]",
+      "tier": "battle",
+      "tags": [
+        "AI behaviour",
+        "Building"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3352512928": {
+      "title": "Dawi-Zharr Whirlwinds ( Vanilla 6.X.X ) ( MCT ) ( NEEDS ASSET PACK )",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos Dwarves"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3355050473": {
+      "title": "Dawi-Zharr Daemachina ( Vanilla 6.X.X ) ( MCT ) ( STANDALONE )",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos Dwarves"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3359782763": {
+      "title": "Tech-Tree Compilation Submod",
+      "tier": "campaign",
+      "role": "submod",
+      "factions": [
+        "All"
+      ]
+    },
+    "3361093386": {
+      "title": "Epic Loading Screens",
+      "tier": "core",
+      "tags": [
+        "Misc"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3361929317": {
+      "title": "Dismemberment Overhaul: SFO Submod",
+      "tier": "graphics",
+      "role": "submod",
+      "factions": [
+        "All"
+      ]
+    },
+    "3363516919": {
+      "title": "Grim Lighting",
+      "tier": "campaign_map",
+      "role": "framework",
+      "tags": [
+        "Graphics",
+        "Lighting"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3366465793": {
+      "title": "New Settlement Who Dis 2",
+      "tier": "campaign_map",
+      "tags": [
+        "POI"
+      ]
+    },
+    "3367843774": {
+      "title": "New Empire Unit: Imperial Combat Medics",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "3368217482": {
+      "title": "Battle Weather Overhaul",
+      "tier": "graphics",
+      "role": "framework",
+      "tags": [
+        "Lighting"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3376517265": {
+      "title": "Tamurkhan Rotting Reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos | Nurgle"
+      ]
+    },
+    "3378167400": {
+      "title": "Sigmar's Heirs - Submod - The Hammer",
+      "tier": "overhaul",
+      "role": "submod",
+      "factions": [
+        "Empire"
+      ]
+    },
+    "3378593407": {
+      "title": "99999 audio files pack",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "All"
+      ]
+    },
+    "3381511645": {
+      "title": "Battles end automatically after victory",
+      "tier": "battle",
+      "tags": [
+        "Mechanics"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3382993544": {
+      "title": "Classically Beautiful Eltharion Reskin (Three Variants)",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "High Elves"
+      ]
+    },
+    "3383143016": {
+      "title": "Blood Chariots of Khorne",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos | Khorne"
+      ],
+      "units": [
+        "Blood Chariots"
+      ]
+    },
+    "3383170428": {
+      "title": "Bruiser Careers",
+      "tier": "units",
+      "tags": [
+        "Unit Overhaul"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "3383227206": {
+      "title": "Champions Of Undeath: Audio Reservoir",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "All"
+      ]
+    },
+    "3383465020": {
+      "title": "开膛手布拉格模型替换（ogr_bragg_reskin）",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "3383603230": {
+      "title": "Rustbuckets",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "3383990383": {
+      "title": "Sentient Bloodletters Voice Pack",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "Chaos | Khorne"
+      ],
+      "units": [
+        "Bloodletters"
+      ]
+    },
+    "3384239916": {
+      "title": "Scrap Upgrade UI Framework",
+      "tier": "core",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "3385983518": {
+      "title": "[6.0 Patch] Greater Chaos Spawn of Khorne",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Chaos | Khorne"
+      ],
+      "units": [
+        "Greater Chaos Spawn"
+      ]
+    },
+    "3385983558": {
+      "title": "[6.0 Patch] Greater Chaos Spawn of Nurgle",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos | Nurgle"
+      ],
+      "units": [
+        "Greater Chaos Spawn"
+      ]
+    },
+    "3386024887": {
+      "title": "Immersive Battle Banners",
+      "tier": "battle",
+      "tags": [
+        "QoL",
+        "Banners"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3386790677": {
+      "title": "Trade Settlement with Allies Only",
+      "tier": "campaign",
+      "tags": [
+        "AI behaviour"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3386989556": {
+      "title": "Tabletop Caps: Reborn",
+      "tier": "campaign",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "3388802859": {
+      "title": "Unique Grail Reliquae - Faction Mechanics for Bretonnia",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "3389436328": {
+      "title": "The Twelve Realms - Wood Elves",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Wood Elves"
+      ]
+    },
+    "3390778814": {
+      "title": "Da GREENSKIN Asset Pack ( v6.0.X )",
+      "tier": "core",
+      "role": "assets",
+      "factions": [
+        "Greenskins"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3390778948": {
+      "title": "Da Greenskin Looted Arsenal BETA ( v6.0.X Vanilla ) ( MCT ) ( REQUIRES ASSET PACK )",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Greenskins"
+      ],
+      "units": [
+        "DERPY"
+      ]
+    },
+    "3398185245": {
+      "title": "Hordes of Chaos Expanded",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ]
+    },
+    "3399454565": {
+      "title": "More Thematic Wallbreakers [6.2.x]",
+      "tier": "units",
+      "tags": [
+        "Experimental"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3400794758": {
+      "title": "Another Sigvald reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos | Slaanesh"
+      ],
+      "units": [
+        "Siegvald"
+      ]
+    },
+    "3400866403": {
+      "title": "（ogr_golgfag_reskin）高尔法格模型替换",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "3402019878": {
+      "title": "Heroes no More: Aekold Helbrass Legendary Lord",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Chaos | Tzeentch"
+      ]
+    },
+    "3405782070": {
+      "title": "High Gothic Bretonnia Reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "3405782371": {
+      "title": "High Gothic Empire Reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Empire"
+      ],
+      "units": [
+        "All"
+      ]
+    },
+    "3405783928": {
+      "title": "Industrial Bretonnia Units",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "3406773174": {
+      "title": "Great Sea Cruise: Unique Ships [BETA]",
+      "tier": "campaign_map",
+      "tags": [
+        "Misc",
+        "Ships"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3409068012": {
+      "title": "Azvar, Tzeentch Legendary Lord",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Chaos | Tzeentch"
+      ],
+      "units": [
+        "Azvar"
+      ]
+    },
+    "3409269134": {
+      "title": "Blood and Shadow: The Rebirth of the Night Legions  - Reskin and New Units for Vampire Counts",
+      "tier": "units",
+      "tags": [
+        "Unit Overhaul"
+      ],
+      "factions": [
+        "Vampire Counts"
+      ]
+    },
+    "3410831274": {
+      "title": "Uniforms and Heraldry of Bretonnia III",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "3412309894": {
+      "title": "Blackskullz Horde by Mortrau",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Blackskullz"
+      ]
+    },
+    "3412700662": {
+      "title": "Exotic Maneaters - Ogre Kingdoms Unit Pack (Balanced)",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "3415220314": {
+      "title": "Bale Fire VFX for Wight Kings, Nightmares, and Hellsteeds",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Vampire Counts"
+      ]
+    },
+    "3415274558": {
+      "title": "Engine of the Stars",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Lizardmen"
+      ]
+    },
+    "3415809363": {
+      "title": "Screenshot Campaign Camera",
+      "tier": "campaign_map",
+      "tags": [
+        "Camera"
+      ]
+    },
+    "3419122211": {
+      "title": "Old World Elector Count Troops SFO Balance Patch",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "All"
+      ]
+    },
+    "3419889793": {
+      "title": "[BETA] Mixu's Legendary Lords -  SFO Submod",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "All"
+      ]
+    },
+    "3425174065": {
+      "title": "Assladders Begone!!! Long Live Buildable Ladders!!!",
+      "tier": "core",
+      "role": "framework",
+      "tags": [
+        "Assladders"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3430478701": {
+      "title": "Units of the Imperial Provinces IV: Talabecland",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "3432067249": {
+      "title": "Tigermen of Cathay",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Cathay"
+      ]
+    },
+    "3432071580": {
+      "title": "Warriors of Chaos Super Units - End Times Escalation",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Chaos"
+      ],
+      "units": [
+        "Super Units"
+      ]
+    },
+    "3433251995": {
+      "title": "Skaven War Litters",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Skaven"
+      ]
+    },
+    "3433525423": {
+      "title": "Tigermen of Cathay: SFO unit stats",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Cathay"
+      ]
+    },
+    "3434034825": {
+      "title": "OvN Lost Factions: Fishmen Invasion",
+      "tier": "overhaul",
+      "tags": [
+        "New Factions"
+      ],
+      "factions": [
+        "Fishmen"
+      ]
+    },
+    "3434094468": {
+      "title": "Heroes Of Legend - SFO Submod",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "All"
+      ]
+    },
+    "3438537291": {
+      "title": "Gorbad BIGGER claw",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Greenskins"
+      ],
+      "units": [
+        "Gorbad Ironclaw"
+      ]
+    },
+    "3442031497": {
+      "title": "Chaos Ogres - SFO",
+      "tier": "units",
+      "role": "submod",
+      "factions": [
+        "Chaos Ogres"
+      ]
+    },
+    "3442905174": {
+      "title": "More High Angle Fire (includes Stop Idling features)",
+      "tier": "battle",
+      "tags": [
+        "AI behaviour",
+        "Firing Arcs"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3448139249": {
+      "title": "Three-Eyed King - Archaon Reskin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos Warriors"
+      ],
+      "units": [
+        "Archeon"
+      ]
+    },
+    "3450045634": {
+      "title": "Imperial Armoury Submod for The Old World Campaign",
+      "tier": "overhaul",
+      "role": "submod",
+      "factions": [
+        "Empire"
+      ]
+    },
+    "3451367947": {
+      "title": "Faster Siege Equipment (No Autoresolve Bonus)",
+      "tier": "campaign",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "3451843316": {
+      "title": "Temporary Compatibility Patch for 【The Return of the Ironskin Tribe】and【Warband Upgrade Ultimate】",
+      "tier": "campaign",
+      "role": "submod",
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "3455572870": {
+      "title": "Units of the Imperial Provinces V: Nordland",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "3459356750": {
+      "title": "Bela's Handsome Arch Lectors and Warrior Priests (with ui)",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Empire"
+      ],
+      "units": [
+        "Arch Lectors"
+      ]
+    },
+    "3460425664": {
+      "title": "Bruno the Battle Bear!",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "3460878402": {
+      "title": "Fort Maps",
+      "tier": "battle_maps",
+      "role": "framework",
+      "factions": [
+        "All"
+      ]
+    },
+    "3461789202": {
+      "title": "Go Squig or Go Home!  (Horned and Tomb Squig Update!)",
+      "tier": "units",
+      "tags": [
+        "Unit Overhaul"
+      ],
+      "factions": [
+        "Greenskins"
+      ],
+      "units": [
+        "Squigs"
+      ]
+    },
+    "3463632426": {
+      "title": "Uber Brothers",
+      "tier": "units",
+      "tags": [
+        "Lords / Heroes"
+      ],
+      "factions": [
+        "Empire"
+      ],
+      "units": [
+        "Uber Brothers"
+      ]
+    },
+    "3465071970": {
+      "title": "Lich Kemmler",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Vampire Counts"
+      ]
+    },
+    "3467434098": {
+      "title": "Corpse Emperor Vlad",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Vampire Counts"
+      ]
+    },
+    "3467812738": {
+      "title": "Medallion of Chaqua - Eternal Dynasties (Version 1.1.0)",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Lizardmen"
+      ]
+    },
+    "3467840932": {
+      "title": "Medallion of Chaqua - SFO Submod",
+      "tier": "campaign",
+      "role": "submod"
+    },
+    "3471406291": {
+      "title": "AI Army Compositions Compatibility Patch",
+      "tier": "campaign",
+      "tags": [
+        "AI behaviour"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3473110084": {
+      "title": "From the Grave - Vampire Counts custom expansion",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Vampire Counts"
+      ]
+    },
+    "3474645690": {
+      "title": "Auric Arsenal: Golden Knight Reskin Collection",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Kislev"
+      ],
+      "units": [
+        "Golden Knights"
+      ]
+    },
+    "3476580530": {
+      "title": "Tabletop Clan Eshin (Reskin)",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Skaven"
+      ]
+    },
+    "3479473174": {
+      "title": "360 shield for war wagons",
+      "tier": "units",
+      "tags": [
+        "Unit Overhaul"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "3485913404": {
+      "title": "Skarbrand skin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos | Khorne"
+      ],
+      "units": [
+        "Skarbrand"
+      ]
+    },
+    "3486883742": {
+      "title": "Units of the Imperial Provinces VI: Ostland",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Empire"
+      ]
+    },
+    "3487180972": {
+      "title": "Vlad von Carstein skin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Vampire Counts"
+      ]
+    },
+    "3488549002": {
+      "title": "Boris Skin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Kislev"
+      ]
+    },
+    "3488873812": {
+      "title": "Vlad skin default weapon",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Vampire Counts"
+      ]
+    },
+    "3489343631": {
+      "title": "Multiple Lores for Warriors of Chaos Daemon Princes",
+      "tier": "units",
+      "tags": [
+        "Unit Overhaul"
+      ],
+      "factions": [
+        "Chaos Daemons"
+      ],
+      "units": [
+        "Deamon Prince"
+      ]
+    },
+    "3490553569": {
+      "title": "The Royal Castellan - Legendary Hero for Bretonnia",
+      "tier": "units",
+      "tags": [
+        "Lords / Heroes"
+      ],
+      "factions": [
+        "Bretonnia"
+      ]
+    },
+    "3493074589": {
+      "title": "Unlocked Legendary Items No Battle + New Legendary Lord and Hero Artefacts, by Katsuko",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics",
+        "Artifacts"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3495015201": {
+      "title": "Karl Franz skin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Empire"
+      ],
+      "units": [
+        "Karl Franz"
+      ]
+    },
+    "3498507481": {
+      "title": "Vampire Coast Unit Pack: Rise of the Brinewight",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Vampire Coast"
+      ]
+    },
+    "3499675615": {
+      "title": "Grimgor skin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Greenskins"
+      ],
+      "units": [
+        "Grimgor"
+      ]
+    },
+    "3500073492": {
+      "title": "Fort Maps for Encampment Stance",
+      "tier": "campaign",
+      "tags": [
+        "Mechanics"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3501256396": {
+      "title": "Auto Resolve Rebalanced Katsuko",
+      "tier": "campaign",
+      "tags": [
+        "Calculations"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3501906896": {
+      "title": "Champions of Undeath: Richard the Halfmast",
+      "tier": "units",
+      "tags": [
+        "Lords / Heroes"
+      ],
+      "factions": [
+        "Vampire coast"
+      ]
+    },
+    "3502513595": {
+      "title": "SCM Might of the Maw",
+      "tier": "overhaul",
+      "tags": [
+        "Faction Overhauls"
+      ],
+      "factions": [
+        "Ogre Kingdoms"
+      ]
+    },
+    "3503667132": {
+      "title": "Diplomacy Logic and Balance Katsuko",
+      "tier": "campaign",
+      "tags": [
+        "Diplomacy"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3504236962": {
+      "title": "Mercenaries of Khuresh",
+      "tier": "units",
+      "tags": [
+        "New Units"
+      ],
+      "factions": [
+        "Cathay"
+      ]
+    },
+    "3509062568": {
+      "title": "Repeating Quest for Unique Items Bug Fix",
+      "tier": "campaign",
+      "role": "fix",
+      "tags": [
+        "Unique Artifacts"
+      ],
+      "factions": [
+        "All"
+      ]
+    },
+    "3512295439": {
+      "title": "Azazel skin",
+      "tier": "units",
+      "tags": [
+        "Reskins"
+      ],
+      "factions": [
+        "Chaos | Slaanesh"
+      ]
+    },
+    "3512478365": {
+      "title": "Unique Item Fusion Will Not Fail",
+      "tier": "campaign_map",
+      "tags": [
+        "QoL"
+      ],
+      "factions": [
+        "All"
+      ]
+    }
+  }
+}

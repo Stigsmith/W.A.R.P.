@@ -1,0 +1,111 @@
+# The ordering vocabulary WARP uses to build a load order.
+#
+# A pack's default position comes from, in order:
+#   1. its tier   - higher priority sits higher in the list and wins file collisions
+#   2. its role   - the same rule, within a tier
+#   3. its name   - Kaedrin character order, as a deterministic tie-break
+# Hard rules (requires / patches / pins) are applied on top. See docs/load-order.md.
+#
+# Priorities only need to be relative; gaps leave room to insert new entries.
+
+[[tier]]
+key = "experimental"
+name = "Experimental"
+priority = 110
+description = "Mods being trialled. Kept on top so their effect is never masked."
+
+[[tier]]
+key = "audio"
+name = "Audio"
+priority = 100
+description = "Sound, music and voice mods."
+
+[[tier]]
+key = "ui"
+name = "UI"
+priority = 90
+description = "Interface changes. Very specific files, so they win over everything below."
+
+[[tier]]
+key = "battle_maps"
+name = "Battle maps"
+priority = 80
+description = "Custom and replacement battle maps."
+
+[[tier]]
+key = "battle"
+name = "Battle"
+priority = 70
+description = "Battle mechanics, battle AI and battle quality of life."
+
+[[tier]]
+key = "graphics"
+name = "Graphics"
+priority = 60
+description = "Visual effects, weather, lighting, LOD, fog and dust."
+
+[[tier]]
+key = "animations"
+name = "Animations"
+priority = 50
+description = "Combat animations and matched combat."
+
+[[tier]]
+key = "campaign_map"
+name = "Campaign map"
+priority = 40
+description = "Campaign map visuals: terrain, landmarks, camera, borders."
+
+[[tier]]
+key = "units"
+name = "Units"
+priority = 30
+description = "New units, lords and heroes, reskins, variants and unit overhauls."
+
+[[tier]]
+key = "campaign"
+name = "Campaign"
+priority = 20
+description = "Campaign mechanics, traits, technologies, diplomacy and campaign AI."
+
+[[tier]]
+key = "overhaul"
+name = "Overhaul"
+priority = 10
+description = "New factions and faction overhauls: large mods that others build on."
+
+[[tier]]
+key = "core"
+name = "Core"
+priority = 0
+description = "Frameworks, shared assets, game modes and tooling. The foundation, so it sits at the bottom."
+
+[[role]]
+key = "submod"
+name = "Submod / patch"
+priority = 40
+description = "Changes or extends another mod. Must win over what it changes."
+
+[[role]]
+key = "fix"
+name = "Fix"
+priority = 30
+description = "Standalone fixes for vanilla or general problems."
+
+[[role]]
+key = "content"
+name = "Content"
+priority = 20
+description = "A regular mod. The default when nothing else is known."
+
+[[role]]
+key = "framework"
+name = "Framework"
+priority = 10
+description = "Systems other mods build on (MCT, script frameworks, game modes)."
+
+[[role]]
+key = "assets"
+name = "Assets"
+priority = 0
+description = "Shared models, textures and resources that other mods reference."
