@@ -8,7 +8,7 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::Error;
-use crate::conflicts::{self, ConflictReport};
+use crate::conflicts::{self, ConflictReport, DbOverlap};
 use crate::import_v1::V1Import;
 use crate::install::Install;
 use crate::knowledge::{self, KnowledgeBase, ModKnowledge, Resolved};
@@ -61,6 +61,8 @@ pub struct ResolvedProfile {
     pub missing_requirements: Vec<(WorkshopId, WorkshopId)>,
     /// Pairs in the profile that are known not to work together.
     pub incompatibilities: Vec<(WorkshopId, WorkshopId)>,
+    /// Pairs in the profile that look like two versions of the same mod.
+    pub either_or: Vec<DbOverlap>,
 }
 
 /// What a sync with the installed game found and did.
@@ -174,13 +176,42 @@ impl Library {
         Ok(out)
     }
 
-    /// Works out a profile's mods and their load order.
-    pub fn resolve_profile(&self, def: &ProfileDef) -> Result<ResolvedProfile, Error> {
-        let entries: HashMap<WorkshopId, LibraryEntry> = self
+    /// Installed mods that look like two versions of the same mod (SFO and vanilla
+    /// editions, a compilation and one of its parts): they ship mostly the same DB
+    /// files, and neither is known to build on the other. Only one should be used.
+    pub fn either_or_pairs(&self) -> Result<Vec<DbOverlap>, Error> {
+        let entries = self.entries_by_id()?;
+        self.either_or_among(&entries)
+    }
+
+    fn either_or_among(
+        &self,
+        entries: &HashMap<WorkshopId, LibraryEntry>,
+    ) -> Result<Vec<DbOverlap>, Error> {
+        let builds_on = |a: WorkshopId, b: WorkshopId| {
+            entries.get(&a).is_some_and(|e| {
+                e.knowledge.requires.contains(&b) || e.knowledge.patches.contains(&b)
+            })
+        };
+        Ok(self
+            .store
+            .db_overlaps()?
+            .into_iter()
+            .filter(|o| o.looks_like_versions() && !builds_on(o.a, o.b) && !builds_on(o.b, o.a))
+            .collect())
+    }
+
+    fn entries_by_id(&self) -> Result<HashMap<WorkshopId, LibraryEntry>, Error> {
+        Ok(self
             .entries()?
             .into_iter()
             .map(|e| (e.info.id, e))
-            .collect();
+            .collect())
+    }
+
+    /// Works out a profile's mods and their load order.
+    pub fn resolve_profile(&self, def: &ProfileDef) -> Result<ResolvedProfile, Error> {
+        let entries = self.entries_by_id()?;
         let sets = self.store.sets()?;
 
         // Members: the stacked sets, plus extras, minus exclusions. First mention wins.
@@ -204,6 +235,7 @@ impl Library {
             unsubscribed: vec![],
             missing_requirements: vec![],
             incompatibilities: vec![],
+            either_or: vec![],
         };
         let mut items = Vec::new();
         let mut incompatible = BTreeSet::new();
@@ -251,6 +283,12 @@ impl Library {
                 patches: e.knowledge.patches.clone(),
             }));
         }
+        out.either_or = self
+            .either_or_among(&entries)?
+            .into_iter()
+            .filter(|o| in_profile.contains(&o.a) && in_profile.contains(&o.b))
+            .filter(|o| !incompatible.contains(&(o.a, o.b)))
+            .collect();
         out.incompatibilities = incompatible.into_iter().collect();
         out.order = order::solve(&items, &def.pins);
         Ok(out)
@@ -565,7 +603,7 @@ impl Library {
             .iter()
             .map(|(_, p)| p.to_string_lossy().into_owned())
             .collect();
-        self.store.transaction(|tx| {
+        let removed = self.store.transaction(|tx| {
             for (id, path, result) in &read {
                 match result {
                     Ok(index) => {
@@ -575,9 +613,17 @@ impl Library {
                     Err(e) => summary.pack_errors.push((path.clone(), e.to_string())),
                 }
             }
-            tx.retain_pack_index(&keep).map(drop)
+            tx.retain_pack_index(&keep)
         })?;
         summary.packs_cached = wanted.len() - stale.len();
+
+        // Which mods ship the same DB files. Redone whenever a pack changed; the
+        // empty check covers a library indexed before this table existed.
+        if summary.packs_indexed > 0 || removed > 0 || self.store.db_overlaps()?.is_empty() {
+            let overlaps = conflicts::db_overlaps(&self.store.mod_db_files()?);
+            self.store
+                .transaction(|tx| tx.replace_db_overlaps(&overlaps))?;
+        }
 
         if check_steam {
             // New mods, and ones whose installed copy is newer than what Steam last told us.
@@ -670,11 +716,7 @@ impl Library {
         continue_save: Option<&str>,
     ) -> Result<PathBuf, Error> {
         let entries = self.mod_list_entries(def, install)?;
-        let missing: Vec<&str> = entries
-            .iter()
-            .filter(|e| e.dir.is_none() && !install.data_dir().join(&e.pack).is_file())
-            .map(|e| e.pack.as_str())
-            .collect();
+        let missing = launch::uninstalled(install, &entries);
         if !missing.is_empty() {
             return Err(Error::Invalid(format!(
                 "{} pack(s) in this profile aren't installed: {}",

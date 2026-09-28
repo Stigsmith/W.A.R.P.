@@ -10,6 +10,7 @@ use rusqlite::{Connection, OptionalExtension, Transaction, params};
 use serde::{Deserialize, Serialize};
 
 use crate::Error;
+use crate::conflicts::DbOverlap;
 use crate::knowledge::ModKnowledge;
 use crate::model::{ModInfo, WorkshopId, pack_key};
 use crate::order::Pin;
@@ -78,6 +79,18 @@ const MIGRATIONS: &[&str] = &[
     r"
     -- Content fingerprint per pack (facet counts + DB tables), for guessing tiers.
     ALTER TABLE pack_index ADD COLUMN contents TEXT NOT NULL DEFAULT '{}';
+",
+    r"
+    -- Mod pairs shipping identical DB file paths, worked out after each sync.
+    CREATE TABLE db_overlaps (
+        a        INTEGER NOT NULL,
+        b        INTEGER NOT NULL,
+        shared   INTEGER NOT NULL,
+        a_files  INTEGER NOT NULL,
+        b_files  INTEGER NOT NULL,
+        example  TEXT NOT NULL,
+        PRIMARY KEY (a, b)
+    );
 ",
 ];
 
@@ -360,6 +373,45 @@ impl Store {
         Ok(out)
     }
 
+    /// Each mod's DB table files across its indexed packs.
+    pub fn mod_db_files(&self) -> Result<Vec<(WorkshopId, Vec<String>)>, Error> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT mod_id, files FROM pack_index WHERE mod_id IS NOT NULL")?;
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, Vec<u8>>(1)?)))?;
+        let mut out: HashMap<WorkshopId, std::collections::BTreeSet<String>> = HashMap::new();
+        for row in rows {
+            let (id, blob) = row?;
+            let files = PackIndex::files_from_blob(&blob)?;
+            out.entry(WorkshopId(id as u64))
+                .or_default()
+                .extend(files.into_iter().filter(|f| pack_index::is_db_file(f)));
+        }
+        let mut out: Vec<(WorkshopId, Vec<String>)> = out
+            .into_iter()
+            .map(|(id, files)| (id, files.into_iter().collect()))
+            .collect();
+        out.sort_by_key(|(id, _)| *id);
+        Ok(out)
+    }
+
+    pub fn db_overlaps(&self) -> Result<Vec<DbOverlap>, Error> {
+        let mut stmt = self.conn.prepare(
+            "SELECT a, b, shared, a_files, b_files, example FROM db_overlaps ORDER BY a, b",
+        )?;
+        let rows = stmt.query_map([], |r| {
+            Ok(DbOverlap {
+                a: WorkshopId(r.get::<_, i64>(0)? as u64),
+                b: WorkshopId(r.get::<_, i64>(1)? as u64),
+                shared: r.get::<_, i64>(2)? as usize,
+                a_files: r.get::<_, i64>(3)? as usize,
+                b_files: r.get::<_, i64>(4)? as usize,
+                example: r.get(5)?,
+            })
+        })?;
+        Ok(rows.collect::<Result<_, _>>()?)
+    }
+
     /// Content fingerprint of every indexed pack, by lowercase pack name.
     pub fn pack_contents(&self) -> Result<HashMap<String, Contents>, Error> {
         let mut stmt = self.conn.prepare("SELECT name, contents FROM pack_index")?;
@@ -507,6 +559,24 @@ impl Tx<'_> {
                 to_json(&index.contents()),
             ],
         )?;
+        Ok(())
+    }
+
+    pub fn replace_db_overlaps(&self, overlaps: &[DbOverlap]) -> Result<(), Error> {
+        self.0.execute("DELETE FROM db_overlaps", [])?;
+        let mut stmt = self.0.prepare(
+            "INSERT INTO db_overlaps (a, b, shared, a_files, b_files, example) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        )?;
+        for o in overlaps {
+            stmt.execute(params![
+                o.a.0 as i64,
+                o.b.0 as i64,
+                o.shared as i64,
+                o.a_files as i64,
+                o.b_files as i64,
+                o.example
+            ])?;
+        }
         Ok(())
     }
 

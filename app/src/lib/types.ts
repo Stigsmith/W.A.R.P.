@@ -128,6 +128,19 @@ export interface ResolvedProfile {
   unsubscribed: WorkshopId[];
   missing_requirements: [WorkshopId, WorkshopId][];
   incompatibilities: [WorkshopId, WorkshopId][];
+  /** Pairs in the profile that look like two versions of the same mod. */
+  either_or: DbOverlap[];
+}
+
+/** Two mods shipping DB files under identical paths. */
+export interface DbOverlap {
+  a: WorkshopId;
+  b: WorkshopId;
+  shared: number;
+  a_files: number;
+  b_files: number;
+  /** One shared file, e.g. db/land_units_tables/my_mod. */
+  example: string;
 }
 
 export interface ShareEntry {

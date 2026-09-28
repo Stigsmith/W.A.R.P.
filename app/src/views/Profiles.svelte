@@ -1,7 +1,7 @@
 <script lang="ts">
   import { api } from "../lib/api";
   import { app } from "../lib/state.svelte";
-  import { count } from "../lib/format";
+  import { count, shortPair } from "../lib/format";
   import ConflictMap from "../components/ConflictMap.svelte";
   import ModPicker from "../components/ModPicker.svelte";
   import OrderList from "../components/OrderList.svelte";
@@ -130,6 +130,15 @@
     app.notify(`Added ${count(ids.length, "mod")} to ${profile.name}`);
   }
 
+  /** Leaves one mod out of this profile, whether it came from a set or was added. */
+  async function leaveOut(id: string) {
+    if (!profile) return;
+    const include = profile.include.filter((i) => i !== id);
+    const exclude = [...new Set([...profile.exclude, id])];
+    await save({ ...$state.snapshot(profile), include, exclude });
+    app.notify(`Left out ${app.title(id)}`);
+  }
+
   /** Leaves mods that are no longer installed out of this profile. */
   async function dropUninstalled() {
     if (!profile || !resolved) return;
@@ -145,7 +154,8 @@
 
   const warnings = $derived.by(() => {
     if (!resolved) return [];
-    const out: { kind: "danger" | "warn"; text: string; fix?: { label: string; run: () => void } }[] = [];
+    type Fix = { label: string; title?: string; run: () => void };
+    const out: { kind: "danger" | "warn"; text: string; fixes?: Fix[] }[] = [];
     if (resolved.missing_requirements.length) {
       const missing = [...new Set(resolved.missing_requirements.map(([, req]) => req))];
       const addable = missing.filter((id) => app.byId.get(id)?.subscribed);
@@ -153,11 +163,19 @@
         out.push({ kind: "warn", text: `${app.title(mod)} depends on ${app.title(req)}, which isn't in this profile.` });
       }
       if (addable.length) {
-        out[out.length - 1].fix = { label: `Add ${count(addable.length, "missing mod")}`, run: () => addMods(addable) };
+        out[out.length - 1].fixes = [{ label: `Add ${count(addable.length, "missing mod")}`, run: () => addMods(addable) }];
       }
     }
     for (const [a, b] of resolved.incompatibilities) {
       out.push({ kind: "danger", text: `${app.title(a)} and ${app.title(b)} are known not to work together.` });
+    }
+    for (const o of resolved.either_or ?? []) {
+      const names = shortPair(app.title(o.a), app.title(o.b));
+      out.push({
+        kind: "warn",
+        text: `${app.title(o.a)} and ${app.title(o.b)} look like two versions of the same mod (${o.shared} identical DB files). Keep one.`,
+        fixes: [o.a, o.b].map((id, i) => ({ label: `Leave out ${names[i]}`, title: app.title(id), run: () => leaveOut(id) })),
+      });
     }
     for (const cycle of resolved.order.cycles) {
       out.push({ kind: "danger", text: `Contradictory rules: ${cycle.map((r) => `${r.above} above ${r.below}`).join(", ")}.` });
@@ -166,7 +184,7 @@
       out.push({
         kind: "warn",
         text: `${count(resolved.unsubscribed.length, "mod")} in this profile ${resolved.unsubscribed.length === 1 ? "isn't" : "aren't"} installed any more: ${resolved.unsubscribed.map((id) => app.title(id)).join(", ")}.`,
-        fix: { label: "Leave them out", run: dropUninstalled },
+        fixes: [{ label: "Leave them out", run: dropUninstalled }],
       });
     }
     if (resolved.mods_without_packs.length) {
@@ -268,7 +286,11 @@
           {#each warnings as w, i (i)}
             <li class={w.kind}>
               <span>{w.text}</span>
-              {#if w.fix}<button class="small" onclick={w.fix.run}>{w.fix.label}</button>{/if}
+              {#if w.fixes?.length}
+                <span class="fixes">
+                  {#each w.fixes as fix, j (j)}<button class="small" title={fix.title} onclick={fix.run}>{fix.label}</button>{/each}
+                </span>
+              {/if}
             </li>
           {/each}
         </ul>
@@ -448,12 +470,24 @@
 
   .warnings li {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 6px 12px;
     padding: 7px 12px;
     border-radius: var(--radius-sm);
     font-size: 13px;
+  }
+
+  /* The text takes the row; fix buttons sit beside it, or wrap below when there's no room. */
+  .warnings li > span {
+    flex: 1 1 360px;
+  }
+
+  .warnings .fixes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   .tabs {

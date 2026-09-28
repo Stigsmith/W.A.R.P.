@@ -7,6 +7,7 @@ import type {
   Bootstrap,
   CompareResult,
   ConflictReport,
+  DbOverlap,
   LibraryEntry,
   ModSet,
   ProfileDef,
@@ -21,6 +22,7 @@ interface Fixture {
   profiles: ProfileDef[];
   resolved: Record<string, ResolvedProfile>;
   conflicts: Record<string, ConflictReport>;
+  either_or: DbOverlap[];
   share: { list: ShareList; code: string };
   compare: { code: string; result: CompareResult };
 }
@@ -38,6 +40,7 @@ const EMPTY: Fixture = {
   profiles: [],
   resolved: {},
   conflicts: {},
+  either_or: [],
   share: { list: { name: "", entries: [] }, code: "" },
   compare: { code: "", result: { diff: { identical: true, common: 0, only_in_a: [], only_in_b: [], moves: [], version_mismatches: [] }, a: { name: "", entries: [] }, b: { name: "", entries: [] }, titles: {} } },
 };
@@ -104,6 +107,7 @@ export async function mockApi(): Promise<Api> {
         900,
       ),
     conflicts: (p) => delay(fx.conflicts[p.name] ?? Object.values(fx.conflicts)[0] ?? { pairs: [], shadowed: [], not_indexed: [] }, 300),
+    eitherOrPairs: () => delay(fx.either_or ?? []),
     play: async () => {
       console.info("mock: would start the game");
       return "Ok" in fx.bootstrap.install ? `${fx.bootstrap.install.Ok.game_dir}/warp_mods.txt` : "warp_mods.txt";

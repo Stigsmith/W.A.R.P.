@@ -8,14 +8,18 @@
   let expanded = $state<string | null>(null);
   const maxPriority = $derived(Math.max(1, ...app.taxonomy.tier.map((t) => t.priority)));
 
-  type Row = { kind: "band"; tier: string; count: number } | { kind: "pack"; p: Placement; index: number };
+  type Row = { kind: "band"; tier: string; count: number; index: number } | { kind: "pack"; p: Placement; index: number };
 
   const rows = $derived.by(() => {
     const out: Row[] = [];
     const q = filter.trim().toLowerCase();
     placements.forEach((p, index) => {
+      // A band per run of one tier. Rules can lift a pack out of its tier, so a
+      // tier may come back further down; each run gets its own band and count.
       if (index === 0 || placements[index - 1].tier !== p.tier) {
-        out.push({ kind: "band", tier: p.tier, count: placements.filter((x) => x.tier === p.tier).length });
+        let end = index;
+        while (end < placements.length && placements[end].tier === p.tier) end++;
+        out.push({ kind: "band", tier: p.tier, count: end - index, index });
       }
       if (!q || p.pack.toLowerCase().includes(q) || app.title(p.workshop_id, p.pack).toLowerCase().includes(q)) {
         out.push({ kind: "pack", p, index });
@@ -46,7 +50,7 @@
 </script>
 
 <ol class="order">
-  {#each rows as row (row.kind === "band" ? `band-${row.tier}` : row.p.pack)}
+  {#each rows as row (row.kind === "band" ? `band-${row.index}` : row.p.pack)}
     {#if row.kind === "band"}
       {@const t = app.tier(row.tier)}
       <li class="band" style:--tier={tierColor(t?.priority ?? 0, maxPriority)}>

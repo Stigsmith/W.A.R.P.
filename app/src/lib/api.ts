@@ -6,6 +6,7 @@ import type {
   Bootstrap,
   CompareResult,
   ConflictReport,
+  DbOverlap,
   FileFilter,
   ImportSummary,
   LibraryEntry,
@@ -41,6 +42,8 @@ export interface Api {
   refreshSteam(): Promise<number>;
   syncInstall(checkSteam: boolean): Promise<SyncSummary>;
   conflicts(profile: ProfileDef): Promise<ConflictReport>;
+  /** Installed mods that look like two versions of the same mod. */
+  eitherOrPairs(): Promise<DbOverlap[]>;
   /** Writes the profile's modlist and starts the game; resolves to the modlist path. */
   play(profile: ProfileDef): Promise<string>;
   // Platform
@@ -78,6 +81,7 @@ async function tauriApi(): Promise<Api> {
     refreshSteam: () => invoke("refresh_steam"),
     syncInstall: (checkSteam) => invoke("sync_install", { checkSteam }),
     conflicts: (profile) => invoke("conflicts", { profile }),
+    eitherOrPairs: () => invoke("either_or_pairs"),
     play: (profile) => invoke("play", { profile }),
     pickFile: async (filters) => {
       const picked = await dialog.open({ multiple: false, directory: false, filters });

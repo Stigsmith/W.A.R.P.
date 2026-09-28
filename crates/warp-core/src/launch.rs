@@ -38,6 +38,15 @@ pub fn mod_list(entries: &[ModListEntry]) -> String {
 }
 
 /// Writes the modlist into the game folder and returns its path.
+/// Packs the game won't find: not in their workshop folder, nor in `data`.
+pub fn uninstalled<'a>(install: &Install, entries: &'a [ModListEntry]) -> Vec<&'a str> {
+    entries
+        .iter()
+        .filter(|e| e.dir.is_none() && !install.data_dir().join(&e.pack).is_file())
+        .map(|e| e.pack.as_str())
+        .collect()
+}
+
 pub fn write_mod_list(install: &Install, entries: &[ModListEntry]) -> Result<PathBuf, Error> {
     let path = install.game_dir.join(MOD_LIST_FILE);
     std::fs::write(&path, mod_list(entries)).map_err(|e| {

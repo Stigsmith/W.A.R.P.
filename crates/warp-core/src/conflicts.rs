@@ -1,10 +1,10 @@
 //! The conflict map: which packs ship the same files, who wins, and whether that's a problem.
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use serde::{Deserialize, Serialize};
 
-use crate::model::pack_key;
+use crate::model::{WorkshopId, pack_key};
 use crate::pack_index::{ContentKind, PackIndex};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -26,6 +26,63 @@ impl ContentKind {
             ContentKind::Ui | ContentKind::Art | ContentKind::Other => Severity::Low,
         }
     }
+}
+
+/// Two mods that ship DB files under identical paths.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DbOverlap {
+    /// The lower id of the two.
+    pub a: WorkshopId,
+    pub b: WorkshopId,
+    /// DB files both mods ship.
+    pub shared: usize,
+    /// DB files in each mod.
+    pub a_files: usize,
+    pub b_files: usize,
+    /// One of the shared files, e.g. `db/land_units_tables/my_mod`.
+    pub example: String,
+}
+
+impl DbOverlap {
+    /// Two versions of one mod (SFO and vanilla editions, a compilation and one of
+    /// its parts) share most of their DB files. A submod shares only the few it changes.
+    pub fn looks_like_versions(&self) -> bool {
+        self.shared * 2 >= self.a_files.min(self.b_files)
+    }
+}
+
+/// Every pair of mods that ship at least one identical DB file path, from each
+/// mod's DB file list. Deterministic: pairs by id, the example is the first shared path.
+pub fn db_overlaps(mods: &[(WorkshopId, Vec<String>)]) -> Vec<DbOverlap> {
+    let mut owners: BTreeMap<&str, BTreeSet<WorkshopId>> = BTreeMap::new();
+    let mut counts: HashMap<WorkshopId, usize> = HashMap::new();
+    for (id, files) in mods {
+        for f in files {
+            if owners.entry(f.as_str()).or_default().insert(*id) {
+                *counts.entry(*id).or_insert(0) += 1;
+            }
+        }
+    }
+    let mut pairs: BTreeMap<(WorkshopId, WorkshopId), (usize, &str)> = BTreeMap::new();
+    for (path, ids) in &owners {
+        let ids: Vec<WorkshopId> = ids.iter().copied().collect();
+        for (i, a) in ids.iter().enumerate() {
+            for b in &ids[i + 1..] {
+                pairs.entry((*a, *b)).or_insert((0, path)).0 += 1;
+            }
+        }
+    }
+    pairs
+        .into_iter()
+        .map(|((a, b), (shared, example))| DbOverlap {
+            a,
+            b,
+            shared,
+            a_files: counts[&a],
+            b_files: counts[&b],
+            example: example.to_owned(),
+        })
+        .collect()
 }
 
 /// One pack overriding another's files.
@@ -240,5 +297,33 @@ mod tests {
         );
         assert_eq!(r.not_indexed, ["ghost.pack"]);
         assert!(r.pairs.is_empty());
+    }
+
+    #[test]
+    fn db_overlaps_find_versions_and_submods() {
+        let files = |names: &[&str]| {
+            names
+                .iter()
+                .map(|n| format!("db/land_units_tables/{n}"))
+                .collect::<Vec<_>>()
+        };
+        let mods = vec![
+            (WorkshopId(1), files(&["champs", "champs_2"])),
+            (WorkshopId(2), files(&["champs", "champs_2", "sfo_extra"])),
+            (
+                WorkshopId(3),
+                files(&["patch_a", "patch_b", "patch_c", "champs"]),
+            ),
+            (WorkshopId(4), files(&["unrelated"])),
+        ];
+        let o = db_overlaps(&mods);
+        let pairs: Vec<_> = o.iter().map(|o| (o.a.0, o.b.0, o.shared)).collect();
+        assert_eq!(pairs, [(1, 2, 2), (1, 3, 1), (2, 3, 1)]);
+        assert_eq!(o[0].example, "db/land_units_tables/champs");
+        assert!(o[0].looks_like_versions());
+        assert!(
+            !o[2].looks_like_versions(),
+            "a submod touching one file of three"
+        );
     }
 }

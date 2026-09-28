@@ -85,6 +85,12 @@ pub enum ContentKind {
     Other,
 }
 
+/// A DB table file (`db/<table>/<file>`), as opposed to a note left in `db/`.
+pub fn is_db_file(path: &str) -> bool {
+    path.strip_prefix("db/")
+        .is_some_and(|rest| rest.contains('/'))
+}
+
 /// Finer content groups than [`ContentKind`], for guessing what kind of mod a pack is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -147,8 +153,9 @@ impl Contents {
         let mut tables = std::collections::BTreeSet::new();
         for f in files {
             *out.facets.entry(Facet::of(f)).or_insert(0) += 1;
-            // `db/<table>/<file>`; loose files straight under `db/` are notes, not tables.
-            if let Some((table, _)) = f.strip_prefix("db/").and_then(|rest| rest.split_once('/')) {
+            if is_db_file(f)
+                && let Some((table, _)) = f[3..].split_once('/')
+            {
                 tables.insert(table.to_owned());
             }
         }

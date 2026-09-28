@@ -1,9 +1,10 @@
 <script lang="ts">
   // Pick exactly which mods a profile has. Sets are optional: a mod ticked here is
   // added on top of the profile's sets; a set mod unticked here is left out.
-  import { untrack } from "svelte";
+  import { onMount, untrack } from "svelte";
+  import { api } from "../lib/api";
   import { app } from "../lib/state.svelte";
-  import { tierColor } from "../lib/format";
+  import { shortPair, tierColor } from "../lib/format";
   import type { ProfileDef, WorkshopId } from "../lib/types";
 
   let { profile, onsave, onclose }: { profile: ProfileDef; onsave: (p: ProfileDef) => void; onclose: () => void } = $props();
@@ -33,6 +34,19 @@
   });
 
   const count = $derived(app.library.filter((e) => chosen(e.info.id)).length);
+
+  // Mods that look like another version of a mod: each id's counterparts.
+  let versions = $state(new Map<WorkshopId, WorkshopId[]>());
+  onMount(async () => {
+    const pairs = (await app.attempt(async () => (await api()).eitherOrPairs())) ?? [];
+    const map = new Map<WorkshopId, WorkshopId[]>();
+    for (const { a, b } of pairs) {
+      map.set(a, [...(map.get(a) ?? []), b]);
+      map.set(b, [...(map.get(b) ?? []), a]);
+    }
+    versions = map;
+  });
+  const chosenVersions = (id: WorkshopId) => (versions.get(id) ?? []).filter(chosen);
 
   function set(id: WorkshopId, on: boolean) {
     const inc = new Set(include);
@@ -97,6 +111,15 @@
               <span class="mono faint">{e.packs.join(", ")}</span>
             </span>
             <span class="tier" style:--tier={tierColor(t?.priority ?? 0, maxPriority)}>{t?.name ?? e.knowledge.tier}</span>
+            {#each chosenVersions(e.info.id) as other (other)}
+              <span
+                class="chip {on ? 'danger' : 'warn'}"
+                title="{e.info.title} and {app.title(other)} look like two versions of the same mod. Keep one."
+              >
+                {on ? "clashes with" : "other version of"}
+                {shortPair(e.info.title, app.title(other), 24)[1]}
+              </span>
+            {/each}
             {#if fromSets.has(e.info.id)}<span class="chip brass" title="Comes from one of this profile's sets">set</span>{/if}
             {#if !e.subscribed}<span class="chip warn">not installed</span>{/if}
           </label>

@@ -16,6 +16,17 @@ export function count(n: number, one: string, many = `${one}s`): string {
   return `${n} ${n === 1 ? one : many}`;
 }
 
+/** A long mod title cut down to fit on a button. */
+export function short(title: string, max = 30): string {
+  return title.length <= max ? title : `${title.slice(0, max - 1).trimEnd()}…`;
+}
+
+/** Two titles cut down, but no further than they can still be told apart. */
+export function shortPair(a: string, b: string, max = 30): [string, string] {
+  while (max < 80 && short(a, max) === short(b, max)) max += 10;
+  return [short(a, max), short(b, max)];
+}
+
 /** Steam page inside the Steam client (where Subscribe works). */
 export function steamClientUrl(id: WorkshopId): string {
   return `steam://url/CommunityFilePage/${id}`;

@@ -6,7 +6,7 @@ use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use tauri::State;
-use warp_core::conflicts::ConflictReport;
+use warp_core::conflicts::{ConflictReport, DbOverlap};
 use warp_core::install::Install;
 use warp_core::kaedrin;
 use warp_core::knowledge::ModKnowledge;
@@ -74,6 +74,12 @@ async fn conflicts(state: State<'_, AppState>, profile: ProfileDef) -> CmdResult
 async fn play(state: State<'_, AppState>, profile: ProfileDef) -> CmdResult<String> {
     let install = Install::locate().map_err(|e| e.to_string())?;
     with_lib(&state, |lib| lib.play(&profile, &install, None)).map(|p| p.display().to_string())
+}
+
+/// Installed mods that look like two versions of the same mod.
+#[tauri::command]
+async fn either_or_pairs(state: State<'_, AppState>) -> CmdResult<Vec<DbOverlap>> {
+    with_lib(&state, |lib| lib.either_or_pairs())
 }
 
 #[tauri::command]
@@ -307,6 +313,7 @@ pub fn run() {
             refresh_steam,
             sync_install,
             conflicts,
+            either_or_pairs,
             play,
         ])
         .run(tauri::generate_context!())

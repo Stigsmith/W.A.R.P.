@@ -88,6 +88,8 @@ enum Command {
         #[arg(long)]
         files: bool,
     },
+    /// Installed mods that look like two versions of the same mod.
+    EitherOr,
     /// Start the game with a profile.
     Play {
         profile: String,
@@ -216,6 +218,21 @@ fn main() -> Result<()> {
                 println!("! couldn't read {path}: {err}");
             }
         }
+        Command::EitherOr => {
+            let titles: std::collections::HashMap<_, _> = lib
+                .entries()?
+                .into_iter()
+                .map(|e| (e.info.id, e.info.title))
+                .collect();
+            let title = |id| titles.get(&id).cloned().unwrap_or_else(|| format!("{id}"));
+            for o in lib.either_or_pairs()? {
+                println!("{}  <->  {}", title(o.a), title(o.b));
+                println!(
+                    "    {} of {}/{} DB files identical, e.g. {}",
+                    o.shared, o.a_files, o.b_files, o.example
+                );
+            }
+        }
         Command::Conflicts { profile, files } => {
             let r = lib.conflicts(&profile_def(&lib, &profile)?)?;
             print_conflicts(&r, files);
@@ -225,6 +242,16 @@ fn main() -> Result<()> {
             let def = profile_def(&lib, &profile)?;
             if dry_run {
                 let entries = lib.mod_list_entries(&def, &install)?;
+                let missing = warp_core::launch::uninstalled(&install, &entries);
+                if !missing.is_empty() {
+                    println!(
+                        "! {} pack(s) aren't installed; the game would refuse to start:",
+                        missing.len()
+                    );
+                    for pack in missing {
+                        println!("  {pack}");
+                    }
+                }
                 let path = warp_core::launch::write_mod_list(&install, &entries)?;
                 println!(
                     "Wrote {} ({} packs). Game not started.",
@@ -328,6 +355,12 @@ fn build(lib: &Library, profile: &str, explain: bool) -> Result<()> {
     }
     for (a, b) in &r.incompatibilities {
         println!("! {a} and {b} are incompatible");
+    }
+    for o in &r.either_or {
+        println!(
+            "! {} and {} look like two versions of the same mod ({} identical DB files, e.g. {})",
+            o.a, o.b, o.shared, o.example
+        );
     }
     for c in &r.order.cycles {
         println!(
@@ -497,8 +530,25 @@ fn classify_report(lib: &Library, misses: bool) -> Result<()> {
 /// staged multiplayer comparison (the first profile against an altered copy).
 fn dev_fixture(lib: &Library, out: &Path) -> Result<()> {
     use serde_json::json;
-    let profiles = lib.store.profiles()?;
-    let first = profiles.first().context("the library has no profiles")?;
+    let mut profiles = lib.store.profiles()?;
+    let first = profiles
+        .first()
+        .context("the library has no profiles")?
+        .clone();
+    // A staged "everything" profile, like a new user's first one: shows every warning.
+    profiles.push(warp_core::store::ProfileDef {
+        name: "Everything installed".into(),
+        sets: vec![],
+        include: lib
+            .entries()?
+            .into_iter()
+            .filter(|e| e.subscribed)
+            .map(|e| e.info.id)
+            .collect(),
+        exclude: vec![],
+        pins: vec![],
+    });
+    let first = &first;
     let mut resolved = serde_json::Map::new();
     let mut conflicts = serde_json::Map::new();
     for p in &profiles {
@@ -546,6 +596,7 @@ fn dev_fixture(lib: &Library, out: &Path) -> Result<()> {
         "profiles": profiles,
         "resolved": resolved,
         "conflicts": conflicts,
+        "either_or": lib.either_or_pairs()?,
         "share": { "list": lib.share_list(first)?, "code": mp::encode(&lib.share_list(first)?) },
         "compare": { "code": code, "result": { "diff": diff, "a": mine, "b": theirs } },
     });
