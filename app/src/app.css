@@ -1,39 +1,47 @@
-/* Palette: Clan Skryre. Smoky green-black, warpstone glow, brass fittings, rust. */
+/* Clan Skryre: near-black stone, warpstone glow, brass fittings, rust.
+   Panels are slightly see-through so the fog and warpstone motes behind them show. */
 :root {
-  --bg: #0b0e0a;
-  --surface: #11160f;
-  --surface-2: #171d14;
-  --surface-3: #1f271b;
-  --border: #242d1f;
-  --border-strong: #37432d;
-  --text: #e3e7d3;
-  --muted: #98a18a;
-  --faint: #626b58;
+  --bg: #050705;
+  --bg-solid: #080b07;
+  --surface: rgb(16 21 14 / 0.8);
+  --surface-2: rgb(22 29 19 / 0.86);
+  --surface-3: rgb(31 40 27 / 0.92);
+  --border: rgb(58 74 48 / 0.45);
+  --border-strong: rgb(82 102 66 / 0.6);
+  --text: #e4e8d4;
+  --muted: #9aa38b;
+  --faint: #646d59;
 
-  /* Warpstone: the only thing that glows. */
-  --accent: #a6f03c;
-  --accent-strong: #c6ff66;
-  --accent-dim: #36531b;
-  --accent-glow: rgb(166 240 60 / 0.26);
-  --ok-dim: rgb(166 240 60 / 0.09);
+  /* Warpstone: the thing that glows. */
+  --accent: #a8f23f;
+  --accent-strong: #caff6b;
+  --accent-dim: #3b5a1c;
+  --accent-glow: rgb(168 242 63 / 0.34);
+  --accent-haze: rgb(168 242 63 / 0.12);
+  --ok-dim: rgb(168 242 63 / 0.09);
 
-  /* Brass and bronze: frames, trims, secondary emphasis. */
-  --brass: #c79b4b;
-  --brass-dim: rgb(199 155 75 / 0.35);
-  --brass-faint: rgb(199 155 75 / 0.12);
+  /* Brass and bronze: frames and trims. */
+  --brass: #cf9f4d;
+  --brass-dim: rgb(207 159 77 / 0.38);
+  --brass-faint: rgb(207 159 77 / 0.12);
 
   /* Rust and blood: danger. */
-  --danger: #d8503a;
-  --danger-dim: rgb(216 80 58 / 0.14);
-  --warn: #e6a93c;
-  --warn-dim: rgb(230 169 60 / 0.13);
-  --info: #74b8a9;
-  --info-dim: rgb(116 184 169 / 0.13);
+  --danger: #dd533b;
+  --danger-dim: rgb(221 83 59 / 0.15);
+  --warn: #e8ab3d;
+  --warn-dim: rgb(232 171 61 / 0.14);
+  --info: #79bcad;
+  --info-dim: rgb(121 188 173 / 0.14);
+
+  --glow-sm: 0 0 10px var(--accent-glow);
+  --glow: 0 0 18px var(--accent-glow), 0 0 42px var(--accent-haze);
+  --glow-text: 0 0 12px rgb(168 242 63 / 0.55), 0 0 28px rgb(168 242 63 / 0.25);
 
   --radius: 8px;
   --radius-sm: 5px;
   --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
-  --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Grenze Gotisch", "Segoe UI", serif;
+  --font-skaven: "IM Fell English", Georgia, serif;
   --mono: "Cascadia Mono", "Cascadia Code", Consolas, monospace;
 
   color-scheme: dark;
@@ -57,11 +65,7 @@ body,
 }
 
 body {
-  /* A faint warp glow bleeding in from the top right, like the lightning in the art. */
-  background:
-    radial-gradient(1200px 520px at 100% -8%, rgb(166 240 60 / 0.07), transparent 60%),
-    radial-gradient(900px 600px at -10% 110%, rgb(199 155 75 / 0.05), transparent 60%),
-    var(--bg);
+  background: var(--bg);
   overflow: hidden;
 }
 
@@ -69,21 +73,23 @@ h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: var(--font-display-weight, 700);
   margin: 0;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
 }
 
 h1 {
-  font-size: 22px;
+  font-size: 30px;
+  line-height: 1.1;
+  text-shadow: 0 0 22px rgb(168 242 63 / 0.18);
 }
 
 h2 {
-  font-size: 16px;
+  font-size: 21px;
 }
 
 h3 {
-  font-size: 14px;
+  font-size: 17px;
 }
 
 p {
@@ -97,7 +103,7 @@ a {
 .label {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--brass);
 }
@@ -113,6 +119,19 @@ a {
 .mono {
   font-family: var(--mono);
   font-size: 12.5px;
+}
+
+/* Skaven speech: the Warlock-Engineer's pamphlet voice. */
+.skaven {
+  font-family: var(--font-skaven);
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.glow-text {
+  color: var(--accent);
+  text-shadow: var(--glow-text);
 }
 
 /* ---- Controls ---- */
@@ -131,22 +150,25 @@ button,
   cursor: pointer;
   white-space: nowrap;
   transition:
-    background 0.12s,
-    border-color 0.12s,
-    box-shadow 0.12s;
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.2s,
+    color 0.15s;
 }
 
 button:hover:not(:disabled) {
   background: var(--surface-3);
-  border-color: var(--brass-dim);
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 12px var(--accent-haze);
 }
 
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 1px solid var(--accent);
   outline-offset: 1px;
+  box-shadow: var(--glow-sm);
 }
 
 button:disabled {
@@ -154,29 +176,49 @@ button:disabled {
   cursor: default;
 }
 
+/* Primary actions are lumps of raw warpstone: they glow and breathe. */
 button.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #0d1605;
-  font-weight: 600;
+  background: linear-gradient(180deg, var(--accent-strong), var(--accent) 55%, #8bd62a);
+  border-color: var(--accent-strong);
+  color: #0c1504;
+  font-weight: 700;
+  box-shadow: var(--glow);
+  animation: warp-breathe 3.2s ease-in-out infinite;
 }
 
 button.primary:hover:not(:disabled) {
-  background: var(--accent-strong);
-  border-color: var(--accent-strong);
-  box-shadow: 0 0 18px var(--accent-glow);
+  background: linear-gradient(180deg, #e0ffa0, var(--accent-strong));
+  box-shadow:
+    0 0 24px rgb(168 242 63 / 0.55),
+    0 0 60px rgb(168 242 63 / 0.22);
+}
+
+button.primary:disabled {
+  animation: none;
+  box-shadow: none;
+}
+
+@keyframes warp-breathe {
+  50% {
+    box-shadow:
+      0 0 26px rgb(168 242 63 / 0.5),
+      0 0 56px rgb(168 242 63 / 0.2);
+  }
 }
 
 button.ghost {
   background: transparent;
   border-color: transparent;
   color: var(--muted);
+  box-shadow: none;
 }
 
 button.ghost:hover:not(:disabled) {
   background: var(--surface-2);
-  color: var(--text);
+  color: var(--accent);
   border-color: transparent;
+  text-shadow: 0 0 10px rgb(168 242 63 / 0.4);
+  box-shadow: none;
 }
 
 button.small {
@@ -189,10 +231,19 @@ select,
 textarea {
   font: inherit;
   color: var(--text);
-  background: var(--surface);
+  background: rgb(8 11 7 / 0.75);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   padding: 7px 10px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.2s;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--accent-dim);
 }
 
 input::placeholder,
@@ -204,10 +255,18 @@ select {
   cursor: pointer;
 }
 
+select option {
+  background: var(--bg-solid);
+}
+
 textarea {
   resize: vertical;
   font-family: var(--mono);
   font-size: 12.5px;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--accent);
 }
 
 /* ---- Chips & badges ---- */
@@ -235,23 +294,26 @@ textarea {
   color: var(--accent);
   border-color: var(--accent-dim);
   background: var(--ok-dim);
+  box-shadow: 0 0 8px var(--accent-haze);
+  text-shadow: 0 0 8px rgb(168 242 63 / 0.45);
 }
 
 .chip.warn {
   color: var(--warn);
-  border-color: rgb(232 182 76 / 0.35);
+  border-color: rgb(232 171 61 / 0.38);
   background: var(--warn-dim);
 }
 
 .chip.danger {
   color: var(--danger);
-  border-color: rgb(240 101 82 / 0.35);
+  border-color: rgb(221 83 59 / 0.4);
   background: var(--danger-dim);
+  box-shadow: 0 0 8px rgb(221 83 59 / 0.2);
 }
 
 .chip.info {
   color: var(--info);
-  border-color: rgb(98 184 227 / 0.35);
+  border-color: rgb(121 188 173 / 0.38);
   background: var(--info-dim);
 }
 
@@ -261,12 +323,43 @@ textarea {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  backdrop-filter: blur(6px);
+}
+
+/* A panel with a brass frame and a warp glow at its edge. */
+.card.forged {
+  border-color: var(--brass-dim);
+  box-shadow:
+    inset 0 1px 0 rgb(207 159 77 / 0.12),
+    0 0 30px var(--accent-haze);
 }
 
 .scroll {
   overflow: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-color: var(--accent-dim) transparent;
+}
+
+.scroll::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent-dim), #2a4014);
+  border-radius: 9px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--accent), var(--accent-dim));
+  background-clip: padding-box;
+}
+
+.scroll::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .empty {
@@ -277,4 +370,14 @@ textarea {
 
 ::selection {
   background: var(--accent-dim);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

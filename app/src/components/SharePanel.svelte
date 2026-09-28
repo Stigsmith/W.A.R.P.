@@ -24,7 +24,7 @@
   async function saveFile() {
     const a = await api();
     const path = await a.pickSavePath(`${list.name}.warp`, [{ name: "W.A.R.P. modlist", extensions: ["warp"] }]);
-    if (path && (await app.attempt(() => a.saveWarpFile(list, path))) !== undefined) {
+    if (path && (await app.run(() => a.saveWarpFile(list, path)))) {
       app.notify(`Saved ${path}`);
     }
   }

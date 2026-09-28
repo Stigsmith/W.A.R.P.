@@ -2,7 +2,9 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "What the W.A.R.P. window may do.",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "dialog:allow-open",
@@ -10,7 +12,17 @@
     "dialog:allow-ask",
     {
       "identifier": "opener:allow-open-url",
-      "allow": [{ "url": "steam://*" }, { "url": "https://steamcommunity.com/*" }]
+      "allow": [
+        {
+          "url": "steam://*"
+        },
+        {
+          "url": "https://steamcommunity.com/*"
+        },
+        {
+          "url": "https://ko-fi.com/*"
+        }
+      ]
     }
   ]
 }

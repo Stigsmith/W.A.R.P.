@@ -10,6 +10,11 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@fontsource/grenze-gotisch": "^5.3.0",
+    "@fontsource/im-fell-english": "^5.3.0",
+    "@fontsource/metamorphous": "^5.3.0",
+    "@fontsource/new-rocker": "^5.3.0",
+    "@fontsource/pirata-one": "^5.3.0",
     "@tauri-apps/api": "^2.12.0",
     "@tauri-apps/plugin-dialog": "^2.8.0",
     "@tauri-apps/plugin-opener": "^2.6.0"

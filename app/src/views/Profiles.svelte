@@ -3,6 +3,7 @@
   import { app } from "../lib/state.svelte";
   import { count } from "../lib/format";
   import ConflictMap from "../components/ConflictMap.svelte";
+  import ModPicker from "../components/ModPicker.svelte";
   import OrderList from "../components/OrderList.svelte";
   import SharePanel from "../components/SharePanel.svelte";
   import type { ConflictReport, ProfileDef, ResolvedProfile, ShareList } from "../lib/types";
@@ -18,6 +19,7 @@
   let tab = $state<"order" | "conflicts">("order");
   let conflicts = $state<ConflictReport | null>(null);
   let launching = $state(false);
+  let picking = $state(false);
 
   let token = 0;
   $effect(() => {
@@ -50,8 +52,7 @@
   });
 
   async function save(p: ProfileDef) {
-    if ((await app.attempt(async () => (await api()).saveProfile(p))) === undefined) return;
-    await app.refresh();
+    if (await app.run(async () => (await api()).saveProfile(p))) await app.refresh();
   }
 
   function toggleSet(name: string) {
@@ -70,6 +71,7 @@
     await save({ name, sets: [], include: [], exclude: [], pins: [] });
     selected = name;
     newName = null;
+    picking = true;
   }
 
   async function remove() {
@@ -105,6 +107,18 @@
     const path = await app.attempt(() => a.play($state.snapshot(profile)));
     launching = false;
     if (path) app.notify("Starting Warhammer III… May the Horned Rat smile upon you.");
+  }
+
+  async function addAllInstalled() {
+    if (!profile) return;
+    const include = app.library.filter((e) => e.subscribed).map((e) => e.info.id);
+    await save({ ...$state.snapshot(profile), include, exclude: [] });
+    app.notify(`Added all ${include.length} installed mods`);
+  }
+
+  async function savePicked(p: ProfileDef) {
+    picking = false;
+    await save(p);
   }
 
   /** Adds installed mods to this profile on top of its sets. */
@@ -212,7 +226,7 @@
           <button class="ghost small" onclick={remove}>Delete</button>
           <button onclick={exportKaedrin} disabled={!resolved}>Export to Kaedrin</button>
           <button onclick={share} disabled={!resolved}>Share</button>
-          <button class="primary play" onclick={play} disabled={!resolved || !app.install || launching} title={app.install ? "" : "The game wasn't found"}>
+          <button class="primary play" data-tour="play" onclick={play} disabled={!resolved || !app.install || launching} title={app.install ? "" : "The game wasn't found"}>
             {launching ? "Starting…" : "▶ Play"}
           </button>
         </div>
@@ -223,17 +237,30 @@
       {/if}
 
       <div class="layers">
-        <span class="label">Sets in this profile</span>
-        <div class="chips">
-          {#each app.sets as s (s.name)}
-            {@const at = profile.sets.indexOf(s.name)}
-            <button class="set" class:on={at >= 0} onclick={() => toggleSet(s.name)} title={`${s.members.length} mods`}>
-              {#if at >= 0}<span class="n">{at + 1}</span>{/if}
-              {s.name}
-              <span class="faint">{s.members.length}</span>
-            </button>
-          {/each}
+        <div class="mods-row">
+          <button onclick={() => (picking = true)}>✚ Pick mods…</button>
+          {#if resolved && resolved.order.placements.length === 0}
+            <button class="primary" onclick={addAllInstalled}>Add all installed mods</button>
+          {/if}
+          {#if profile.include.length || profile.exclude.length}
+            <span class="faint">
+              {#if profile.include.length}{profile.include.length} picked{/if}{#if profile.include.length && profile.exclude.length}&nbsp;·&nbsp;{/if}{#if profile.exclude.length}{profile.exclude.length} left out{/if}
+            </span>
+          {/if}
         </div>
+        {#if app.sets.length}
+          <span class="label">Sets <span class="faint">· optional groups of mods</span></span>
+          <div class="chips">
+            {#each app.sets as s (s.name)}
+              {@const at = profile.sets.indexOf(s.name)}
+              <button class="set" class:on={at >= 0} onclick={() => toggleSet(s.name)} title={`${s.members.length} mods`}>
+                {#if at >= 0}<span class="n">{at + 1}</span>{/if}
+                {s.name}
+                <span class="faint">{s.members.length}</span>
+              </button>
+            {/each}
+          </div>
+        {/if}
       </div>
 
       {#if warnings.length}
@@ -249,10 +276,10 @@
 
       <div class="order-head">
         <div class="tabs" role="tablist">
-          <button role="tab" class:active={tab === "order"} aria-selected={tab === "order"} onclick={() => (tab = "order")}>
+          <button role="tab" data-tour="order-tab" class:active={tab === "order"} aria-selected={tab === "order"} onclick={() => (tab = "order")}>
             Load order <span class="faint">· top wins</span>
           </button>
-          <button role="tab" class:active={tab === "conflicts"} aria-selected={tab === "conflicts"} onclick={() => (tab = "conflicts")}>
+          <button role="tab" data-tour="conflicts-tab" class:active={tab === "conflicts"} aria-selected={tab === "conflicts"} onclick={() => (tab = "conflicts")}>
             Conflicts
             {#if conflicts}
               {@const serious = conflicts.pairs.filter((p) => !p.intended && p.severity !== "low").length}
@@ -271,7 +298,9 @@
           {/if}
         {:else if resolved}
           {#if resolved.order.placements.length === 0}
-            <div class="empty">Add a set above to fill this profile.</div>
+            <div class="empty">
+              <p class="skaven">"An empty war-list? Pick some mod-things, man-thing. Quick-quick!"</p>
+            </div>
           {:else}
             <OrderList placements={resolved.order.placements} {filter} />
           {/if}
@@ -280,6 +309,10 @@
     {/if}
   </section>
 </div>
+
+{#if picking && profile}
+  <ModPicker profile={$state.snapshot(profile)} onsave={savePicked} onclose={() => (picking = false)} />
+{/if}
 
 <style>
   .profiles {
@@ -361,6 +394,13 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+  }
+
+  .mods-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
   .chips {

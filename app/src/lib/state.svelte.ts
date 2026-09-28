@@ -84,6 +84,17 @@ class AppState {
     this.#toastTimer = setTimeout(() => (this.toast = null), kind === "error" ? 7000 : 3500);
   }
 
+  /** Runs an action that returns nothing useful; true if it worked, false (with an error toast) if not. */
+  async run(action: () => Promise<unknown>): Promise<boolean> {
+    try {
+      await action();
+      return true;
+    } catch (e) {
+      this.notify(String(e), "error");
+      return false;
+    }
+  }
+
   /** Runs an action, turning failures into an error toast. */
   async attempt<T>(action: () => Promise<T>): Promise<T | undefined> {
     try {
