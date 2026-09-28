@@ -26,12 +26,22 @@
       plain: "Sync reads your installed mods and what's inside each one. Do it after subscribing to new mods.",
     },
     {
+      target: "sets-mode",
+      view: "library",
+      title: "Clan sets",
+      speech:
+        "Sort your mod-things into sets, like a clever engineer sorts his warp-parts! A set for the basics, a set for each faction you conquer with. Skaven campaign? Make a Skaven set! Next campaign, leave it out. No picking through a hundred mods like a starving clanrat.",
+      plain:
+        "Sets are groups of mods. In the Library, switch to Sets and tick mods into a set's column; drag down a column to tick many. Tip: make one set per faction campaign, so you can leave it out of the next one.",
+    },
+    {
       target: "nav-profiles",
       view: "profiles",
       title: "War-lists",
       speech:
-        "Here you build war-lists. Pick the mod-things you want and my engine sorts them: small clever things on top, big heavy foundations at the bottom. Like a proper Skaven hierarchy. Me on top.",
-      plain: "Profiles are your modlists. WARP works out the load order for you.",
+        "Here you build war-lists: stack your sets, add a few single mod-things, leave some out. My engine sorts them: small clever things on top, big heavy foundations at the bottom. Like a proper Skaven hierarchy. Me on top.",
+      plain:
+        "A profile is a stack of sets plus single mods you pick. WARP works out the load order. When you change a set later, profiles using it ask before taking the change.",
     },
     {
       target: "order-tab",

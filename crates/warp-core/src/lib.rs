@@ -5,6 +5,7 @@
 //! - [`knowledge`]: tiers, roles and relations, merged from user, community and heuristics
 //! - [`pack_index`] / [`conflicts`]: what's inside packs and which ones collide
 //! - [`install`] / [`launch`]: the game on disk, and starting it with a modlist
+//! - [`sets`]: how profiles keep their own copy of each set and hear about changes
 //! - [`library`]: the user's mods, sets and profiles, tying it all together
 
 pub mod conflicts;
@@ -18,6 +19,7 @@ pub mod model;
 pub mod mp;
 pub mod order;
 pub mod pack_index;
+pub mod sets;
 pub mod steam;
 pub mod store;
 pub mod taxonomy;

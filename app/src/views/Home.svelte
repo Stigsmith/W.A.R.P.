@@ -46,6 +46,7 @@
 <div class="home scroll">
   <div class="hero">
     <img class="logo" src="/logo.png" alt="W.A.R.P." />
+    <p class="expansion">Warhammer Advanced Resource Platform</p>
     <p class="skaven greeting">
       {firstRun ? "Yes-yes! A new warlord! Let the Warlock-Engineer find your mod-things first." : greeting}
     </p>
@@ -130,6 +131,16 @@
     flex-direction: column;
     align-items: center;
     gap: 6px;
+  }
+
+  .expansion {
+    margin: -6px 0 0;
+    font-family: var(--font-display);
+    font-size: 17px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--brass);
+    text-shadow: 0 0 14px rgb(207 159 77 / 0.35);
   }
 
   /* No box: the glow follows the logo's own outline. */

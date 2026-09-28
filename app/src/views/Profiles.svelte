@@ -5,13 +5,15 @@
   import ConflictMap from "../components/ConflictMap.svelte";
   import ModPicker from "../components/ModPicker.svelte";
   import OrderList from "../components/OrderList.svelte";
+  import SetUpdates from "../components/SetUpdates.svelte";
   import SharePanel from "../components/SharePanel.svelte";
-  import type { ConflictReport, ProfileDef, ResolvedProfile, ShareList } from "../lib/types";
+  import type { ConflictReport, ProfileDef, ResolvedProfile, SetChanges, ShareList } from "../lib/types";
 
   let selected = $state<string | null>(app.profiles[0]?.name ?? null);
   const profile = $derived(app.profiles.find((p) => p.name === selected) ?? null);
 
   let resolved = $state<ResolvedProfile | null>(null);
+  const updates = $derived(profile ? (app.setUpdates[profile.name] ?? []) : []);
   let loading = $state(false);
   let filter = $state("");
   let sharing = $state<ShareList | null>(null);
@@ -59,6 +61,11 @@
     if (!profile) return;
     const sets = profile.sets.includes(name) ? profile.sets.filter((s) => s !== name) : [...profile.sets, name];
     save({ ...$state.snapshot(profile), sets });
+  }
+
+  function setPolicy(set_changes: SetChanges) {
+    if (!profile) return;
+    save({ ...$state.snapshot(profile), set_changes });
   }
 
   async function create() {
@@ -219,7 +226,10 @@
     {/if}
     {#each app.profiles as p (p.name)}
       <button class="item" class:active={p.name === selected} onclick={() => (selected = p.name)}>
-        <span>{p.name}</span>
+        <span>
+          {p.name}
+          {#if app.setUpdates[p.name]?.length}<span class="dot" title="Its sets changed; open it to review"></span>{/if}
+        </span>
         <small class="faint">{p.sets.join(" + ") || "no sets yet"}</small>
       </button>
     {:else}
@@ -267,19 +277,43 @@
           {/if}
         </div>
         {#if app.sets.length}
-          <span class="label">Sets <span class="faint">· optional groups of mods</span></span>
+          <div class="sets-head">
+            <span class="label">Sets <span class="faint">· whole groups of mods, stacked</span></span>
+            {#if profile.sets.length}
+              <label class="policy faint">
+                When a set changes
+                <select value={profile.set_changes ?? "ask"} onchange={(e) => setPolicy(e.currentTarget.value as SetChanges)}>
+                  <option value="ask">Ask me</option>
+                  <option value="follow">Update automatically</option>
+                  <option value="ignore">Keep as is, don't ask</option>
+                </select>
+              </label>
+            {/if}
+          </div>
           <div class="chips">
             {#each app.sets as s (s.name)}
               {@const at = profile.sets.indexOf(s.name)}
-              <button class="set" class:on={at >= 0} onclick={() => toggleSet(s.name)} title={`${s.members.length} mods`}>
+              {@const copy = profile.set_members?.[s.name]}
+              {@const changed = updates.some((u) => u.set === s.name)}
+              <button
+                class="set"
+                class:on={at >= 0}
+                class:changed
+                onclick={() => toggleSet(s.name)}
+                title={changed ? `${s.name} changed since this profile took it (now ${s.members.length} mods)` : `${(copy ?? s.members).length} mods`}
+              >
                 {#if at >= 0}<span class="n">{at + 1}</span>{/if}
                 {s.name}
-                <span class="faint">{s.members.length}</span>
+                <span class="faint">{(at >= 0 && copy ? copy : s.members).length}</span>
               </button>
             {/each}
           </div>
         {/if}
       </div>
+
+      {#if updates.length}
+        <SetUpdates {profile} {updates} />
+      {/if}
 
       {#if warnings.length}
         <ul class="warnings">
@@ -443,6 +477,53 @@
     color: var(--text);
     border-color: var(--accent-dim);
     background: var(--ok-dim);
+  }
+
+  .set.changed {
+    border-color: var(--brass-dim);
+    box-shadow: 0 0 10px rgb(207 159 77 / 0.25);
+  }
+
+  .set.changed::after {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-left: 6px;
+    border-radius: 50%;
+    background: var(--brass);
+    box-shadow: 0 0 6px var(--brass);
+    vertical-align: middle;
+  }
+
+  .sets-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .policy {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+  }
+
+  .policy select {
+    padding: 2px 6px;
+    font-size: 12.5px;
+  }
+
+  .dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-left: 4px;
+    border-radius: 50%;
+    background: var(--brass);
+    box-shadow: 0 0 6px var(--brass);
+    vertical-align: middle;
   }
 
   .set .n {

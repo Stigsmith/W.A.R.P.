@@ -16,8 +16,13 @@
   let tier = $state("");
   let onlyChosen = $state(false);
 
+  // What the profile's sets give it: its own copy of each set, not the live set.
   const fromSets = $derived(
-    new Set(app.sets.filter((s) => profile.sets.some((n) => n.toLowerCase() === s.name.toLowerCase())).flatMap((s) => s.members)),
+    new Set(
+      profile.sets.flatMap(
+        (name) => profile.set_members?.[name] ?? app.sets.find((s) => s.name.toLowerCase() === name.toLowerCase())?.members ?? [],
+      ),
+    ),
   );
   const chosen = (id: WorkshopId) => (fromSets.has(id) || include.has(id)) && !exclude.has(id);
   const maxPriority = $derived(Math.max(1, ...app.taxonomy.tier.map((t) => t.priority)));

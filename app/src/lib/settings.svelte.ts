@@ -12,13 +12,17 @@ export const HEADING_FONTS: HeadingFont[] = [
 
 const STORAGE_KEY = "warp.settings";
 
-type Stored = { headingFont: string; motes: boolean; tourDone: boolean };
+export type LibraryMode = "details" | "sets";
+
+type Stored = { headingFont: string; motes: boolean; tourDone: boolean; libraryMode: LibraryMode };
 
 class Settings {
   headingFont = $state(HEADING_FONTS[0].key);
   /** Floating warpstone motes and fog. */
   motes = $state(true);
   tourDone = $state(false);
+  /** The Library's last view: plain details, or a column per set. */
+  libraryMode = $state<LibraryMode>("details");
 
   constructor() {
     try {
@@ -26,6 +30,7 @@ class Settings {
       if (HEADING_FONTS.some((f) => f.key === saved.headingFont)) this.headingFont = saved.headingFont!;
       if (typeof saved.motes === "boolean") this.motes = saved.motes;
       if (typeof saved.tourDone === "boolean") this.tourDone = saved.tourDone;
+      if (saved.libraryMode === "sets" || saved.libraryMode === "details") this.libraryMode = saved.libraryMode;
     } catch {
       // No storage (private window, blocked): defaults it is.
     }
@@ -40,7 +45,7 @@ class Settings {
     (this as unknown as Stored)[key] = value;
     this.apply();
     try {
-      const data: Stored = { headingFont: this.headingFont, motes: this.motes, tourDone: this.tourDone };
+      const data: Stored = { headingFont: this.headingFont, motes: this.motes, tourDone: this.tourDone, libraryMode: this.libraryMode };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch {
       // Not remembered, but still applied for this session.

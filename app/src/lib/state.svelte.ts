@@ -1,7 +1,7 @@
 // App-wide state, loaded once and refreshed after changes.
 
 import { api } from "./api";
-import type { Install, LibraryEntry, ModSet, ProfileDef, Role, SyncSummary, Taxonomy, Tier, WorkshopId } from "./types";
+import type { Install, LibraryEntry, ModSet, ProfileDef, Role, SetUpdate, SyncSummary, Taxonomy, Tier, WorkshopId } from "./types";
 
 type Toast = { text: string; kind: "ok" | "error" };
 
@@ -10,6 +10,8 @@ class AppState {
   library = $state<LibraryEntry[]>([]);
   sets = $state<ModSet[]>([]);
   profiles = $state<ProfileDef[]>([]);
+  /** Set changes each profile hasn't taken or dismissed, by profile name. */
+  setUpdates = $state<Record<string, SetUpdate[]>>({});
   dataDir = $state("");
   kaedrinDir = $state<string | null>(null);
   /** The installed game, or why it wasn't found. */
@@ -38,10 +40,11 @@ class AppState {
 
   async refresh() {
     const a = await api();
-    const [library, sets, profiles] = await Promise.all([a.library(), a.sets(), a.profiles()]);
+    const [library, sets, profiles, setUpdates] = await Promise.all([a.library(), a.sets(), a.profiles(), a.setUpdates()]);
     this.library = library;
     this.sets = sets;
     this.profiles = profiles;
+    this.setUpdates = setUpdates;
   }
 
   /** Reads the installed game (subscriptions, versions, pack contents), then reloads. */

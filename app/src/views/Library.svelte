@@ -1,16 +1,24 @@
 <script lang="ts">
+  // All mods, as a table you can edit many rows of at once. "Sets" mode shows a
+  // column per set: click a box to put a mod in a set, drag down a column to tick
+  // many, and with rows selected one click fills them all, like a spreadsheet.
+  import { onMount } from "svelte";
+  import { SvelteSet } from "svelte/reactivity";
+  import { api } from "../lib/api";
   import { app } from "../lib/state.svelte";
-  import { date, tierColor } from "../lib/format";
+  import { settings } from "../lib/settings.svelte";
+  import { count, date, tierColor } from "../lib/format";
   import ModPanel from "../components/ModPanel.svelte";
-  import type { Source } from "../lib/types";
+  import type { Source, WorkshopId } from "../lib/types";
 
   let query = $state("");
   let tier = $state("");
   let set = $state("");
   let showUnsubscribed = $state(false);
-  let selectedId = $state<string | null>(null);
+  const mode = $derived(settings.libraryMode);
+  let openId = $state<string | null>(null);
 
-  const selected = $derived(selectedId ? app.byId.get(selectedId) : undefined);
+  const opened = $derived(openId ? app.byId.get(openId) : undefined);
   const maxPriority = $derived(Math.max(1, ...app.taxonomy.tier.map((t) => t.priority)));
   const priority = (key: string) => app.tier(key)?.priority ?? -1;
 
@@ -25,12 +33,191 @@
   });
 
   const sourceMark: Record<Source, string> = { user: "you", community: "", heuristic: "guess", default: "?" };
+
+  // --- Selection: tick boxes, shift-click for a range. ---------------------------
+  const selection = new SvelteSet<WorkshopId>();
+  let anchor: WorkshopId | null = null;
+  const shownIds = $derived(rows.map((e) => e.info.id));
+  const allShownSelected = $derived(shownIds.length > 0 && shownIds.every((id) => selection.has(id)));
+
+  function select(e: MouseEvent, id: WorkshopId) {
+    const on = !selection.has(id);
+    const from = anchor ? shownIds.indexOf(anchor) : -1;
+    const to = shownIds.indexOf(id);
+    const range = e.shiftKey && from >= 0 ? shownIds.slice(Math.min(from, to), Math.max(from, to) + 1) : [id];
+    for (const x of range) on ? selection.add(x) : selection.delete(x);
+    anchor = id;
+  }
+
+  function selectAllShown() {
+    if (allShownSelected) for (const id of shownIds) selection.delete(id);
+    else for (const id of shownIds) selection.add(id);
+  }
+
+  // --- Set membership, with the change shown before the backend confirms it. -----
+  const memberOf = $derived(new Map(app.sets.map((s) => [s.name, new Set(s.members)])));
+
+  async function editSet(name: string, add: WorkshopId[], remove: WorkshopId[]) {
+    if (!add.length && !remove.length) return;
+    const s = app.sets.find((x) => x.name === name);
+    if (s) s.members = [...new Set([...s.members, ...add])].filter((id) => !remove.includes(id));
+    const ok = await app.run(async () => (await api()).editSet(name, add, remove));
+    await app.refresh();
+    if (!ok) return;
+    const asking = Object.values(app.setUpdates).filter((us) => us.some((u) => u.set === name)).length;
+    app.notify(
+      (add.length ? `Put ${count(add.length, "mod")} in ${name}` : `Took ${count(remove.length, "mod")} out of ${name}`) +
+        (asking ? `. ${count(asking, "profile")} using it will ask before taking the change.` : ""),
+    );
+  }
+
+  // Painting: press on a box, drag along the column, let go to save.
+  let paint = $state<{ set: string; value: boolean; ids: SvelteSet<WorkshopId> } | null>(null);
+
+  const isMember = (name: string, id: WorkshopId) =>
+    paint && paint.set === name && paint.ids.has(id) ? paint.value : (memberOf.get(name)?.has(id) ?? false);
+
+  function startPaint(e: PointerEvent, name: string, id: WorkshopId) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const ids = new SvelteSet<WorkshopId>([id]);
+    // A box in a selected row fills the whole selection.
+    if (selection.has(id)) for (const x of selection) ids.add(x);
+    paint = { set: name, value: !(memberOf.get(name)?.has(id) ?? false), ids };
+  }
+
+  function extendPaint(name: string, id: WorkshopId) {
+    if (paint?.set === name) paint.ids.add(id);
+  }
+
+  async function finishPaint() {
+    if (!paint) return;
+    const { set: name, value, ids } = paint;
+    const members = memberOf.get(name) ?? new Set();
+    const changed = [...ids].filter((id) => members.has(id) !== value);
+    await editSet(name, value ? changed : [], value ? [] : changed);
+    paint = null;
+  }
+
+  onMount(() => {
+    const onUp = () => finishPaint();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !(e.target instanceof HTMLInputElement)) selection.clear();
+    };
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("keydown", onKey);
+    };
+  });
+
+  // --- Bulk actions on the selection. -------------------------------------------
+  async function addSelected(name: string) {
+    const members = memberOf.get(name) ?? new Set();
+    await editSet(name, [...selection].filter((id) => !members.has(id)), []);
+  }
+
+  async function removeSelected(name: string) {
+    const members = memberOf.get(name) ?? new Set();
+    await editSet(name, [], [...selection].filter((id) => members.has(id)));
+  }
+
+  async function setTier(key: string) {
+    const a = await api();
+    const ids = [...selection];
+    const ok = await app.run(async () => {
+      for (const id of ids) {
+        const e = app.byId.get(id);
+        if (e) await a.setKnowledge(id, { ...(e.user ?? {}), tier: key });
+      }
+    });
+    await app.refresh();
+    if (ok) app.notify(`${count(ids.length, "mod")} now sit in ${app.tier(key)?.name ?? key}`);
+  }
+
+  // --- Making, renaming and deleting sets. ----------------------------------------
+  let newSet = $state<string | null>(null);
+  let menuFor = $state<string | null>(null);
+  let renameTo = $state("");
+
+  async function createSet() {
+    const name = newSet?.trim();
+    if (!name) return;
+    const members = [...selection];
+    if (await app.run(async () => (await api()).createSet(name, members))) {
+      await app.refresh();
+      app.notify(members.length ? `Made the set ${name} with ${count(members.length, "mod")}` : `Made the set ${name}. Tick its mods in the ${name} column.`);
+      newSet = null;
+      settings.set("libraryMode", "sets");
+    }
+  }
+
+  async function renameSet(from: string) {
+    const to = renameTo.trim();
+    if (!to || to === from) return (menuFor = null);
+    if (await app.run(async () => (await api()).renameSet(from, to))) {
+      if (set === from) set = to;
+      await app.refresh();
+      app.notify(`Renamed ${from} to ${to}`);
+    }
+    menuFor = null;
+  }
+
+  async function deleteSet(name: string) {
+    menuFor = null;
+    const a = await api();
+    const using = app.profiles.filter((p) => p.sets.some((s) => s.toLowerCase() === name.toLowerCase()));
+    const ok = await a.confirm(
+      `Delete the set "${name}"? Its mods stay installed.` +
+        (using.length ? `\n\nProfiles using it (${using.map((p) => p.name).join(", ")}) keep their copy and will ask what to do.` : ""),
+    );
+    if (!ok) return;
+    if (await app.run(() => a.deleteSet(name))) {
+      if (set === name) set = "";
+      await app.refresh();
+      app.notify(`Deleted the set ${name}`);
+    }
+  }
+
+  function openMenu(name: string) {
+    menuFor = menuFor === name ? null : name;
+    renameTo = name;
+  }
 </script>
 
-<div class="library" class:with-panel={!!selected}>
+<div class="library" class:with-panel={!!opened}>
   <div class="body">
     <header>
-      <h1>Library</h1>
+      <div class="title-row">
+        <h1>Library</h1>
+        <div class="modes" role="tablist" data-tour="sets-mode">
+          <button role="tab" class:active={mode === "details"} aria-selected={mode === "details"} onclick={() => settings.set("libraryMode", "details")}>Details</button>
+          <button role="tab" class:active={mode === "sets"} aria-selected={mode === "sets"} onclick={() => settings.set("libraryMode", "sets")}>Sets</button>
+        </div>
+        <span class="spacer"></span>
+        {#if newSet === null}
+          <button class="small" onclick={() => (newSet = "")}>+ New set{selection.size ? ` from ${selection.size} selected` : ""}</button>
+        {:else}
+          <form
+            class="new-set"
+            onsubmit={(e) => {
+              e.preventDefault();
+              createSet();
+            }}
+          >
+            <!-- svelte-ignore a11y_autofocus -->
+            <input
+              bind:value={newSet}
+              placeholder={selection.size ? `Name for ${count(selection.size, "mod")}…` : "Set name, e.g. Skaven campaign"}
+              autofocus
+              onkeydown={(e) => e.key === "Escape" && (newSet = null)}
+            />
+            <button class="primary small" type="submit">Make set</button>
+            <button class="ghost small" type="button" onclick={() => (newSet = null)}>Cancel</button>
+          </form>
+        {/if}
+      </div>
       <div class="filters">
         <input class="search" bind:value={query} placeholder="Search mods, packs, tags…" />
         <select bind:value={tier}>
@@ -45,23 +232,88 @@
         <label class="check"><input type="checkbox" bind:checked={showUnsubscribed} /> Unsubscribed</label>
         <span class="faint count">{rows.length} shown</span>
       </div>
+
+      {#if selection.size}
+        <div class="bulk">
+          <span class="picked">{count(selection.size, "mod")} selected</span>
+          <select onchange={(e) => (addSelected(e.currentTarget.value), (e.currentTarget.value = ""))} disabled={!app.sets.length}>
+            <option value="">Put in set…</option>
+            {#each app.sets as s (s.name)}<option value={s.name}>{s.name}</option>{/each}
+          </select>
+          <select onchange={(e) => (removeSelected(e.currentTarget.value), (e.currentTarget.value = ""))} disabled={!app.sets.length}>
+            <option value="">Take out of set…</option>
+            {#each app.sets as s (s.name)}<option value={s.name}>{s.name}</option>{/each}
+          </select>
+          <select onchange={(e) => (setTier(e.currentTarget.value), (e.currentTarget.value = ""))}>
+            <option value="">Move to tier…</option>
+            {#each app.taxonomy.tier as t (t.key)}<option value={t.key}>{t.name}</option>{/each}
+          </select>
+          <span class="spacer"></span>
+          <button class="ghost small" onclick={() => selection.clear()}>Clear selection</button>
+        </div>
+      {:else if mode === "sets"}
+        <p class="hint faint">
+          Click a box to put a mod in a set. Drag down a column to tick many at once. With rows selected, one click fills them
+          all. Click a set's name to rename or delete it.
+        </p>
+      {/if}
     </header>
 
     <div class="table scroll">
-      <table>
+      <table class:painting={!!paint} class:sets-mode={mode === "sets"}>
         <thead>
           <tr>
+            <th class="pick">
+              <input type="checkbox" checked={allShownSelected} onchange={selectAllShown} aria-label="Select all shown" />
+            </th>
             <th>Mod</th>
             <th>Tier</th>
-            <th>Role</th>
-            <th>Sets</th>
-            <th class="right">Updated</th>
+            {#if mode === "details"}
+              <th>Role</th>
+              <th>Sets</th>
+              <th class="right">Updated</th>
+            {:else}
+              {#each app.sets as s (s.name)}
+                <th class="setcol" class:open={menuFor === s.name}>
+                  <button class="set-name" onclick={() => openMenu(s.name)} title="{s.name}: {count(s.members.length, 'mod')}">
+                    <span class="rot">{s.name}</span>
+                    <span class="n">{s.members.length}</span>
+                  </button>
+                  {#if menuFor === s.name}
+                    <div class="menu card forged">
+                      <form
+                        onsubmit={(e) => {
+                          e.preventDefault();
+                          renameSet(s.name);
+                        }}
+                      >
+                        <!-- svelte-ignore a11y_autofocus -->
+                        <input bind:value={renameTo} aria-label="Set name" autofocus onkeydown={(e) => e.key === "Escape" && (menuFor = null)} />
+                        <button class="small" type="submit">Rename</button>
+                      </form>
+                      {#if selection.size}
+                        <button class="small" onclick={() => (addSelected(s.name), (menuFor = null))}>Put {count(selection.size, "selected mod")} in</button>
+                        <button class="small" onclick={() => (removeSelected(s.name), (menuFor = null))}>Take {count(selection.size, "selected mod")} out</button>
+                      {/if}
+                      <button class="small" onclick={() => ((set = s.name), (menuFor = null))}>Show only this set</button>
+                      <button class="small danger" onclick={() => deleteSet(s.name)}>Delete set</button>
+                    </div>
+                  {/if}
+                </th>
+              {:else}
+                <th class="muted">No sets yet: make one with “+ New set”.</th>
+              {/each}
+            {/if}
           </tr>
         </thead>
         <tbody>
           {#each rows as e (e.info.id)}
             {@const t = app.tier(e.knowledge.tier)}
-            <tr class:active={e.info.id === selectedId} class:off={!e.subscribed} onclick={() => (selectedId = e.info.id)}>
+            {@const id = e.info.id}
+            <tr class:active={id === openId} class:picked={selection.has(id)} class:off={!e.subscribed} onclick={() => (openId = id)}>
+              <td class="pick" onclick={(ev) => ev.stopPropagation()}>
+                <input type="checkbox" checked={selection.has(id)} onclick={(ev) => select(ev, id)} aria-label="Select {e.info.title}" />
+              </td>
               <td class="mod">
                 <span class="title">
                   {e.info.title || e.packs[0]}
@@ -75,9 +327,27 @@
                 <span class="tier" style:--tier={tierColor(t?.priority ?? 0, maxPriority)}>{t?.name ?? e.knowledge.tier}</span>
                 {#if sourceMark[e.knowledge.tier_source]}<span class="src">{sourceMark[e.knowledge.tier_source]}</span>{/if}
               </td>
-              <td class="muted">{app.role(e.knowledge.role)?.name ?? e.knowledge.role}</td>
-              <td class="sets muted">{e.sets.join(", ")}</td>
-              <td class="right faint">{date(e.info.time_updated)}</td>
+              {#if mode === "details"}
+                <td class="muted">{app.role(e.knowledge.role)?.name ?? e.knowledge.role}</td>
+                <td class="sets muted">{e.sets.join(", ")}</td>
+                <td class="right faint">{date(e.info.time_updated)}</td>
+              {:else}
+                {#each app.sets as s (s.name)}
+                  {@const on = isMember(s.name, id)}
+                  <td
+                    class="cell"
+                    role="checkbox"
+                    aria-checked={on}
+                    aria-label="{e.info.title} in {s.name}"
+                    tabindex="-1"
+                    onclick={(ev) => ev.stopPropagation()}
+                    onpointerdown={(ev) => startPaint(ev, s.name, id)}
+                    onpointerenter={() => extendPaint(s.name, id)}
+                  >
+                    <span class="box" class:on></span>
+                  </td>
+                {/each}
+              {/if}
             </tr>
           {/each}
         </tbody>
@@ -86,8 +356,8 @@
     </div>
   </div>
 
-  {#if selected}
-    <ModPanel entry={selected} onclose={() => (selectedId = null)} />
+  {#if opened}
+    <ModPanel entry={opened} onclose={() => (openId = null)} />
   {/if}
 </div>
 
@@ -116,11 +386,74 @@
     gap: 12px;
   }
 
-  .filters {
+  .title-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .spacer {
+    flex: 1;
+  }
+
+  .modes {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .modes button {
+    border: 0;
+    background: transparent;
+    padding: 4px 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .modes button.active {
+    background: var(--ok-dim);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent-dim), var(--glow-sm);
+  }
+
+  .new-set {
+    display: flex;
+    gap: 6px;
+  }
+
+  .new-set input {
+    width: 260px;
+  }
+
+  .filters,
+  .bulk {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
+  }
+
+  .bulk {
+    padding: 8px 12px;
+    border: 1px solid var(--accent-dim);
+    border-radius: var(--radius);
+    background: var(--ok-dim);
+    box-shadow: var(--glow-sm);
+  }
+
+  .picked {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 13px;
+    margin-right: 4px;
+  }
+
+  .hint {
+    margin: 0;
+    font-size: 12.5px;
   }
 
   .search {
@@ -151,11 +484,16 @@
     border-collapse: collapse;
   }
 
+  table.painting {
+    user-select: none;
+  }
+
   th {
     position: sticky;
     top: 0;
     background: var(--bg);
     text-align: left;
+    vertical-align: bottom;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.1em;
@@ -172,6 +510,11 @@
     vertical-align: middle;
   }
 
+  .pick {
+    width: 30px;
+    padding-right: 0;
+  }
+
   tr {
     cursor: pointer;
   }
@@ -184,6 +527,10 @@
     background: var(--surface-2);
   }
 
+  tr.picked {
+    background: rgb(168 242 63 / 0.06);
+  }
+
   tr.off {
     opacity: 0.55;
   }
@@ -192,6 +539,10 @@
     display: flex;
     flex-direction: column;
     max-width: 520px;
+  }
+
+  .sets-mode .mod {
+    max-width: 380px;
   }
 
   .mod span {
@@ -228,5 +579,107 @@
   .right {
     text-align: right;
     white-space: nowrap;
+  }
+
+  /* Set columns: names written upwards so a dozen sets fit side by side. */
+  th.setcol {
+    width: 34px;
+    padding: 6px 2px;
+    text-align: center;
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+
+  .set-name {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 30px;
+    padding: 6px 0 4px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .set-name:hover,
+  th.open .set-name {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+    box-shadow: var(--glow-sm);
+  }
+
+  .rot {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    max-height: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .n {
+    font-size: 10.5px;
+    color: var(--faint);
+    font-weight: 400;
+  }
+
+  .menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 5;
+    width: 230px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+    background: rgb(12 16 10 / 0.97);
+  }
+
+  .menu form {
+    display: flex;
+    gap: 6px;
+  }
+
+  .menu input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .menu .danger {
+    color: var(--danger);
+  }
+
+  td.cell {
+    padding: 0;
+    text-align: center;
+    cursor: cell;
+  }
+
+  td.cell:hover .box {
+    border-color: var(--accent);
+  }
+
+  .box {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid var(--border-strong);
+    background: rgb(0 0 0 / 0.25);
+    vertical-align: middle;
+    transition:
+      background 0.1s,
+      box-shadow 0.1s;
+  }
+
+  .box.on {
+    border-color: var(--accent);
+    background: radial-gradient(circle at 40% 35%, var(--accent-strong), var(--accent) 60%, #6aa826);
+    box-shadow: 0 0 8px var(--accent-glow);
   }
 </style>

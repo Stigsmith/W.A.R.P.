@@ -15,6 +15,7 @@ import type {
   ModSet,
   ProfileDef,
   ResolvedProfile,
+  SetUpdate,
   ShareList,
   SyncSummary,
   WorkshopId,
@@ -26,8 +27,19 @@ export interface Api {
   setKnowledge(id: WorkshopId, knowledge: ModKnowledge): Promise<void>;
   sets(): Promise<ModSet[]>;
   saveSet(set: ModSet): Promise<void>;
+  /** Fails if a set with that name (in any case) exists. */
+  createSet(name: string, members: WorkshopId[]): Promise<void>;
+  /** Adds and removes mods in one go. */
+  editSet(name: string, add: WorkshopId[], remove: WorkshopId[]): Promise<void>;
+  /** Renames a set, including in the profiles that use it. */
   renameSet(from: string, to: string): Promise<void>;
   deleteSet(name: string): Promise<void>;
+  /** Set changes each profile hasn't taken or dismissed, by profile name. */
+  setUpdates(): Promise<Record<string, SetUpdate[]>>;
+  /** Takes the new contents of these sets (all changed ones if empty); returns the profile. */
+  applySetUpdates(profile: string, sets: string[]): Promise<ProfileDef>;
+  /** Stops showing these sets' current changes (all if empty); returns the profile. */
+  dismissSetUpdates(profile: string, sets: string[]): Promise<ProfileDef>;
   profiles(): Promise<ProfileDef[]>;
   saveProfile(profile: ProfileDef): Promise<void>;
   deleteProfile(name: string): Promise<void>;
@@ -65,8 +77,13 @@ async function tauriApi(): Promise<Api> {
     setKnowledge: (id, knowledge) => invoke("set_knowledge", { id, knowledge }),
     sets: () => invoke("sets"),
     saveSet: (set) => invoke("save_set", { set }),
+    createSet: (name, members) => invoke("create_set", { name, members }),
+    editSet: (name, add, remove) => invoke("edit_set", { name, add, remove }),
     renameSet: (from, to) => invoke("rename_set", { from, to }),
     deleteSet: (name) => invoke("delete_set", { name }),
+    setUpdates: () => invoke("set_updates"),
+    applySetUpdates: (profile, sets) => invoke("apply_set_updates", { profile, sets }),
+    dismissSetUpdates: (profile, sets) => invoke("dismiss_set_updates", { profile, sets }),
     profiles: () => invoke("profiles"),
     saveProfile: (profile) => invoke("save_profile", { profile }),
     deleteProfile: (name) => invoke("delete_profile", { name }),

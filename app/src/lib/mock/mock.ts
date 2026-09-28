@@ -12,7 +12,9 @@ import type {
   ModSet,
   ProfileDef,
   ResolvedProfile,
+  SetUpdate,
   ShareList,
+  WorkshopId,
 } from "../types";
 
 interface Fixture {
@@ -55,6 +57,55 @@ export async function mockApi(): Promise<Api> {
 
   const firstResolved = (): ResolvedProfile => Object.values(fx.resolved)[0];
 
+  // Sets and profile copies, following the same rules as warp-core's `sets` module.
+  const findSet = (name: string) => fx.sets.find((s) => s.name.toLowerCase() === name.toLowerCase());
+  const seen = (name: string) => {
+    const s = findSet(name);
+    return s ? [...s.members].sort().join(",") : "deleted";
+  };
+  const relabel = () => {
+    for (const e of fx.library) e.sets = fx.sets.filter((s) => s.members.includes(e.info.id)).map((s) => s.name);
+  };
+  const take = (p: ProfileDef, name: string) => {
+    if (!p.sets.includes(name)) return;
+    p.set_members ??= {};
+    delete p.dismissed?.[name];
+    const s = findSet(name);
+    if (s) p.set_members[name] = [...s.members];
+    else if (name in p.set_members) {
+      p.sets = p.sets.filter((x) => x !== name);
+      delete p.set_members[name];
+    } else p.set_members[name] = [];
+  };
+  const fill = (p: ProfileDef) => {
+    for (const name of [...p.sets]) if (p.set_changes === "follow" || !(name in (p.set_members ?? {}))) take(p, name);
+    for (const name of Object.keys(p.set_members ?? {})) if (!p.sets.includes(name)) delete p.set_members![name];
+  };
+  const pending = (p: ProfileDef): SetUpdate[] => {
+    if ((p.set_changes ?? "ask") !== "ask") return [];
+    return p.sets.flatMap((name) => {
+      const copy = p.set_members?.[name];
+      if (!copy || p.dismissed?.[name] === seen(name)) return [];
+      const live = findSet(name);
+      const now = new Set<WorkshopId>(live?.members ?? []);
+      const had = new Set(copy);
+      const added = [...now].filter((id) => !had.has(id));
+      const removed = [...had].filter((id) => !now.has(id));
+      return live && !added.length && !removed.length ? [] : [{ set: name, added, removed, deleted: !live }];
+    });
+  };
+  const setsChanged = () => {
+    relabel();
+    for (const p of fx.profiles) if (p.set_changes === "follow") fill(p);
+  };
+  const changeProfile = (name: string, sets: string[], change: (p: ProfileDef, set: string) => void) => {
+    const p = fx.profiles.find((x) => x.name === name);
+    if (!p) throw new Error(`there is no profile called "${name}"`);
+    for (const s of sets.length ? sets : pending(p).map((u) => u.set)) change(p, s);
+    fill(p);
+    return delay(p);
+  };
+
   return {
     bootstrap: () => delay(fx.bootstrap),
     library: () => delay(fx.library),
@@ -71,20 +122,49 @@ export async function mockApi(): Promise<Api> {
       const i = fx.sets.findIndex((s) => s.name.toLowerCase() === set.name.toLowerCase());
       if (i >= 0) fx.sets[i] = set;
       else fx.sets.push(set);
-      for (const e of fx.library) {
-        const has = set.members.includes(e.info.id);
-        e.sets = e.sets.filter((s) => s !== set.name).concat(has ? [set.name] : []);
-      }
+      setsChanged();
+    },
+    createSet: async (name, members) => {
+      if (findSet(name)) throw new Error(`there is already a set called "${name.trim()}"`);
+      fx.sets.push({ name: name.trim(), members: [...members] });
+      fx.sets.sort((a, b) => a.name.localeCompare(b.name));
+      setsChanged();
+    },
+    editSet: async (name, add, remove) => {
+      const s = findSet(name);
+      if (!s) throw new Error(`there is no set called "${name}"`);
+      s.members = [...new Set([...s.members, ...add])].filter((id) => !remove.includes(id));
+      setsChanged();
     },
     renameSet: async (from, to) => {
-      const s = fx.sets.find((s) => s.name === from);
-      if (s) s.name = to;
+      const s = findSet(from);
+      if (!s) throw new Error(`there is no set called "${from}"`);
+      if (from.toLowerCase() !== to.toLowerCase() && findSet(to)) throw new Error(`there is already a set called "${to}"`);
+      s.name = to.trim();
+      for (const p of fx.profiles) {
+        const old = p.sets.find((x) => x.toLowerCase() === from.toLowerCase());
+        if (!old) continue;
+        p.sets = p.sets.map((x) => (x === old ? s.name : x));
+        if (p.set_members?.[old]) {
+          p.set_members[s.name] = p.set_members[old];
+          delete p.set_members[old];
+        }
+      }
+      setsChanged();
     },
     deleteSet: async (name) => {
       fx.sets = fx.sets.filter((s) => s.name !== name);
+      setsChanged();
     },
+    setUpdates: () => delay(Object.fromEntries(fx.profiles.map((p) => [p.name, pending(p)]).filter(([, u]) => u.length))),
+    applySetUpdates: (profile, sets) => changeProfile(profile, sets, take),
+    dismissSetUpdates: (profile, sets) =>
+      changeProfile(profile, sets, (p, s) => {
+        p.dismissed = { ...p.dismissed, [s]: seen(s) };
+      }),
     profiles: () => delay(fx.profiles),
     saveProfile: async (p) => {
+      fill(p);
       const i = fx.profiles.findIndex((x) => x.name.toLowerCase() === p.name.toLowerCase());
       if (i >= 0) fx.profiles[i] = p;
       else fx.profiles.push(p);

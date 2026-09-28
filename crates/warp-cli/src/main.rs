@@ -535,6 +535,22 @@ fn dev_fixture(lib: &Library, out: &Path) -> Result<()> {
         .first()
         .context("the library has no profiles")?
         .clone();
+    // Stage a set change the first profile hasn't taken yet: its copy of its first
+    // set is missing two mods the set has now, and has one the set dropped.
+    let sets = lib.store.sets()?;
+    if let Some(name) = profiles[0].sets.first().cloned()
+        && let Some(copy) = profiles[0].set_members.get_mut(&name)
+        && copy.len() > 3
+    {
+        copy.drain(..2);
+        if let Some(outsider) = sets
+            .iter()
+            .flat_map(|s| &s.members)
+            .find(|id| !copy.contains(id))
+        {
+            copy.push(*outsider);
+        }
+    }
     // A staged "everything" profile, like a new user's first one: shows every warning.
     profiles.push(warp_core::store::ProfileDef {
         name: "Everything installed".into(),
@@ -545,8 +561,7 @@ fn dev_fixture(lib: &Library, out: &Path) -> Result<()> {
             .filter(|e| e.subscribed)
             .map(|e| e.info.id)
             .collect(),
-        exclude: vec![],
-        pins: vec![],
+        ..Default::default()
     });
     let first = &first;
     let mut resolved = serde_json::Map::new();

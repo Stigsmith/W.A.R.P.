@@ -48,7 +48,7 @@
 
 <div class="shell">
   <aside>
-    <button class="brand" onclick={() => (view = "home")} aria-label="Home">
+    <button class="brand" onclick={() => (view = "home")} aria-label="Home" title="W.A.R.P.: Warhammer Advanced Resource Platform">
       <img src="/logo.png" alt="" />
       <span>
         <span class="name">W.A.R.P.</span>

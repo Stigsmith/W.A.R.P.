@@ -89,6 +89,23 @@ export interface ProfileDef {
   include: WorkshopId[];
   exclude: WorkshopId[];
   pins: Pin[];
+  /** The profile's own copy of each of its sets; filled in by the backend on save. */
+  set_members?: Record<string, WorkshopId[]>;
+  set_changes?: SetChanges;
+  /** Dismissed set changes: set name to the set's fingerprint at the time. */
+  dismissed?: Record<string, string>;
+}
+
+/** What a profile does when one of its sets changes. */
+export type SetChanges = "ask" | "follow" | "ignore";
+
+/** A set that changed since a profile took it. */
+export interface SetUpdate {
+  set: string;
+  added: WorkshopId[];
+  removed: WorkshopId[];
+  /** The set no longer exists; taking the update drops it from the profile. */
+  deleted: boolean;
 }
 
 export type RuleKind = "requires" | "patches" | "pin";

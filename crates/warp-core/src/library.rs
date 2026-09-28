@@ -1,7 +1,7 @@
 //! The user's mod library: store + knowledge + taxonomy, and the operations the
 //! app and CLI are built on.
 
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::path::PathBuf;
 
 use rayon::prelude::*;
@@ -17,6 +17,7 @@ use crate::model::{ModInfo, WorkshopId, pack_key};
 use crate::mp::{self, ListDiff, ShareEntry, ShareList};
 use crate::order::{self, OrderItem, OrderResult};
 use crate::pack_index::{self, Contents, PackIndex};
+use crate::sets::{self, SetUpdate};
 use crate::steam;
 use crate::store::{ModSet, ProfileDef, Store};
 use crate::taxonomy::Taxonomy;
@@ -218,9 +219,11 @@ impl Library {
         let mut members: Vec<WorkshopId> = Vec::new();
         let mut seen = HashSet::new();
         for name in &def.sets {
-            if let Some(set) = sets.iter().find(|s| s.name.eq_ignore_ascii_case(name)) {
-                members.extend(set.members.iter().filter(|id| seen.insert(**id)));
-            }
+            members.extend(
+                sets::members_of(def, name, &sets)
+                    .iter()
+                    .filter(|id| seen.insert(**id)),
+            );
         }
         members.extend(def.include.iter().filter(|id| seen.insert(**id)));
         let excluded: HashSet<_> = def.exclude.iter().collect();
@@ -292,6 +295,115 @@ impl Library {
         out.incompatibilities = incompatible.into_iter().collect();
         out.order = order::solve(&items, &def.pins);
         Ok(out)
+    }
+
+    /// Replaces a set's members. Profiles that follow their sets take the change;
+    /// the others get a notice.
+    pub fn save_set(&mut self, set: &ModSet) -> Result<(), Error> {
+        self.store.transaction(|tx| {
+            tx.save_set(set)?;
+            tx.refresh_following()
+        })
+    }
+
+    pub fn create_set(&mut self, name: &str, members: &[WorkshopId]) -> Result<(), Error> {
+        self.store.transaction(|tx| {
+            tx.create_set(name)?;
+            tx.edit_set(name.trim(), members, &[])?;
+            tx.refresh_following()
+        })
+    }
+
+    /// Adds and removes mods in one go, as the Library's set columns do.
+    pub fn edit_set(
+        &mut self,
+        name: &str,
+        add: &[WorkshopId],
+        remove: &[WorkshopId],
+    ) -> Result<(), Error> {
+        self.store.transaction(|tx| {
+            tx.edit_set(name, add, remove)?;
+            tx.refresh_following()
+        })
+    }
+
+    /// Renames a set everywhere, including in the profiles that use it.
+    pub fn rename_set(&mut self, from: &str, to: &str) -> Result<(), Error> {
+        self.store.transaction(|tx| {
+            tx.rename_set(from, to)?;
+            tx.refresh_following()
+        })
+    }
+
+    /// Deletes a set. Profiles that used it keep their copy until the user takes the change.
+    pub fn delete_set(&mut self, name: &str) -> Result<(), Error> {
+        self.store.transaction(|tx| {
+            tx.delete_set(name)?;
+            tx.refresh_following()
+        })
+    }
+
+    /// Saves a profile, giving it its own copy of any set it just gained.
+    pub fn save_profile(&mut self, def: &ProfileDef) -> Result<(), Error> {
+        self.store.transaction(|tx| tx.save_profile(def))
+    }
+
+    /// Changes to their sets that profiles haven't taken or dismissed, by profile.
+    pub fn set_updates(&self) -> Result<BTreeMap<String, Vec<SetUpdate>>, Error> {
+        let all = self.store.sets()?;
+        Ok(self
+            .store
+            .profiles()?
+            .into_iter()
+            .map(|p| (p.name.clone(), sets::pending(&p, &all)))
+            .filter(|(_, updates)| !updates.is_empty())
+            .collect())
+    }
+
+    /// Takes the current contents of some of a profile's sets (all changed ones if
+    /// `names` is empty). Returns the updated profile.
+    pub fn apply_set_updates(
+        &mut self,
+        profile: &str,
+        names: &[String],
+    ) -> Result<ProfileDef, Error> {
+        self.change_profile(profile, names, sets::take)
+    }
+
+    /// Stops showing the current changes of some of a profile's sets (all if
+    /// `names` is empty) without taking them.
+    pub fn dismiss_set_updates(
+        &mut self,
+        profile: &str,
+        names: &[String],
+    ) -> Result<ProfileDef, Error> {
+        self.change_profile(profile, names, sets::dismiss)
+    }
+
+    fn change_profile(
+        &mut self,
+        profile: &str,
+        names: &[String],
+        change: fn(&mut ProfileDef, &str, &[ModSet]),
+    ) -> Result<ProfileDef, Error> {
+        let mut def = self
+            .store
+            .profile(profile)?
+            .ok_or_else(|| Error::Invalid(format!("there is no profile called \"{profile}\"")))?;
+        let all = self.store.sets()?;
+        let names: Vec<String> = if names.is_empty() {
+            sets::pending(&def, &all)
+                .into_iter()
+                .map(|u| u.set)
+                .collect()
+        } else {
+            names.to_vec()
+        };
+        for name in &names {
+            change(&mut def, name, &all);
+        }
+        self.save_profile(&def)?;
+        Ok(self.store.profile(profile)?.unwrap_or(def))
     }
 
     /// A profile's resolved order as a shareable list.
@@ -827,6 +939,89 @@ mod tests {
         let share = lib.share_list(&def).unwrap();
         assert_eq!(share.entries[0].workshop_id, Some(WorkshopId(2)));
         assert_eq!(share.entries[0].time_updated, 1_700_000_002);
+    }
+
+    #[test]
+    fn editing_a_set_leaves_profiles_alone_until_they_take_it() {
+        let mut lib = lib_with(
+            &[
+                (1, "a.pack", "core", "content"),
+                (2, "b.pack", "ui", "content"),
+                (3, "c.pack", "units", "content"),
+            ],
+            &[],
+        );
+        lib.create_set("Base", &[WorkshopId(1)]).unwrap();
+        let def = ProfileDef {
+            name: "Solo".into(),
+            sets: vec!["Base".into()],
+            ..Default::default()
+        };
+        lib.save_profile(&def).unwrap();
+        lib.save_profile(&ProfileDef {
+            set_changes: sets::SetChanges::Follow,
+            ..ProfileDef {
+                name: "Follows".into(),
+                ..def.clone()
+            }
+        })
+        .unwrap();
+
+        lib.edit_set("Base", &[WorkshopId(2), WorkshopId(3)], &[WorkshopId(1)])
+            .unwrap();
+        let solo = lib.store.profile("Solo").unwrap().unwrap();
+        assert_eq!(
+            lib.resolve_profile(&solo).unwrap().order.packs(),
+            ["a.pack"]
+        );
+        let follows = lib.store.profile("Follows").unwrap().unwrap();
+        assert_eq!(
+            lib.resolve_profile(&follows).unwrap().order.packs(),
+            ["b.pack", "c.pack"]
+        );
+
+        let updates = lib.set_updates().unwrap();
+        assert_eq!(updates.keys().collect::<Vec<_>>(), ["Solo"]);
+        assert_eq!(updates["Solo"][0].added, [WorkshopId(2), WorkshopId(3)]);
+
+        let solo = lib.apply_set_updates("Solo", &[]).unwrap();
+        assert_eq!(
+            lib.resolve_profile(&solo).unwrap().order.packs(),
+            ["b.pack", "c.pack"]
+        );
+        assert!(lib.set_updates().unwrap().is_empty());
+    }
+
+    #[test]
+    fn renaming_a_set_follows_into_profiles() {
+        let mut lib = lib_with(&[(1, "a.pack", "core", "content")], &[]);
+        lib.create_set("Base", &[WorkshopId(1)]).unwrap();
+        assert!(
+            lib.create_set("base", &[]).is_err(),
+            "names are case-insensitive"
+        );
+        lib.save_profile(&ProfileDef {
+            name: "p".into(),
+            sets: vec!["Base".into()],
+            ..Default::default()
+        })
+        .unwrap();
+        lib.rename_set("Base", "Foundations").unwrap();
+        let p = lib.store.profile("p").unwrap().unwrap();
+        assert_eq!(p.sets, ["Foundations"]);
+        assert_eq!(lib.resolve_profile(&p).unwrap().order.packs(), ["a.pack"]);
+        assert!(lib.set_updates().unwrap().is_empty());
+
+        lib.delete_set("Foundations").unwrap();
+        let updates = lib.set_updates().unwrap();
+        assert!(updates["p"][0].deleted);
+        let p = lib.dismiss_set_updates("p", &[]).unwrap();
+        assert!(lib.set_updates().unwrap().is_empty());
+        assert_eq!(
+            p.sets,
+            ["Foundations"],
+            "dismissing keeps the profile's copy"
+        );
     }
 
     #[test]

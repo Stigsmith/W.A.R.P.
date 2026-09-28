@@ -1,6 +1,6 @@
 //! The desktop app: Tauri commands over `warp-core`. No logic lives here.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
@@ -13,6 +13,7 @@ use warp_core::knowledge::ModKnowledge;
 use warp_core::library::{ImportSummary, Library, LibraryEntry, ResolvedProfile, SyncSummary};
 use warp_core::model::WorkshopId;
 use warp_core::mp::{self, ListDiff, ShareList};
+use warp_core::sets::SetUpdate;
 use warp_core::store::{ModSet, ProfileDef, Store};
 use warp_core::taxonomy::Taxonomy;
 use warp_core::{import_v1, steam};
@@ -103,17 +104,61 @@ async fn sets(state: State<'_, AppState>) -> CmdResult<Vec<ModSet>> {
 
 #[tauri::command]
 async fn save_set(state: State<'_, AppState>, set: ModSet) -> CmdResult<()> {
-    with_lib(&state, |lib| lib.store.save_set(&set))
+    with_lib(&state, |lib| lib.save_set(&set))
+}
+
+#[tauri::command]
+async fn create_set(
+    state: State<'_, AppState>,
+    name: String,
+    members: Vec<WorkshopId>,
+) -> CmdResult<()> {
+    with_lib(&state, |lib| lib.create_set(&name, &members))
+}
+
+/// Adds and removes mods in one go (the Library's set columns and bulk actions).
+#[tauri::command]
+async fn edit_set(
+    state: State<'_, AppState>,
+    name: String,
+    add: Vec<WorkshopId>,
+    remove: Vec<WorkshopId>,
+) -> CmdResult<()> {
+    with_lib(&state, |lib| lib.edit_set(&name, &add, &remove))
 }
 
 #[tauri::command]
 async fn rename_set(state: State<'_, AppState>, from: String, to: String) -> CmdResult<()> {
-    with_lib(&state, |lib| lib.store.rename_set(&from, &to))
+    with_lib(&state, |lib| lib.rename_set(&from, &to))
 }
 
 #[tauri::command]
 async fn delete_set(state: State<'_, AppState>, name: String) -> CmdResult<()> {
-    with_lib(&state, |lib| lib.store.delete_set(&name))
+    with_lib(&state, |lib| lib.delete_set(&name))
+}
+
+/// Set changes each profile hasn't taken or dismissed yet.
+#[tauri::command]
+async fn set_updates(state: State<'_, AppState>) -> CmdResult<BTreeMap<String, Vec<SetUpdate>>> {
+    with_lib(&state, |lib| lib.set_updates())
+}
+
+#[tauri::command]
+async fn apply_set_updates(
+    state: State<'_, AppState>,
+    profile: String,
+    sets: Vec<String>,
+) -> CmdResult<ProfileDef> {
+    with_lib(&state, |lib| lib.apply_set_updates(&profile, &sets))
+}
+
+#[tauri::command]
+async fn dismiss_set_updates(
+    state: State<'_, AppState>,
+    profile: String,
+    sets: Vec<String>,
+) -> CmdResult<ProfileDef> {
+    with_lib(&state, |lib| lib.dismiss_set_updates(&profile, &sets))
 }
 
 #[tauri::command]
@@ -123,7 +168,7 @@ async fn profiles(state: State<'_, AppState>) -> CmdResult<Vec<ProfileDef>> {
 
 #[tauri::command]
 async fn save_profile(state: State<'_, AppState>, profile: ProfileDef) -> CmdResult<()> {
-    with_lib(&state, |lib| lib.store.save_profile(&profile))
+    with_lib(&state, |lib| lib.save_profile(&profile))
 }
 
 #[tauri::command]
@@ -297,8 +342,13 @@ pub fn run() {
             set_knowledge,
             sets,
             save_set,
+            create_set,
+            edit_set,
             rename_set,
             delete_set,
+            set_updates,
+            apply_set_updates,
+            dismiss_set_updates,
             profiles,
             save_profile,
             delete_profile,

@@ -1,6 +1,6 @@
 # W.A.R.P.
 
-A mod manager for **Total War: WARHAMMER III** that works out the load order for
+**Warhammer Advanced Resource Platform**: a mod manager for **Total War: WARHAMMER III** that works out the load order for
 you, and gets you and your friends into multiplayer with matching modlists.
 
 > Status: early development (M1). Nothing to download yet.
@@ -14,8 +14,11 @@ you, and gets you and your friends into multiplayer with matching modlists.
 - **Multiplayer sync.** Share your modlist as a code that fits in one Discord
   message. WARP compares two lists and tells you exactly what's missing, what's
   extra, the fewest moves to fix the order, and whose copy of a mod is outdated.
-- **Sets and profiles.** Build reusable sets (Base, SFO, Chaos...) and stack them
-  into profiles.
+- **Sets and profiles.** Build reusable sets (Base, SFO, one per faction campaign...)
+  by ticking mods into set columns in the Library, a whole column at a time if you
+  like. A profile stacks sets plus single mods. It keeps its own copy of each set,
+  so changing a set later never changes a profile behind your back: the profile
+  asks first.
 - **Community knowledge.** Mod categories and relations live in a shared
   knowledge base ([knowledge/](knowledge/)), so nobody has to tag 400 mods alone.
 

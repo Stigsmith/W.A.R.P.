@@ -2,7 +2,7 @@
 //! installed versions, the pack index, the user's knowledge overrides, sets,
 //! profiles and launches.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -15,6 +15,7 @@ use crate::knowledge::ModKnowledge;
 use crate::model::{ModInfo, WorkshopId, pack_key};
 use crate::order::Pin;
 use crate::pack_index::{self, Contents, PackIndex};
+use crate::sets::{self, SetChanges};
 
 /// Schema migrations, applied in order. Never edit a released entry; append a new one.
 const MIGRATIONS: &[&str] = &[
@@ -112,6 +113,14 @@ pub struct ProfileDef {
     pub exclude: Vec<WorkshopId>,
     #[serde(default)]
     pub pins: Vec<Pin>,
+    /// The profile's own copy of each of its sets (see [`sets`]). Filled in on save.
+    #[serde(default)]
+    pub set_members: BTreeMap<String, Vec<WorkshopId>>,
+    #[serde(default)]
+    pub set_changes: SetChanges,
+    /// Set changes the user dismissed: set name to the set's fingerprint at the time.
+    #[serde(default)]
+    pub dismissed: BTreeMap<String, String>,
 }
 
 pub struct Store {
@@ -146,7 +155,17 @@ impl Store {
             tx.pragma_update(None, "user_version", (i + 1) as i64)?;
         }
         tx.commit()?;
-        Ok(Self { conn })
+        let mut store = Self { conn };
+        // Profiles saved before profiles kept their own copy of each set get one now.
+        let old: Vec<ProfileDef> = store
+            .profiles()?
+            .into_iter()
+            .filter(|p| p.sets.iter().any(|s| !p.set_members.contains_key(s)))
+            .collect();
+        if !old.is_empty() {
+            store.transaction(|tx| old.iter().try_for_each(|p| tx.save_profile(p)))?;
+        }
+        Ok(store)
     }
 
     /// Runs `f` in one transaction: all of it lands, or none of it.
@@ -219,27 +238,7 @@ impl Store {
     }
 
     pub fn sets(&self) -> Result<Vec<ModSet>, Error> {
-        let mut sets: Vec<ModSet> = self
-            .conn
-            .prepare("SELECT name FROM sets ORDER BY name COLLATE NOCASE")?
-            .query_map([], |r| r.get::<_, String>(0))?
-            .map(|name| {
-                Ok(ModSet {
-                    name: name?,
-                    members: Vec::new(),
-                })
-            })
-            .collect::<Result<_, Error>>()?;
-        let mut stmt = self
-            .conn
-            .prepare("SELECT set_name, mod_id FROM set_members ORDER BY mod_id")?;
-        for row in stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)))? {
-            let (name, id) = row?;
-            if let Some(set) = sets.iter_mut().find(|s| s.name.eq_ignore_ascii_case(&name)) {
-                set.members.push(WorkshopId(id as u64));
-            }
-        }
-        Ok(sets)
+        read_sets(&self.conn)
     }
 
     /// Creates the set if needed and replaces its members.
@@ -247,27 +246,8 @@ impl Store {
         self.transaction(|tx| tx.save_set(set))
     }
 
-    pub fn rename_set(&self, from: &str, to: &str) -> Result<(), Error> {
-        self.conn.execute(
-            "UPDATE sets SET name = ?2 WHERE name = ?1",
-            params![from, to.trim()],
-        )?;
-        Ok(())
-    }
-
-    pub fn delete_set(&self, name: &str) -> Result<(), Error> {
-        self.conn
-            .execute("DELETE FROM sets WHERE name = ?1", params![name])?;
-        Ok(())
-    }
-
     pub fn profiles(&self) -> Result<Vec<ProfileDef>, Error> {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT data FROM profiles ORDER BY name COLLATE NOCASE")?;
-        let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
-        rows.map(|row| serde_json::from_str(&row?).map_err(|e| Error::Format(e.to_string())))
-            .collect()
+        read_profiles(&self.conn)
     }
 
     pub fn profile(&self, name: &str) -> Result<Option<ProfileDef>, Error> {
@@ -508,15 +488,106 @@ impl Tx<'_> {
         Ok(())
     }
 
+    /// Saves a profile, first giving it its own copy of any set it has none of.
     pub fn save_profile(&self, profile: &ProfileDef) -> Result<(), Error> {
         if profile.name.trim().is_empty() {
             return Err(Error::Invalid("a profile needs a name".into()));
         }
+        let mut profile = profile.clone();
+        sets::fill(&mut profile, &read_sets(&self.0)?);
         self.0.execute(
             "INSERT INTO profiles (name, data, updated_at) VALUES (?1, ?2, ?3)
              ON CONFLICT (name) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at",
-            params![profile.name.trim(), to_json(profile), now()],
+            params![profile.name.trim(), to_json(&profile), now()],
         )?;
+        Ok(())
+    }
+
+    pub fn profiles(&self) -> Result<Vec<ProfileDef>, Error> {
+        read_profiles(&self.0)
+    }
+
+    /// Creates an empty set. Fails if one with that name (in any case) exists.
+    pub fn create_set(&self, name: &str) -> Result<(), Error> {
+        let name = name.trim();
+        if name.is_empty() {
+            return Err(Error::Invalid("a set needs a name".into()));
+        }
+        if sets::find(&read_sets(&self.0)?, name).is_some() {
+            return Err(Error::Invalid(format!(
+                "there is already a set called \"{name}\""
+            )));
+        }
+        self.0
+            .execute("INSERT INTO sets (name) VALUES (?1)", params![name])?;
+        Ok(())
+    }
+
+    /// Adds and removes members without touching the rest of the set.
+    pub fn edit_set(
+        &self,
+        name: &str,
+        add: &[WorkshopId],
+        remove: &[WorkshopId],
+    ) -> Result<(), Error> {
+        if sets::find(&read_sets(&self.0)?, name).is_none() {
+            return Err(Error::Invalid(format!("there is no set called \"{name}\"")));
+        }
+        for id in add {
+            self.0.execute(
+                "INSERT OR IGNORE INTO set_members (set_name, mod_id) VALUES (?1, ?2)",
+                params![name, id.0 as i64],
+            )?;
+        }
+        for id in remove {
+            self.0.execute(
+                "DELETE FROM set_members WHERE set_name = ?1 AND mod_id = ?2",
+                params![name, id.0 as i64],
+            )?;
+        }
+        Ok(())
+    }
+
+    /// Renames a set, and follows the rename in every profile that uses it.
+    pub fn rename_set(&self, from: &str, to: &str) -> Result<(), Error> {
+        let to = to.trim();
+        if to.is_empty() {
+            return Err(Error::Invalid("a set needs a name".into()));
+        }
+        let all = read_sets(&self.0)?;
+        if sets::find(&all, from).is_none() {
+            return Err(Error::Invalid(format!("there is no set called \"{from}\"")));
+        }
+        if !from.eq_ignore_ascii_case(to) && sets::find(&all, to).is_some() {
+            return Err(Error::Invalid(format!(
+                "there is already a set called \"{to}\""
+            )));
+        }
+        self.0.execute(
+            "UPDATE sets SET name = ?2 WHERE name = ?1",
+            params![from, to],
+        )?;
+        for mut p in self.profiles()? {
+            if sets::rename(&mut p, from, to) {
+                self.save_profile(&p)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn delete_set(&self, name: &str) -> Result<(), Error> {
+        self.0
+            .execute("DELETE FROM sets WHERE name = ?1", params![name])?;
+        Ok(())
+    }
+
+    /// Profiles that follow their sets take the sets' current contents.
+    pub fn refresh_following(&self) -> Result<(), Error> {
+        for p in self.profiles()? {
+            if p.set_changes == SetChanges::Follow {
+                self.save_profile(&p)?;
+            }
+        }
         Ok(())
     }
 
@@ -600,6 +671,34 @@ impl Tx<'_> {
     }
 }
 
+fn read_sets(conn: &Connection) -> Result<Vec<ModSet>, Error> {
+    let mut sets: Vec<ModSet> = conn
+        .prepare("SELECT name FROM sets ORDER BY name COLLATE NOCASE")?
+        .query_map([], |r| r.get::<_, String>(0))?
+        .map(|name| {
+            Ok(ModSet {
+                name: name?,
+                members: Vec::new(),
+            })
+        })
+        .collect::<Result<_, Error>>()?;
+    let mut stmt = conn.prepare("SELECT set_name, mod_id FROM set_members ORDER BY mod_id")?;
+    for row in stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)))? {
+        let (name, id) = row?;
+        if let Some(set) = sets.iter_mut().find(|s| s.name.eq_ignore_ascii_case(&name)) {
+            set.members.push(WorkshopId(id as u64));
+        }
+    }
+    Ok(sets)
+}
+
+fn read_profiles(conn: &Connection) -> Result<Vec<ProfileDef>, Error> {
+    let mut stmt = conn.prepare("SELECT data FROM profiles ORDER BY name COLLATE NOCASE")?;
+    let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
+    rows.map(|row| serde_json::from_str(&row?).map_err(|e| Error::Format(e.to_string())))
+        .collect()
+}
+
 fn to_json<T: Serialize>(v: &T) -> String {
     serde_json::to_string(v).expect("store types serialize")
 }
@@ -634,7 +733,9 @@ mod tests {
                 members: vec![info.id],
             })
             .unwrap();
-        store.rename_set("base V1", "Base v2").unwrap();
+        store
+            .transaction(|tx| tx.rename_set("base V1", "Base v2"))
+            .unwrap();
         assert_eq!(
             store.sets().unwrap(),
             vec![ModSet {
@@ -649,10 +750,43 @@ mod tests {
             ..Default::default()
         };
         store.save_profile(&p).unwrap();
-        assert_eq!(store.profile("solo chaos").unwrap(), Some(p));
+        let saved = store.profile("solo chaos").unwrap().unwrap();
+        assert_eq!(
+            saved.set_members["Base v2"],
+            [info.id],
+            "saving takes a copy of each set"
+        );
+        assert_eq!(
+            ProfileDef {
+                set_members: Default::default(),
+                ..saved
+            },
+            p
+        );
 
-        store.delete_set("Base v2").unwrap();
+        store.transaction(|tx| tx.delete_set("Base v2")).unwrap();
         assert!(store.sets().unwrap().is_empty());
+    }
+
+    #[test]
+    fn profiles_from_before_set_copies_get_one_on_open() {
+        let mut store = Store::open_in_memory().unwrap();
+        store
+            .save_set(&ModSet {
+                name: "Base".into(),
+                members: vec![WorkshopId(1)],
+            })
+            .unwrap();
+        store
+            .conn
+            .execute(
+                "INSERT INTO profiles (name, data, updated_at) VALUES ('Old', ?1, 0)",
+                [r#"{"name":"Old","sets":["Base"]}"#],
+            )
+            .unwrap();
+        let store = Store::init(store.conn).unwrap();
+        let old = store.profile("Old").unwrap().unwrap();
+        assert_eq!(old.set_members["Base"], [WorkshopId(1)]);
     }
 
     #[test]
