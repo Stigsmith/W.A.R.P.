@@ -12,7 +12,11 @@ use warp_core::store::Store;
 use warp_core::{import_v1, kaedrin};
 
 #[derive(Parser)]
-#[command(name = "warp", version, about = "W.A.R.P. - mod manager for Total War: WARHAMMER III")]
+#[command(
+    name = "warp",
+    version,
+    about = "W.A.R.P. - mod manager for Total War: WARHAMMER III"
+)]
 struct Cli {
     /// Database file (default: %APPDATA%\WARP\warp.db, or $WARP_HOME/warp.db).
     #[arg(long, global = true)]
@@ -70,20 +74,29 @@ enum Command {
     },
     /// Refresh Steam metadata for every mod in the library.
     SteamRefresh,
+    /// Write sample data for running the app UI in a browser (development only).
+    #[command(hide = true)]
+    DevFixture { out: PathBuf },
 }
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
     let db = cli.db.clone().unwrap_or_else(warp_core::default_db_path);
     let kb = match &cli.kb {
-        Some(path) => KnowledgeBase::parse(&std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?)?,
+        Some(path) => KnowledgeBase::parse(
+            &std::fs::read_to_string(path)
+                .with_context(|| format!("reading {}", path.display()))?,
+        )?,
         None => warp_core::builtin_kb(),
     };
 
     if let Command::ImportV1 { workbook, write_kb } = &cli.command {
         return import(&db, kb, workbook, write_kb.as_deref());
     }
-    let mut lib = Library::new(Store::open(&db).with_context(|| format!("opening {}", db.display()))?, kb);
+    let mut lib = Library::new(
+        Store::open(&db).with_context(|| format!("opening {}", db.display()))?,
+        kb,
+    );
 
     match cli.command {
         Command::ImportV1 { .. } => unreachable!("handled above"),
@@ -93,7 +106,10 @@ fn main() -> Result<()> {
                 let hay = format!("{} {}", e.info.title, e.packs.join(" ")).to_lowercase();
                 if filter.as_ref().is_none_or(|f| hay.contains(f)) {
                     let flag = if e.subscribed { ' ' } else { 'x' };
-                    println!("{flag} {:>10}  {:<13} {:<10} {}", e.info.id, e.knowledge.tier, e.knowledge.role, e.info.title);
+                    println!(
+                        "{flag} {:>10}  {:<13} {:<10} {}",
+                        e.info.id, e.knowledge.tier, e.knowledge.role, e.info.title
+                    );
                 }
             }
         }
@@ -113,10 +129,16 @@ fn main() -> Result<()> {
             let resolved = lib.resolve_profile(&def)?;
             let out = match out {
                 Some(p) => p,
-                None => kaedrin::profiles_dir().context("no Kaedrin folder")?.join(kaedrin::profile_file_name(&def.name)),
+                None => kaedrin::profiles_dir()
+                    .context("no Kaedrin folder")?
+                    .join(kaedrin::profile_file_name(&def.name)),
             };
             std::fs::write(&out, kaedrin::write_profile(&resolved.order.packs()))?;
-            println!("Wrote {} packs to {}", resolved.order.placements.len(), out.display());
+            println!(
+                "Wrote {} packs to {}",
+                resolved.order.placements.len(),
+                out.display()
+            );
         }
         Command::Share { profile, file } => {
             let list = lib.share_list(&profile_def(&lib, &profile)?)?;
@@ -141,12 +163,19 @@ fn main() -> Result<()> {
             let n = lib.refresh_from_steam(None)?;
             println!("Refreshed {n} mods from Steam");
         }
+        Command::DevFixture { out } => dev_fixture(&lib, &out)?,
     }
     Ok(())
 }
 
-fn import(db: &Path, mut kb: KnowledgeBase, workbook: &Path, write_kb: Option<&Path>) -> Result<()> {
-    let data = import_v1::read(workbook).with_context(|| format!("reading {}", workbook.display()))?;
+fn import(
+    db: &Path,
+    mut kb: KnowledgeBase,
+    workbook: &Path,
+    write_kb: Option<&Path>,
+) -> Result<()> {
+    let data =
+        import_v1::read(workbook).with_context(|| format!("reading {}", workbook.display()))?;
     if let Some(path) = write_kb {
         let mut file_kb = match std::fs::read_to_string(path) {
             Ok(text) => KnowledgeBase::parse(&text)?,
@@ -156,7 +185,11 @@ fn import(db: &Path, mut kb: KnowledgeBase, workbook: &Path, write_kb: Option<&P
             file_kb.mods.insert(m.info.id, m.knowledge.clone());
         }
         std::fs::write(path, file_kb.to_json())?;
-        println!("Knowledge base: {} mods written to {}", file_kb.mods.len(), path.display());
+        println!(
+            "Knowledge base: {} mods written to {}",
+            file_kb.mods.len(),
+            path.display()
+        );
         kb = file_kb;
     }
     let mut lib = Library::new(Store::open(db)?, kb);
@@ -166,7 +199,10 @@ fn import(db: &Path, mut kb: KnowledgeBase, workbook: &Path, write_kb: Option<&P
     if let Some(p) = s.profile {
         println!("Profile: {p}");
     }
-    println!("Your own overrides (differ from the knowledge base): {}", s.overrides);
+    println!(
+        "Your own overrides (differ from the knowledge base): {}",
+        s.overrides
+    );
     if !s.unresolved_dependencies.is_empty() {
         println!("Dependencies that don't match a mod in the workbook:");
         for (pack, text) in s.unresolved_dependencies {
@@ -177,7 +213,9 @@ fn import(db: &Path, mut kb: KnowledgeBase, workbook: &Path, write_kb: Option<&P
 }
 
 fn profile_def(lib: &Library, name: &str) -> Result<warp_core::store::ProfileDef> {
-    lib.store.profile(name)?.with_context(|| format!("no profile named '{name}'"))
+    lib.store
+        .profile(name)?
+        .with_context(|| format!("no profile named '{name}'"))
 }
 
 fn build(lib: &Library, profile: &str, explain: bool) -> Result<()> {
@@ -190,8 +228,12 @@ fn build(lib: &Library, profile: &str, explain: bool) -> Result<()> {
                     Reason::Default { .. } => {}
                     Reason::Above { other, rule } => println!("        above {other} ({rule:?})"),
                     Reason::Below { other, rule } => println!("        below {other} ({rule:?})"),
-                    Reason::Raised { other, rule } => println!("        RAISED above {other} ({rule:?})"),
-                    Reason::InCycle => println!("        in a rule cycle - placed by default order"),
+                    Reason::Raised { other, rule } => {
+                        println!("        RAISED above {other} ({rule:?})")
+                    }
+                    Reason::InCycle => {
+                        println!("        in a rule cycle - placed by default order")
+                    }
                 }
             }
         }
@@ -211,7 +253,13 @@ fn build(lib: &Library, profile: &str, explain: bool) -> Result<()> {
         println!("! {a} and {b} are incompatible");
     }
     for c in &r.order.cycles {
-        println!("! contradictory rules: {}", c.iter().map(|r| format!("{} > {}", r.above, r.below)).collect::<Vec<_>>().join(", "));
+        println!(
+            "! contradictory rules: {}",
+            c.iter()
+                .map(|r| format!("{} > {}", r.above, r.below))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
     }
     Ok(())
 }
@@ -223,10 +271,20 @@ fn load_list(lib: &Library, source: &str) -> Result<ShareList> {
     let path = Path::new(source);
     if path.is_file() {
         let text = std::fs::read_to_string(path)?;
-        if path.extension().is_some_and(|e| e.eq_ignore_ascii_case("warp")) {
+        if path
+            .extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("warp"))
+        {
             return Ok(mp::from_warp_file(&text)?);
         }
-        let name = path.file_stem().map(|s| s.to_string_lossy().trim_start_matches("profile_").to_owned()).unwrap_or_default();
+        let name = path
+            .file_stem()
+            .map(|s| {
+                s.to_string_lossy()
+                    .trim_start_matches("profile_")
+                    .to_owned()
+            })
+            .unwrap_or_default();
         return Ok(lib.share_list_from_packs(&name, &kaedrin::read_profile(&text))?);
     }
     match lib.store.profile(source)? {
@@ -236,7 +294,14 @@ fn load_list(lib: &Library, source: &str) -> Result<ShareList> {
 }
 
 fn print_diff(a: &ShareList, b: &ShareList, d: &mp::ListDiff) {
-    println!("A: {} ({} packs)   B: {} ({} packs)   shared: {}", a.name, a.entries.len(), b.name, b.entries.len(), d.common);
+    println!(
+        "A: {} ({} packs)   B: {} ({} packs)   shared: {}",
+        a.name,
+        a.entries.len(),
+        b.name,
+        b.entries.len(),
+        d.common
+    );
     if d.identical {
         println!("Identical. Good to play.");
         return;
@@ -274,4 +339,57 @@ fn print_diff(a: &ShareList, b: &ShareList, d: &mp::ListDiff) {
             println!("  {}  - {who}", v.pack);
         }
     }
+}
+
+/// Real data from the library, shaped like the app's command results, plus a
+/// staged multiplayer comparison (the first profile against an altered copy).
+fn dev_fixture(lib: &Library, out: &Path) -> Result<()> {
+    use serde_json::json;
+    let profiles = lib.store.profiles()?;
+    let first = profiles.first().context("the library has no profiles")?;
+    let mut resolved = serde_json::Map::new();
+    for p in &profiles {
+        resolved.insert(
+            p.name.clone(),
+            serde_json::to_value(lib.resolve_profile(p)?)?,
+        );
+    }
+
+    let mut mine = lib.share_list(first)?;
+    let mut theirs = mine.clone();
+    theirs.name = "Friend's list".into();
+    theirs.entries.remove(12);
+    theirs.entries.remove(40);
+    theirs.entries.swap(3, 7);
+    theirs.entries.swap(60, 61);
+    theirs.entries.insert(
+        20,
+        mp::ShareEntry::new(
+            "friend_only_mod.pack",
+            Some(warp_core::model::WorkshopId(3_100_000_001)),
+            1_750_000_000,
+        ),
+    );
+    theirs.entries[30].time_updated += 86_400;
+    let code = mp::encode(&theirs);
+    let mut theirs = mp::decode(&code)?;
+    let diff = lib.compare(&mut mine, &mut theirs, false)?;
+
+    let fixture = json!({
+        "bootstrap": {
+            "taxonomy": lib.taxonomy,
+            "mod_count": lib.store.mods()?.len(),
+            "data_dir": r"C:\Users\you\AppData\Roaming\WARP",
+            "kaedrin_dir": r"C:\Users\you\AppData\Roaming\Kaedrin Mod Manager\Profiles\Warhammer3",
+        },
+        "library": lib.entries()?,
+        "sets": lib.store.sets()?,
+        "profiles": profiles,
+        "resolved": resolved,
+        "share": { "list": lib.share_list(first)?, "code": mp::encode(&lib.share_list(first)?) },
+        "compare": { "code": code, "result": { "diff": diff, "a": mine, "b": theirs } },
+    });
+    std::fs::write(out, serde_json::to_string(&fixture)?)?;
+    println!("Wrote {}", out.display());
+    Ok(())
 }

@@ -43,8 +43,17 @@ pub struct ShareEntry {
 }
 
 impl ShareEntry {
-    pub fn new(pack: impl Into<String>, workshop_id: Option<WorkshopId>, time_updated: i64) -> Self {
-        Self { pack: pack.into(), workshop_id, time_updated, version: None }
+    pub fn new(
+        pack: impl Into<String>,
+        workshop_id: Option<WorkshopId>,
+        time_updated: i64,
+    ) -> Self {
+        Self {
+            pack: pack.into(),
+            workshop_id,
+            time_updated,
+            version: None,
+        }
     }
 
     /// The version fingerprint, from the timestamp when known.
@@ -98,11 +107,15 @@ pub fn encode(list: &ShareList) -> String {
     for e in &list.entries {
         // The receiver can look a single-pack mod's name up by id; send the rest.
         let needs_name = e.workshop_id.is_none_or(|id| ids[&id] > 1);
-        put_bytes(&mut payload, if needs_name { e.pack.as_bytes() } else { b"" });
+        put_bytes(
+            &mut payload,
+            if needs_name { e.pack.as_bytes() } else { b"" },
+        );
     }
 
     let mut enc = DeflateEncoder::new(Vec::new(), Compression::best());
-    enc.write_all(&payload).expect("writing to a Vec cannot fail");
+    enc.write_all(&payload)
+        .expect("writing to a Vec cannot fail");
     let compressed = enc.finish().expect("writing to a Vec cannot fail");
     format!("{CODE_PREFIX}{}", URL_SAFE_NO_PAD.encode(compressed))
 }
@@ -110,20 +123,27 @@ pub fn encode(list: &ShareList) -> String {
 /// Decodes a share code. Accepts a whole pasted message: the code is found
 /// wherever it sits, with Discord formatting and line breaks ignored.
 pub fn decode(text: &str) -> Result<ShareList, Error> {
-    let start = text.find(CODE_PREFIX).ok_or_else(|| bad("no WARP share code found"))?;
+    let start = text
+        .find(CODE_PREFIX)
+        .ok_or_else(|| bad("no WARP share code found"))?;
     let body: String = text[start + CODE_PREFIX.len()..]
         .chars()
         .filter(|c| !c.is_whitespace())
         .take_while(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
         .collect();
-    let compressed = URL_SAFE_NO_PAD.decode(body).map_err(|_| bad("the code is damaged (invalid characters)"))?;
+    let compressed = URL_SAFE_NO_PAD
+        .decode(body)
+        .map_err(|_| bad("the code is damaged (invalid characters)"))?;
     let mut payload = Vec::new();
     DeflateDecoder::new(&compressed[..])
         .take(4 << 20)
         .read_to_end(&mut payload)
         .map_err(|_| bad("the code is damaged (incomplete or altered)"))?;
 
-    let mut r = Reader { buf: &payload, pos: 0 };
+    let mut r = Reader {
+        buf: &payload,
+        pos: 0,
+    };
     if r.byte()? != PAYLOAD_VERSION {
         return Err(bad("this code was made by a newer WARP; update to read it"));
     }
@@ -133,7 +153,9 @@ pub fn decode(text: &str) -> Result<ShareList, Error> {
         return Err(bad("the code is damaged (implausible size)"));
     }
     let ids: Vec<u64> = (0..count).map(|_| r.varint()).collect::<Result<_, _>>()?;
-    let tags: Vec<u16> = (0..count).map(|_| Ok(u16::from_le_bytes([r.byte()?, r.byte()?]))).collect::<Result<_, Error>>()?;
+    let tags: Vec<u16> = (0..count)
+        .map(|_| Ok(u16::from_le_bytes([r.byte()?, r.byte()?])))
+        .collect::<Result<_, Error>>()?;
     let packs: Vec<String> = (0..count).map(|_| r.string()).collect::<Result<_, _>>()?;
     let entries = packs
         .into_iter()
@@ -158,13 +180,20 @@ struct WarpFile {
 
 /// The `.warp` file form of a list: complete (names and timestamps), for lists too long to paste.
 pub fn to_warp_file(list: &ShareList) -> String {
-    serde_json::to_string_pretty(&WarpFile { warp: WARP_FILE_FORMAT, list: list.clone() }).expect("serializes")
+    serde_json::to_string_pretty(&WarpFile {
+        warp: WARP_FILE_FORMAT,
+        list: list.clone(),
+    })
+    .expect("serializes")
 }
 
 pub fn from_warp_file(json: &str) -> Result<ShareList, Error> {
-    let file: WarpFile = serde_json::from_str(json).map_err(|e| bad(&format!("not a .warp file: {e}")))?;
+    let file: WarpFile =
+        serde_json::from_str(json).map_err(|e| bad(&format!("not a .warp file: {e}")))?;
     if file.warp > WARP_FILE_FORMAT {
-        return Err(bad("this .warp file was made by a newer WARP; update to read it"));
+        return Err(bad(
+            "this .warp file was made by a newer WARP; update to read it",
+        ));
     }
     Ok(file.list)
 }
@@ -229,8 +258,12 @@ pub fn diff(a: &ShareList, b: &ShareList) -> ListDiff {
     let only_in_b = entries_where(b, |i| b_to_a[i].is_none());
 
     // Shared entries in B's order: (a entry, b entry, position in A).
-    let shared: Vec<(&ShareEntry, &ShareEntry, usize)> =
-        b.entries.iter().zip(&b_to_a).filter_map(|(be, ai)| ai.map(|ai| (&a.entries[ai], be, ai))).collect();
+    let shared: Vec<(&ShareEntry, &ShareEntry, usize)> = b
+        .entries
+        .iter()
+        .zip(&b_to_a)
+        .filter_map(|(be, ai)| ai.map(|ai| (&a.entries[ai], be, ai)))
+        .collect();
     let a_positions: Vec<usize> = shared.iter().map(|&(_, _, ai)| ai).collect();
     let keep = longest_increasing_subsequence(&a_positions);
 
@@ -257,14 +290,22 @@ pub fn diff(a: &ShareList, b: &ShareList) -> ListDiff {
                 workshop_id: be.workshop_id.or(ae.workshop_id),
                 a_time_updated: ae.time_updated,
                 b_time_updated: be.time_updated,
-                stale: (ae.time_updated > 0 && be.time_updated > 0)
-                    .then_some(if ae.time_updated < be.time_updated { Side::A } else { Side::B }),
+                stale: (ae.time_updated > 0 && be.time_updated > 0).then_some(
+                    if ae.time_updated < be.time_updated {
+                        Side::A
+                    } else {
+                        Side::B
+                    },
+                ),
             })
         })
         .collect();
 
     ListDiff {
-        identical: only_in_a.is_empty() && only_in_b.is_empty() && moves.is_empty() && version_mismatches.is_empty(),
+        identical: only_in_a.is_empty()
+            && only_in_b.is_empty()
+            && moves.is_empty()
+            && version_mismatches.is_empty(),
         common: shared.len(),
         only_in_a,
         only_in_b,
@@ -275,12 +316,27 @@ pub fn diff(a: &ShareList, b: &ShareList) -> ListDiff {
 
 /// Settles who is stale using Steam's current `time_updated` per mod. The side
 /// whose version matches Steam is up to date.
-pub fn resolve_stale(diff: &mut ListDiff, a: &ShareList, b: &ShareList, steam_current: &HashMap<WorkshopId, i64>) {
-    let tag_of = |list: &ShareList, id: WorkshopId| list.entries.iter().find(|e| e.workshop_id == Some(id)).and_then(ShareEntry::version_tag);
+pub fn resolve_stale(
+    diff: &mut ListDiff,
+    a: &ShareList,
+    b: &ShareList,
+    steam_current: &HashMap<WorkshopId, i64>,
+) {
+    let tag_of = |list: &ShareList, id: WorkshopId| {
+        list.entries
+            .iter()
+            .find(|e| e.workshop_id == Some(id))
+            .and_then(ShareEntry::version_tag)
+    };
     for m in &mut diff.version_mismatches {
         let Some(id) = m.workshop_id else { continue };
-        let Some(current) = steam_current.get(&id).and_then(|&t| version_tag(t)) else { continue };
-        let (a_ok, b_ok) = (tag_of(a, id) == Some(current), tag_of(b, id) == Some(current));
+        let Some(current) = steam_current.get(&id).and_then(|&t| version_tag(t)) else {
+            continue;
+        };
+        let (a_ok, b_ok) = (
+            tag_of(a, id) == Some(current),
+            tag_of(b, id) == Some(current),
+        );
         m.stale = Some(match (a_ok, b_ok) {
             (true, false) => Side::B,
             (false, true) => Side::A,
@@ -294,7 +350,13 @@ fn match_entries(a: &ShareList, b: &ShareList) -> Vec<Option<usize>> {
     let (a_ids, b_ids) = (id_counts(a), id_counts(b));
     // Pass 1: by workshop id (with the pack name too, for mods that ship several packs).
     let key = |e: &ShareEntry, counts: &HashMap<WorkshopId, usize>| {
-        e.workshop_id.map(|id| if counts[&id] > 1 { format!("{id}/{}", pack_key(&e.pack)) } else { id.to_string() })
+        e.workshop_id.map(|id| {
+            if counts[&id] > 1 {
+                format!("{id}/{}", pack_key(&e.pack))
+            } else {
+                id.to_string()
+            }
+        })
     };
     let mut a_by_key: HashMap<String, usize> = HashMap::new();
     for (i, e) in a.entries.iter().enumerate() {
@@ -307,7 +369,9 @@ fn match_entries(a: &ShareList, b: &ShareList) -> Vec<Option<usize>> {
         .entries
         .iter()
         .map(|e| {
-            let i = key(e, &b_ids).and_then(|k| a_by_key.get(&k).copied()).filter(|&i| !used[i])?;
+            let i = key(e, &b_ids)
+                .and_then(|k| a_by_key.get(&k).copied())
+                .filter(|&i| !used[i])?;
             used[i] = true;
             Some(i)
         })
@@ -321,10 +385,11 @@ fn match_entries(a: &ShareList, b: &ShareList) -> Vec<Option<usize>> {
         }
     }
     for (slot, e) in out.iter_mut().zip(&b.entries) {
-        if slot.is_none() && !e.pack.is_empty() {
-            if let Some(i) = a_by_pack.remove(&pack_key(&e.pack)) {
-                *slot = Some(i);
-            }
+        if slot.is_none()
+            && !e.pack.is_empty()
+            && let Some(i) = a_by_pack.remove(&pack_key(&e.pack))
+        {
+            *slot = Some(i);
         }
     }
     out
@@ -335,12 +400,20 @@ fn entries_where(list: &ShareList, keep: impl Fn(usize) -> bool) -> Vec<DiffEntr
         .iter()
         .enumerate()
         .filter(|(i, _)| keep(*i))
-        .map(|(i, e)| DiffEntry { pack: e.label(), workshop_id: e.workshop_id, position: i })
+        .map(|(i, e)| DiffEntry {
+            pack: e.label(),
+            workshop_id: e.workshop_id,
+            position: i,
+        })
         .collect()
 }
 
 fn best_label(a: &ShareEntry, b: &ShareEntry) -> String {
-    if b.pack.is_empty() { a.label() } else { b.label() }
+    if b.pack.is_empty() {
+        a.label()
+    } else {
+        b.label()
+    }
 }
 
 fn id_counts(list: &ShareList) -> HashMap<WorkshopId, usize> {
@@ -408,7 +481,10 @@ struct Reader<'a> {
 
 impl Reader<'_> {
     fn byte(&mut self) -> Result<u8, Error> {
-        let b = *self.buf.get(self.pos).ok_or_else(|| bad("the code is damaged (truncated)"))?;
+        let b = *self
+            .buf
+            .get(self.pos)
+            .ok_or_else(|| bad("the code is damaged (truncated)"))?;
         self.pos += 1;
         Ok(b)
     }
@@ -427,8 +503,13 @@ impl Reader<'_> {
 
     fn string(&mut self) -> Result<String, Error> {
         let len = self.varint()? as usize;
-        let end = self.pos.checked_add(len).filter(|&e| e <= self.buf.len()).ok_or_else(|| bad("the code is damaged (truncated)"))?;
-        let s = std::str::from_utf8(&self.buf[self.pos..end]).map_err(|_| bad("the code is damaged (bad text)"))?;
+        let end = self
+            .pos
+            .checked_add(len)
+            .filter(|&e| e <= self.buf.len())
+            .ok_or_else(|| bad("the code is damaged (truncated)"))?;
+        let s = std::str::from_utf8(&self.buf[self.pos..end])
+            .map_err(|_| bad("the code is damaged (bad text)"))?;
         self.pos = end;
         Ok(s.to_owned())
     }
@@ -445,7 +526,13 @@ mod tests {
             entries: packs
                 .iter()
                 .enumerate()
-                .map(|(i, p)| ShareEntry::new(*p, Some(WorkshopId(2_800_000_000 + i as u64 * 7_919_111)), 1_690_000_000 + i as i64 * 86_413))
+                .map(|(i, p)| {
+                    ShareEntry::new(
+                        *p,
+                        Some(WorkshopId(2_800_000_000 + i as u64 * 7_919_111)),
+                        1_690_000_000 + i as i64 * 86_413,
+                    )
+                })
                 .collect(),
         }
     }
@@ -454,7 +541,16 @@ mod tests {
     fn as_received(l: &ShareList) -> ShareList {
         ShareList {
             name: l.name.clone(),
-            entries: l.entries.iter().map(|e| ShareEntry { pack: String::new(), time_updated: 0, version: e.version_tag(), ..e.clone() }).collect(),
+            entries: l
+                .entries
+                .iter()
+                .map(|e| ShareEntry {
+                    pack: String::new(),
+                    time_updated: 0,
+                    version: e.version_tag(),
+                    ..e.clone()
+                })
+                .collect(),
         }
     }
 
@@ -463,7 +559,11 @@ mod tests {
         let mut l = list(&["!a.pack", "b.pack", "Aekold Reskin.pack"]);
         l.entries.push(ShareEntry::new("no_id.pack", None, 0));
         let code = encode(&l);
-        let pasted = format!("here's my list:\n```\n{}\n{}\n```", &code[..20], &code[20..]);
+        let pasted = format!(
+            "here's my list:\n```\n{}\n{}\n```",
+            &code[..20],
+            &code[20..]
+        );
         let got = decode(&pasted).unwrap();
         let mut expected = as_received(&l);
         expected.entries[3].pack = "no_id.pack".into(); // no id, so the name travels
@@ -517,8 +617,20 @@ mod tests {
         let d = diff(&a, &b);
         assert!(!d.identical);
         assert_eq!(d.common, 3);
-        assert_eq!(d.only_in_a.iter().map(|e| e.pack.as_str()).collect::<Vec<_>>(), ["x.pack"]);
-        assert_eq!(d.only_in_b.iter().map(|e| e.pack.as_str()).collect::<Vec<_>>(), ["y.pack"]);
+        assert_eq!(
+            d.only_in_a
+                .iter()
+                .map(|e| e.pack.as_str())
+                .collect::<Vec<_>>(),
+            ["x.pack"]
+        );
+        assert_eq!(
+            d.only_in_b
+                .iter()
+                .map(|e| e.pack.as_str())
+                .collect::<Vec<_>>(),
+            ["y.pack"]
+        );
         assert_eq!(d.moves.len(), 1, "one move fixes a swap: {:?}", d.moves);
         assert_eq!(d.version_mismatches.len(), 1);
         assert_eq!(d.version_mismatches[0].stale, Some(Side::A));
@@ -531,7 +643,8 @@ mod tests {
         b.entries[0].version = version_tag(1); // B shared an old build
         let mut d = diff(&a, &b);
         assert_eq!(d.version_mismatches[0].stale, None);
-        let current = HashMap::from([(a.entries[0].workshop_id.unwrap(), a.entries[0].time_updated)]);
+        let current =
+            HashMap::from([(a.entries[0].workshop_id.unwrap(), a.entries[0].time_updated)]);
         resolve_stale(&mut d, &a, &b, &current);
         assert_eq!(d.version_mismatches[0].stale, Some(Side::B));
     }
@@ -546,7 +659,9 @@ mod tests {
 
     #[test]
     fn a_150_mod_list_fits_in_a_discord_message() {
-        let names: Vec<String> = (0..150).map(|i| format!("!some_typical_mod_name_{i:03}_sfo.pack")).collect();
+        let names: Vec<String> = (0..150)
+            .map(|i| format!("!some_typical_mod_name_{i:03}_sfo.pack"))
+            .collect();
         let code = encode(&list(&names.iter().map(String::as_str).collect::<Vec<_>>()));
         assert!(code.len() <= 2000, "code is {} chars", code.len());
     }

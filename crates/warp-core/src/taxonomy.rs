@@ -44,8 +44,12 @@ impl Taxonomy {
 
     pub fn parse(text: &str) -> Result<Self, Error> {
         let mut taxonomy: Self = toml::from_str(text).map_err(|e| Error::Format(e.to_string()))?;
-        taxonomy.tiers.sort_by_key(|t| std::cmp::Reverse(t.priority));
-        taxonomy.roles.sort_by_key(|r| std::cmp::Reverse(r.priority));
+        taxonomy
+            .tiers
+            .sort_by_key(|t| std::cmp::Reverse(t.priority));
+        taxonomy
+            .roles
+            .sort_by_key(|r| std::cmp::Reverse(r.priority));
         if taxonomy.role(Self::DEFAULT_ROLE).is_none() {
             return Err(Error::Format(format!(
                 "taxonomy must define the default role '{}'",

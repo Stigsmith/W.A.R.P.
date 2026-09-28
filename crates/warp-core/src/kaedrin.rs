@@ -10,12 +10,20 @@ use crate::model::is_pack_name;
 
 /// Kaedrin's Warhammer III profile folder (it may not exist).
 pub fn profiles_dir() -> Option<PathBuf> {
-    Some(dirs::data_dir()?.join("Kaedrin Mod Manager").join("Profiles").join("Warhammer3"))
+    Some(
+        dirs::data_dir()?
+            .join("Kaedrin Mod Manager")
+            .join("Profiles")
+            .join("Warhammer3"),
+    )
 }
 
 /// Kaedrin's file name for a profile.
 pub fn profile_file_name(profile: &str) -> String {
-    let name: String = profile.chars().map(|c| if r#"\/:*?"<>|"#.contains(c) { '_' } else { c }).collect();
+    let name: String = profile
+        .chars()
+        .map(|c| if r#"\/:*?"<>|"#.contains(c) { '_' } else { c })
+        .collect();
     format!("profile_{}.txt", name.trim())
 }
 
@@ -33,7 +41,11 @@ fn rank(c: char) -> u32 {
 }
 
 fn stem(name: &str) -> &str {
-    if is_pack_name(name) { &name[..name.len() - 5] } else { name }
+    if is_pack_name(name) {
+        &name[..name.len() - 5]
+    } else {
+        name
+    }
 }
 
 /// A sortable key for a pack name. Earlier in Kaedrin order means a smaller key.
@@ -73,9 +85,16 @@ mod tests {
 
     #[test]
     fn punctuation_before_digits_before_letters_before_brackets() {
-        let mut names = vec!["_z.pack", "b.pack", "1.pack", "@a.pack", "!a.pack", "~x.pack"];
+        let mut names = vec![
+            "_z.pack", "b.pack", "1.pack", "@a.pack", "!a.pack", "~x.pack",
+        ];
         names.sort_by(|a, b| compare_names(a, b));
-        assert_eq!(names, ["!a.pack", "@a.pack", "1.pack", "b.pack", "_z.pack", "~x.pack"]);
+        assert_eq!(
+            names,
+            [
+                "!a.pack", "@a.pack", "1.pack", "b.pack", "_z.pack", "~x.pack"
+            ]
+        );
     }
 
     #[test]
@@ -88,12 +107,18 @@ mod tests {
     fn hyphen_and_space_are_ranked() {
         // v1 used an en dash in its table, so '-' fell through to "unknown".
         assert_eq!(compare_names("a-b.pack", "a0.pack"), Ordering::Less);
-        assert_eq!(compare_names("Azazel - Reskin.pack", "Azazel_Reskin.pack"), Ordering::Less);
+        assert_eq!(
+            compare_names("Azazel - Reskin.pack", "Azazel_Reskin.pack"),
+            Ordering::Less
+        );
     }
 
     #[test]
     fn prefix_sorts_first_and_extension_is_ignored() {
-        assert_eq!(compare_names("marthreload.pack", "marthreload_fix.pack"), Ordering::Less);
+        assert_eq!(
+            compare_names("marthreload.pack", "marthreload_fix.pack"),
+            Ordering::Less
+        );
     }
 
     #[test]

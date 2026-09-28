@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "What the W.A.R.P. window may do.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "dialog:allow-ask",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "steam://*" }, { "url": "https://steamcommunity.com/*" }]
+    }
+  ]
+}

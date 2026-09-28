@@ -49,7 +49,11 @@ pub fn builtin_kb() -> KnowledgeBase {
 pub fn data_dir() -> PathBuf {
     std::env::var_os("WARP_HOME")
         .map(PathBuf::from)
-        .unwrap_or_else(|| dirs::data_dir().unwrap_or_else(|| PathBuf::from(".")).join("WARP"))
+        .unwrap_or_else(|| {
+            dirs::data_dir()
+                .unwrap_or_else(|| PathBuf::from("."))
+                .join("WARP")
+        })
 }
 
 pub fn default_db_path() -> PathBuf {

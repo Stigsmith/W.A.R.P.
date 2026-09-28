@@ -1,0 +1,260 @@
+:root {
+  --bg: #0a0c09;
+  --surface: #10140e;
+  --surface-2: #161b13;
+  --surface-3: #1d2419;
+  --border: #232d1e;
+  --border-strong: #33412b;
+  --text: #dde8d4;
+  --muted: #8d9c84;
+  --faint: #5e6b57;
+  --accent: #82e043;
+  --accent-strong: #a5f06d;
+  --accent-dim: #2f4d1c;
+  --accent-glow: rgb(130 224 67 / 0.22);
+  --danger: #f06552;
+  --danger-dim: rgb(240 101 82 / 0.12);
+  --warn: #e8b64c;
+  --warn-dim: rgb(232 182 76 / 0.12);
+  --info: #62b8e3;
+  --info-dim: rgb(98 184 227 / 0.12);
+  --ok-dim: rgb(130 224 67 / 0.1);
+
+  --radius: 8px;
+  --radius-sm: 5px;
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --mono: "Cascadia Mono", "Cascadia Code", Consolas, monospace;
+
+  color-scheme: dark;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  overflow: hidden;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+h1 {
+  font-size: 22px;
+}
+
+h2 {
+  font-size: 16px;
+}
+
+h3 {
+  font-size: 14px;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--accent);
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.faint {
+  color: var(--faint);
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+/* ---- Controls ---- */
+
+button,
+.btn {
+  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+
+button:hover:not(:disabled) {
+  background: var(--surface-3);
+  border-color: var(--faint);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b1406;
+  font-weight: 600;
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 18px var(--accent-glow);
+}
+
+button.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+
+button.ghost:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: transparent;
+}
+
+button.small {
+  padding: 4px 9px;
+  font-size: 12.5px;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--faint);
+}
+
+select {
+  cursor: pointer;
+}
+
+textarea {
+  resize: vertical;
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+/* ---- Chips & badges ---- */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  border: 1px solid var(--border-strong);
+  color: var(--muted);
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+.chip.accent {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+  background: var(--ok-dim);
+}
+
+.chip.warn {
+  color: var(--warn);
+  border-color: rgb(232 182 76 / 0.35);
+  background: var(--warn-dim);
+}
+
+.chip.danger {
+  color: var(--danger);
+  border-color: rgb(240 101 82 / 0.35);
+  background: var(--danger-dim);
+}
+
+.chip.info {
+  color: var(--info);
+  border-color: rgb(98 184 227 / 0.35);
+  background: var(--info-dim);
+}
+
+/* ---- Panels ---- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.scroll {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--muted);
+}
+
+::selection {
+  background: var(--accent-dim);
+}

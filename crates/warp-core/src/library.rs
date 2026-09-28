@@ -62,7 +62,11 @@ pub struct ImportSummary {
 
 impl Library {
     pub fn new(store: Store, kb: KnowledgeBase) -> Self {
-        Self { store, kb, taxonomy: Taxonomy::builtin() }
+        Self {
+            store,
+            kb,
+            taxonomy: Taxonomy::builtin(),
+        }
     }
 
     pub fn entries(&self) -> Result<Vec<LibraryEntry>, Error> {
@@ -83,7 +87,12 @@ impl Library {
                 let packs = packs.get(&id).cloned().unwrap_or_default();
                 let heuristic = knowledge::heuristic(&info, &packs);
                 LibraryEntry {
-                    knowledge: knowledge::resolve(&self.taxonomy, user.get(&id), self.kb.mods.get(&id), &heuristic),
+                    knowledge: knowledge::resolve(
+                        &self.taxonomy,
+                        user.get(&id),
+                        self.kb.mods.get(&id),
+                        &heuristic,
+                    ),
                     user: user.get(&id).cloned(),
                     community: self.kb.mods.get(&id).cloned(),
                     sets: sets_of.remove(&id).unwrap_or_default(),
@@ -97,7 +106,11 @@ impl Library {
 
     /// Works out a profile's mods and their load order.
     pub fn resolve_profile(&self, def: &ProfileDef) -> Result<ResolvedProfile, Error> {
-        let entries: HashMap<WorkshopId, LibraryEntry> = self.entries()?.into_iter().map(|e| (e.info.id, e)).collect();
+        let entries: HashMap<WorkshopId, LibraryEntry> = self
+            .entries()?
+            .into_iter()
+            .map(|e| (e.info.id, e))
+            .collect();
         let sets = self.store.sets()?;
 
         // Members: the stacked sets, plus extras, minus exclusions. First mention wins.
@@ -139,14 +152,24 @@ impl Library {
             }
             for other in &e.knowledge.incompatible_with {
                 if in_profile.contains(other) {
-                    incompatible.insert(if id < other { (*id, *other) } else { (*other, *id) });
+                    incompatible.insert(if id < other {
+                        (*id, *other)
+                    } else {
+                        (*other, *id)
+                    });
                 }
             }
             if e.packs.is_empty() {
                 out.mods_without_packs.push(*id);
             }
-            let tier = self.taxonomy.tier(&e.knowledge.tier).unwrap_or(self.taxonomy.fallback_tier());
-            let role = self.taxonomy.role(&e.knowledge.role).unwrap_or(self.taxonomy.default_role());
+            let tier = self
+                .taxonomy
+                .tier(&e.knowledge.tier)
+                .unwrap_or(self.taxonomy.fallback_tier());
+            let role = self
+                .taxonomy
+                .role(&e.knowledge.role)
+                .unwrap_or(self.taxonomy.default_role());
             items.extend(e.packs.iter().map(|pack| OrderItem {
                 pack: pack.clone(),
                 workshop_id: Some(*id),
@@ -174,7 +197,10 @@ impl Library {
                 .placements
                 .iter()
                 .map(|p| {
-                    let time = p.workshop_id.and_then(|id| times.get(&id).copied()).unwrap_or(0);
+                    let time = p
+                        .workshop_id
+                        .and_then(|id| times.get(&id).copied())
+                        .unwrap_or(0);
                     ShareEntry::new(p.pack.clone(), p.workshop_id, time)
                 })
                 .collect(),
@@ -197,7 +223,11 @@ impl Library {
                 .iter()
                 .map(|p| {
                     let id = by_pack.get(&pack_key(p)).copied();
-                    ShareEntry::new(p.clone(), id, id.and_then(|id| times.get(&id).copied()).unwrap_or(0))
+                    ShareEntry::new(
+                        p.clone(),
+                        id,
+                        id.and_then(|id| times.get(&id).copied()).unwrap_or(0),
+                    )
                 })
                 .collect(),
         })
@@ -207,7 +237,11 @@ impl Library {
     pub fn fill_pack_names(&self, list: &mut ShareList) -> Result<(), Error> {
         let packs = self.store.packs()?;
         for e in list.entries.iter_mut().filter(|e| e.pack.is_empty()) {
-            if let Some([only]) = e.workshop_id.and_then(|id| packs.get(&id)).map(Vec::as_slice) {
+            if let Some([only]) = e
+                .workshop_id
+                .and_then(|id| packs.get(&id))
+                .map(Vec::as_slice)
+            {
                 e.pack = only.clone();
             }
         }
@@ -216,21 +250,38 @@ impl Library {
 
     /// Compares two lists (A = mine, B = theirs, by convention). With `check_steam`,
     /// version mismatches whose stale side isn't known yet are settled by asking Steam.
-    pub fn compare(&self, a: &mut ShareList, b: &mut ShareList, check_steam: bool) -> Result<ListDiff, Error> {
+    pub fn compare(
+        &self,
+        a: &mut ShareList,
+        b: &mut ShareList,
+        check_steam: bool,
+    ) -> Result<ListDiff, Error> {
         self.fill_pack_names(a)?;
         self.fill_pack_names(b)?;
         let mut d = mp::diff(a, b);
-        let unsettled: Vec<WorkshopId> =
-            d.version_mismatches.iter().filter(|m| m.stale.is_none()).filter_map(|m| m.workshop_id).collect();
+        let unsettled: Vec<WorkshopId> = d
+            .version_mismatches
+            .iter()
+            .filter(|m| m.stale.is_none())
+            .filter_map(|m| m.workshop_id)
+            .collect();
         if check_steam && !unsettled.is_empty() {
-            let current = steam::fetch_details(&unsettled)?.into_iter().map(|m| (m.id, m.time_updated)).collect();
+            let current = steam::fetch_details(&unsettled)?
+                .into_iter()
+                .map(|m| (m.id, m.time_updated))
+                .collect();
             mp::resolve_stale(&mut d, a, b, &current);
         }
         Ok(d)
     }
 
     fn time_updated(&self) -> Result<HashMap<WorkshopId, i64>, Error> {
-        Ok(self.store.mods()?.into_iter().map(|(m, _)| (m.id, m.time_updated)).collect())
+        Ok(self
+            .store
+            .mods()?
+            .into_iter()
+            .map(|(m, _)| (m.id, m.time_updated))
+            .collect())
     }
 
     /// Saves the user's knowledge for a mod, keeping only what differs from the community KB.
@@ -248,15 +299,21 @@ impl Library {
             if let Some(c) = &m.component {
                 match sets.iter_mut().find(|s| s.name.eq_ignore_ascii_case(c)) {
                     Some(set) => set.members.push(m.info.id),
-                    None => sets.push(ModSet { name: c.clone(), members: vec![m.info.id] }),
+                    None => sets.push(ModSet {
+                        name: c.clone(),
+                        members: vec![m.info.id],
+                    }),
                 }
             }
         }
-        let profile = import.profile.as_ref().map(|(name, components)| ProfileDef {
-            name: name.clone(),
-            sets: components.clone(),
-            ..ProfileDef::default()
-        });
+        let profile = import
+            .profile
+            .as_ref()
+            .map(|(name, components)| ProfileDef {
+                name: name.clone(),
+                sets: components.clone(),
+                ..ProfileDef::default()
+            });
 
         let kb = &self.kb;
         let overrides: Vec<(WorkshopId, ModKnowledge)> = import
@@ -309,12 +366,20 @@ impl Library {
             None => self.store.mods()?.into_iter().map(|(m, _)| m.id).collect(),
         };
         let fresh = steam::fetch_details(&ids)?;
-        let known: HashMap<WorkshopId, ModInfo> = self.store.mods()?.into_iter().map(|(m, _)| (m.id, m)).collect();
+        let known: HashMap<WorkshopId, ModInfo> = self
+            .store
+            .mods()?
+            .into_iter()
+            .map(|(m, _)| (m.id, m))
+            .collect();
         self.store.transaction(|tx| {
             for info in &fresh {
                 // A removed item loses its details on Steam; keep what we knew.
                 let merged = match (info.available, known.get(&info.id)) {
-                    (false, Some(old)) => ModInfo { available: false, ..old.clone() },
+                    (false, Some(old)) => ModInfo {
+                        available: false,
+                        ..old.clone()
+                    },
                     _ => info.clone(),
                 };
                 tx.upsert_mod(&merged)?;
@@ -328,7 +393,11 @@ impl Library {
 /// The parts of `mine` that differ from `community` (the title is never an override).
 fn overrides(mine: &ModKnowledge, community: &ModKnowledge) -> ModKnowledge {
     fn diff<T: PartialEq + Clone + Default>(mine: &T, theirs: &T) -> T {
-        if mine == theirs { T::default() } else { mine.clone() }
+        if mine == theirs {
+            T::default()
+        } else {
+            mine.clone()
+        }
     }
     ModKnowledge {
         title: String::new(),
@@ -362,7 +431,14 @@ mod tests {
             .unwrap();
         let mut kb = KnowledgeBase::new();
         for (id, _, tier, role) in mods {
-            kb.mods.insert(WorkshopId(*id), ModKnowledge { tier: Some((*tier).into()), role: Some((*role).into()), ..Default::default() });
+            kb.mods.insert(
+                WorkshopId(*id),
+                ModKnowledge {
+                    tier: Some((*tier).into()),
+                    role: Some((*role).into()),
+                    ..Default::default()
+                },
+            );
         }
         for (id, k) in kb_entries {
             kb.mods.insert(WorkshopId(*id), k.clone());
@@ -372,10 +448,32 @@ mod tests {
 
     #[test]
     fn profile_stacks_sets_and_orders_by_tier() {
-        let mut lib = lib_with(&[(1, "core.pack", "core", "framework"), (2, "ui.pack", "ui", "content"), (3, "units.pack", "units", "content")], &[]);
-        lib.store.save_set(&ModSet { name: "Base".into(), members: vec![WorkshopId(1), WorkshopId(3)] }).unwrap();
-        lib.store.save_set(&ModSet { name: "Extra".into(), members: vec![WorkshopId(2)] }).unwrap();
-        let def = ProfileDef { name: "p".into(), sets: vec!["Base".into(), "extra".into()], exclude: vec![WorkshopId(3)], ..Default::default() };
+        let mut lib = lib_with(
+            &[
+                (1, "core.pack", "core", "framework"),
+                (2, "ui.pack", "ui", "content"),
+                (3, "units.pack", "units", "content"),
+            ],
+            &[],
+        );
+        lib.store
+            .save_set(&ModSet {
+                name: "Base".into(),
+                members: vec![WorkshopId(1), WorkshopId(3)],
+            })
+            .unwrap();
+        lib.store
+            .save_set(&ModSet {
+                name: "Extra".into(),
+                members: vec![WorkshopId(2)],
+            })
+            .unwrap();
+        let def = ProfileDef {
+            name: "p".into(),
+            sets: vec!["Base".into(), "extra".into()],
+            exclude: vec![WorkshopId(3)],
+            ..Default::default()
+        };
         let r = lib.resolve_profile(&def).unwrap();
         assert_eq!(r.order.packs(), ["ui.pack", "core.pack"]);
 
@@ -386,10 +484,32 @@ mod tests {
 
     #[test]
     fn missing_requirements_and_incompatibilities_are_reported() {
-        let needs = ModKnowledge { tier: Some("ui".into()), requires: vec![WorkshopId(9)], incompatible_with: vec![WorkshopId(2)], ..Default::default() };
-        let mut lib = lib_with(&[(1, "a.pack", "ui", "content"), (2, "b.pack", "core", "content")], &[(1, needs)]);
-        lib.store.save_set(&ModSet { name: "S".into(), members: vec![WorkshopId(1), WorkshopId(2)] }).unwrap();
-        let r = lib.resolve_profile(&ProfileDef { name: "p".into(), sets: vec!["S".into()], ..Default::default() }).unwrap();
+        let needs = ModKnowledge {
+            tier: Some("ui".into()),
+            requires: vec![WorkshopId(9)],
+            incompatible_with: vec![WorkshopId(2)],
+            ..Default::default()
+        };
+        let mut lib = lib_with(
+            &[
+                (1, "a.pack", "ui", "content"),
+                (2, "b.pack", "core", "content"),
+            ],
+            &[(1, needs)],
+        );
+        lib.store
+            .save_set(&ModSet {
+                name: "S".into(),
+                members: vec![WorkshopId(1), WorkshopId(2)],
+            })
+            .unwrap();
+        let r = lib
+            .resolve_profile(&ProfileDef {
+                name: "p".into(),
+                sets: vec!["S".into()],
+                ..Default::default()
+            })
+            .unwrap();
         assert_eq!(r.missing_requirements, [(WorkshopId(1), WorkshopId(9))]);
         assert_eq!(r.incompatibilities, [(WorkshopId(1), WorkshopId(2))]);
     }
@@ -397,10 +517,18 @@ mod tests {
     #[test]
     fn user_knowledge_stores_only_differences() {
         let lib = lib_with(&[(1, "a.pack", "ui", "content")], &[]);
-        let same = ModKnowledge { tier: Some("ui".into()), role: Some("content".into()), ..Default::default() };
+        let same = ModKnowledge {
+            tier: Some("ui".into()),
+            role: Some("content".into()),
+            ..Default::default()
+        };
         lib.set_user_knowledge(WorkshopId(1), &same).unwrap();
         assert!(lib.store.user_knowledge().unwrap().is_empty());
-        let changed = ModKnowledge { tier: Some("battle".into()), role: Some("content".into()), ..Default::default() };
+        let changed = ModKnowledge {
+            tier: Some("battle".into()),
+            role: Some("content".into()),
+            ..Default::default()
+        };
         lib.set_user_knowledge(WorkshopId(1), &changed).unwrap();
         let stored = &lib.store.user_knowledge().unwrap()[&WorkshopId(1)];
         assert_eq!(stored.tier.as_deref(), Some("battle"));
@@ -410,7 +538,9 @@ mod tests {
     #[test]
     fn kaedrin_packs_map_to_mods() {
         let lib = lib_with(&[(1, "Aekold Reskin.pack", "units", "content")], &[]);
-        let l = lib.share_list_from_packs("k", &["aekold reskin.pack".into(), "unknown.pack".into()]).unwrap();
+        let l = lib
+            .share_list_from_packs("k", &["aekold reskin.pack".into(), "unknown.pack".into()])
+            .unwrap();
         assert_eq!(l.entries[0].workshop_id, Some(WorkshopId(1)));
         assert_eq!(l.entries[1].workshop_id, None);
     }

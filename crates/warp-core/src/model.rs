@@ -130,7 +130,10 @@ mod tests {
         let json = serde_json::to_string(&id).unwrap();
         assert_eq!(json, "\"2968554980\"");
         assert_eq!(serde_json::from_str::<WorkshopId>(&json).unwrap(), id);
-        assert_eq!(serde_json::from_str::<WorkshopId>("2968554980").unwrap(), id);
+        assert_eq!(
+            serde_json::from_str::<WorkshopId>("2968554980").unwrap(),
+            id
+        );
     }
 
     #[test]

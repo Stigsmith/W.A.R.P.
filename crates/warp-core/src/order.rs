@@ -123,9 +123,16 @@ pub fn default_order(items: &[OrderItem]) -> Vec<usize> {
 pub fn solve(items: &[OrderItem], pins: &[Pin]) -> OrderResult {
     // Deduplicate by pack name, keeping the first occurrence.
     let mut seen = BTreeSet::new();
-    let items: Vec<&OrderItem> = items.iter().filter(|i| seen.insert(pack_key(&i.pack))).collect();
+    let items: Vec<&OrderItem> = items
+        .iter()
+        .filter(|i| seen.insert(pack_key(&i.pack)))
+        .collect();
     let n = items.len();
-    let by_pack: HashMap<String, usize> = items.iter().enumerate().map(|(i, it)| (pack_key(&it.pack), i)).collect();
+    let by_pack: HashMap<String, usize> = items
+        .iter()
+        .enumerate()
+        .map(|(i, it)| (pack_key(&it.pack), i))
+        .collect();
     let mut by_mod: HashMap<WorkshopId, Vec<usize>> = HashMap::new();
     for (i, it) in items.iter().enumerate() {
         if let Some(id) = it.workshop_id {
@@ -136,7 +143,10 @@ pub fn solve(items: &[OrderItem], pins: &[Pin]) -> OrderResult {
     // Hard rules as edges above -> below.
     let mut edges: BTreeSet<(usize, usize, RuleKind)> = BTreeSet::new();
     for (a, it) in items.iter().enumerate() {
-        for (targets, kind) in [(&it.requires, RuleKind::Requires), (&it.patches, RuleKind::Patches)] {
+        for (targets, kind) in [
+            (&it.requires, RuleKind::Requires),
+            (&it.patches, RuleKind::Patches),
+        ] {
             for target in targets {
                 for &b in by_mod.get(target).into_iter().flatten() {
                     if b != a {
@@ -148,7 +158,10 @@ pub fn solve(items: &[OrderItem], pins: &[Pin]) -> OrderResult {
     }
     let mut unused_pins = Vec::new();
     for pin in pins {
-        match (by_pack.get(&pack_key(&pin.above)), by_pack.get(&pack_key(&pin.below))) {
+        match (
+            by_pack.get(&pack_key(&pin.above)),
+            by_pack.get(&pack_key(&pin.below)),
+        ) {
             (Some(&a), Some(&b)) if a != b => {
                 edges.insert((a, b, RuleKind::Pin));
             }
@@ -189,7 +202,11 @@ pub fn solve(items: &[OrderItem], pins: &[Pin]) -> OrderResult {
                         cycles.push(
                             cycle
                                 .iter()
-                                .map(|&(a, b, kind)| Rule { above: items[a].pack.clone(), below: items[b].pack.clone(), kind })
+                                .map(|&(a, b, kind)| Rule {
+                                    above: items[a].pack.clone(),
+                                    below: items[b].pack.clone(),
+                                    kind,
+                                })
                                 .collect(),
                         );
                         cycle.iter().map(|&(a, _, _)| a).collect()
@@ -199,7 +216,10 @@ pub fn solve(items: &[OrderItem], pins: &[Pin]) -> OrderResult {
                 for &m in &members {
                     in_cycle[m] = true;
                 }
-                *members.iter().min_by(|&&a, &&b| keys[a].cmp(&keys[b])).expect("nodes remain")
+                *members
+                    .iter()
+                    .min_by(|&&a, &&b| keys[a].cmp(&keys[b]))
+                    .expect("nodes remain")
             }
         };
         placed[next] = true;
@@ -225,15 +245,27 @@ pub fn solve(items: &[OrderItem], pins: &[Pin]) -> OrderResult {
         .rev()
         .map(|&i| {
             let it = items[i];
-            let mut reasons = vec![Reason::Default { tier: it.tier.clone(), role: it.role.clone() }];
+            let mut reasons = vec![Reason::Default {
+                tier: it.tier.clone(),
+                role: it.role.clone(),
+            }];
             for &(a, b, kind) in &edges {
                 if a == i && position[a] < position[b] {
-                    reasons.push(Reason::Above { other: items[b].pack.clone(), rule: kind });
+                    reasons.push(Reason::Above {
+                        other: items[b].pack.clone(),
+                        rule: kind,
+                    });
                     if keys[a] < keys[b] {
-                        reasons.push(Reason::Raised { other: items[b].pack.clone(), rule: kind });
+                        reasons.push(Reason::Raised {
+                            other: items[b].pack.clone(),
+                            rule: kind,
+                        });
                     }
                 } else if b == i && position[a] < position[b] {
-                    reasons.push(Reason::Below { other: items[a].pack.clone(), rule: kind });
+                    reasons.push(Reason::Below {
+                        other: items[a].pack.clone(),
+                        rule: kind,
+                    });
                 }
             }
             if in_cycle[i] {
@@ -249,7 +281,11 @@ pub fn solve(items: &[OrderItem], pins: &[Pin]) -> OrderResult {
         })
         .collect();
 
-    OrderResult { placements, cycles, unused_pins }
+    OrderResult {
+        placements,
+        cycles,
+        unused_pins,
+    }
 }
 
 /// Finds one cycle among the unplaced nodes, as a list of edges.
@@ -308,7 +344,10 @@ mod tests {
             item("ui_sub.pack", 4, 90, 40),
         ];
         let r = solve(&items, &[]);
-        assert_eq!(r.packs(), ["ui_sub.pack", "!ui_a.pack", "ui_b.pack", "core.pack"]);
+        assert_eq!(
+            r.packs(),
+            ["ui_sub.pack", "!ui_a.pack", "ui_b.pack", "core.pack"]
+        );
     }
 
     #[test]
@@ -316,19 +355,39 @@ mod tests {
         // A low-tier patch that patches a UI mod rises to sit just above it.
         let mut patch = item("patch.pack", 1, 0, 40);
         patch.patches = vec![WorkshopId(2)];
-        let items = vec![patch, item("ui.pack", 2, 90, 20), item("battle.pack", 3, 70, 20), item("top.pack", 4, 110, 20)];
+        let items = vec![
+            patch,
+            item("ui.pack", 2, 90, 20),
+            item("battle.pack", 3, 70, 20),
+            item("top.pack", 4, 110, 20),
+        ];
         let r = solve(&items, &[]);
-        assert_eq!(r.packs(), ["top.pack", "patch.pack", "ui.pack", "battle.pack"]);
-        assert!(r.placements[1].reasons.contains(&Reason::Raised { other: "ui.pack".into(), rule: RuleKind::Patches }));
-        assert!(r.placements[2].reasons.contains(&Reason::Below { other: "patch.pack".into(), rule: RuleKind::Patches }));
+        assert_eq!(
+            r.packs(),
+            ["top.pack", "patch.pack", "ui.pack", "battle.pack"]
+        );
+        assert!(r.placements[1].reasons.contains(&Reason::Raised {
+            other: "ui.pack".into(),
+            rule: RuleKind::Patches
+        }));
+        assert!(r.placements[2].reasons.contains(&Reason::Below {
+            other: "patch.pack".into(),
+            rule: RuleKind::Patches
+        }));
     }
 
     #[test]
     fn pins_apply_and_unknown_pins_are_reported() {
         let items = vec![item("a.pack", 1, 90, 20), item("b.pack", 2, 0, 20)];
         let pins = vec![
-            Pin { above: "B.pack".into(), below: "a.pack".into() },
-            Pin { above: "ghost.pack".into(), below: "a.pack".into() },
+            Pin {
+                above: "B.pack".into(),
+                below: "a.pack".into(),
+            },
+            Pin {
+                above: "ghost.pack".into(),
+                below: "a.pack".into(),
+            },
         ];
         let r = solve(&items, &pins);
         assert_eq!(r.packs(), ["b.pack", "a.pack"]);
@@ -345,7 +404,11 @@ mod tests {
         assert_eq!(r.placements.len(), 3);
         assert_eq!(r.cycles.len(), 1);
         assert_eq!(r.cycles[0].len(), 2);
-        assert!(r.placements.iter().any(|p| p.reasons.contains(&Reason::InCycle)));
+        assert!(
+            r.placements
+                .iter()
+                .any(|p| p.reasons.contains(&Reason::InCycle))
+        );
     }
 
     #[test]

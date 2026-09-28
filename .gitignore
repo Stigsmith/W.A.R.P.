@@ -8,3 +8,5 @@ node_modules/
 .idea/
 desktop.ini
 Thumbs.db
+app/src/lib/mock/fixture.json
+.claude/

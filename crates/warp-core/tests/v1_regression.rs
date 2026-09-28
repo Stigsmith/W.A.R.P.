@@ -20,7 +20,10 @@ const COMPONENTS: [&str; 4] = ["Base v1", "SFO", "Old World", "Chaos v4"];
 fn v1_compare_names(a: &str, b: &str) -> i32 {
     const ORDER: &str = "!#$%&'()+,–;=@0123456789abcdefghijklmnopqrstuvwxyz[]^_`{}~";
     let rank = |c: char| ORDER.chars().position(|o| o == c).map_or(1000, |i| i + 1);
-    let (a, b): (Vec<char>, Vec<char>) = (a.to_lowercase().chars().collect(), b.to_lowercase().chars().collect());
+    let (a, b): (Vec<char>, Vec<char>) = (
+        a.to_lowercase().chars().collect(),
+        b.to_lowercase().chars().collect(),
+    );
     for i in 0..a.len().max(b.len()) {
         if i >= a.len() {
             return -1;
@@ -64,7 +67,12 @@ fn solver_keeps_v1_tier_bands() {
     let selected: Vec<&V1Mod> = import
         .mods
         .iter()
-        .filter(|m| !m.pack.is_empty() && m.component.as_ref().is_some_and(|c| wanted.contains(&c.to_lowercase())))
+        .filter(|m| {
+            !m.pack.is_empty()
+                && m.component
+                    .as_ref()
+                    .is_some_and(|c| wanted.contains(&c.to_lowercase()))
+        })
         .collect();
     let old = v1_order(&selected);
 
@@ -74,21 +82,42 @@ fn solver_keeps_v1_tier_bands() {
     }
     let mut lib = Library::new(Store::open_in_memory().unwrap(), kb);
     lib.import_v1(&import).unwrap();
-    let def = ProfileDef { name: "Solo Chaos v4".into(), sets: COMPONENTS.iter().map(|s| s.to_string()).collect(), ..Default::default() };
+    let def = ProfileDef {
+        name: "Solo Chaos v4".into(),
+        sets: COMPONENTS.iter().map(|s| s.to_string()).collect(),
+        ..Default::default()
+    };
     let resolved = lib.resolve_profile(&def).unwrap();
-    let new: Vec<String> = resolved.order.placements.iter().map(|p| p.pack.to_lowercase()).collect();
+    let new: Vec<String> = resolved
+        .order
+        .placements
+        .iter()
+        .map(|p| p.pack.to_lowercase())
+        .collect();
 
     // 1. Same packs.
     let (old_set, new_set): (HashSet<_>, HashSet<_>) = (old.iter().collect(), new.iter().collect());
     assert_eq!(old_set, new_set, "v1 and the solver place different packs");
 
     // 2. Every cross-tier disagreement is explained by a hard rule.
-    let tier: HashMap<String, String> = resolved.order.placements.iter().map(|p| (p.pack.to_lowercase(), p.tier.clone())).collect();
+    let tier: HashMap<String, String> = resolved
+        .order
+        .placements
+        .iter()
+        .map(|p| (p.pack.to_lowercase(), p.tier.clone()))
+        .collect();
     let ruled: HashSet<String> = resolved
         .order
         .placements
         .iter()
-        .filter(|p| p.reasons.iter().any(|r| matches!(r, Reason::Raised { .. } | Reason::Above { .. } | Reason::Below { .. })))
+        .filter(|p| {
+            p.reasons.iter().any(|r| {
+                matches!(
+                    r,
+                    Reason::Raised { .. } | Reason::Above { .. } | Reason::Below { .. }
+                )
+            })
+        })
         .map(|p| p.pack.to_lowercase())
         .collect();
     let new_pos: HashMap<&String, usize> = new.iter().enumerate().map(|(i, p)| (p, i)).collect();
@@ -113,5 +142,9 @@ fn solver_keeps_v1_tier_bands() {
          {cross_tier_ruled} across tiers because of a dependency rule",
         new.len()
     );
-    assert!(unexplained.is_empty(), "cross-tier changes without a rule:\n{}", unexplained.join("\n"));
+    assert!(
+        unexplained.is_empty(),
+        "cross-tier changes without a rule:\n{}",
+        unexplained.join("\n")
+    );
 }

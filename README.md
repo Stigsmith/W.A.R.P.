@@ -31,12 +31,16 @@ you, and gets you and your friends into multiplayer with matching modlists.
 
 ## Development
 
-Needs Rust (stable) and Node 20+. On Windows, also the Visual Studio C++ Build Tools.
+Needs Rust 1.90+ and Node 20+. On Windows, also the Visual Studio C++ Build Tools.
 
 ```sh
-cargo test --workspace
-cargo run -p warp-cli -- --help
+cargo test --workspace                # core tests
+cargo run -p warp-cli -- --help       # the CLI
+npm --prefix app install
+npm --prefix app run tauri dev        # the desktop app
 ```
+
+See [docs/architecture.md](docs/architecture.md) for how the pieces fit.
 
 ## License
 

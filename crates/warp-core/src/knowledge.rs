@@ -46,7 +46,11 @@ pub struct ModKnowledge {
 
 impl ModKnowledge {
     pub fn is_empty(&self) -> bool {
-        *self == Self { title: self.title.clone(), ..Self::default() }
+        *self
+            == Self {
+                title: self.title.clone(),
+                ..Self::default()
+            }
     }
 }
 
@@ -59,7 +63,10 @@ pub struct KnowledgeBase {
 
 impl KnowledgeBase {
     pub fn new() -> Self {
-        Self { format: KB_FORMAT, mods: BTreeMap::new() }
+        Self {
+            format: KB_FORMAT,
+            mods: BTreeMap::new(),
+        }
     }
 
     pub fn parse(json: &str) -> Result<Self, Error> {
@@ -113,11 +120,18 @@ pub fn resolve(
     community: Option<&ModKnowledge>,
     heuristic: &ModKnowledge,
 ) -> Resolved {
-    let layers = [(user, Source::User), (community, Source::Community), (Some(heuristic), Source::Heuristic)];
+    let layers = [
+        (user, Source::User),
+        (community, Source::Community),
+        (Some(heuristic), Source::Heuristic),
+    ];
 
     let pick = |get: fn(&ModKnowledge) -> Option<&String>, valid: &dyn Fn(&str) -> bool| {
         layers.iter().find_map(|(layer, source)| {
-            layer.and_then(get).filter(|v| valid(v)).map(|v| (v.clone(), *source))
+            layer
+                .and_then(get)
+                .filter(|v| valid(v))
+                .map(|v| (v.clone(), *source))
         })
     };
     let (tier, tier_source) = pick(|k| k.tier.as_ref(), &|v| taxonomy.tier(v).is_some())
@@ -127,10 +141,22 @@ pub fn resolve(
 
     // Lists: the highest layer that says anything wins.
     let list = |get: fn(&ModKnowledge) -> &Vec<WorkshopId>| {
-        layers.iter().filter_map(|(l, _)| *l).map(get).find(|v| !v.is_empty()).cloned().unwrap_or_default()
+        layers
+            .iter()
+            .filter_map(|(l, _)| *l)
+            .map(get)
+            .find(|v| !v.is_empty())
+            .cloned()
+            .unwrap_or_default()
     };
     let strings = |get: fn(&ModKnowledge) -> &Vec<String>| {
-        layers.iter().filter_map(|(l, _)| *l).map(get).find(|v| !v.is_empty()).cloned().unwrap_or_default()
+        layers
+            .iter()
+            .filter_map(|(l, _)| *l)
+            .map(get)
+            .find(|v| !v.is_empty())
+            .cloned()
+            .unwrap_or_default()
     };
 
     Resolved {
@@ -154,7 +180,16 @@ pub fn heuristic(info: &ModInfo, pack_names: &[String]) -> ModKnowledge {
     let has = |words: &[&str]| words.iter().any(|w| text.contains(w));
 
     // Titles often say "updated for patch 6.x", so only pack names may use a bare "_patch".
-    let role = if has(&["submod", "sub-mod", "sub mod", "compatibility patch", "compat patch", "_compat", "compat_", "_patch.pack"]) {
+    let role = if has(&[
+        "submod",
+        "sub-mod",
+        "sub mod",
+        "compatibility patch",
+        "compat patch",
+        "_compat",
+        "compat_",
+        "_patch.pack",
+    ]) {
         Some("submod")
     } else if has(&["assets", "resources"]) {
         Some("assets")
@@ -166,10 +201,17 @@ pub fn heuristic(info: &ModInfo, pack_names: &[String]) -> ModKnowledge {
 
     // Workshop tags authors pick from a fixed list; map the unambiguous ones.
     let tags: Vec<String> = info.steam_tags.iter().map(|t| t.to_lowercase()).collect();
-    let tier = [("ui", "ui"), ("units", "units"), ("graphical", "graphics"), ("overhaul", "overhaul"), ("battle", "battle"), ("campaign", "campaign")]
-        .iter()
-        .find(|(tag, _)| tags.iter().any(|t| t == tag))
-        .map(|(_, tier)| *tier);
+    let tier = [
+        ("ui", "ui"),
+        ("units", "units"),
+        ("graphical", "graphics"),
+        ("overhaul", "overhaul"),
+        ("battle", "battle"),
+        ("campaign", "campaign"),
+    ]
+    .iter()
+    .find(|(tag, _)| tags.iter().any(|t| t == tag))
+    .map(|(_, tier)| *tier);
 
     ModKnowledge {
         tier: tier.map(str::to_owned),
@@ -183,23 +225,43 @@ mod tests {
     use super::*;
 
     fn k(tier: Option<&str>, role: Option<&str>) -> ModKnowledge {
-        ModKnowledge { tier: tier.map(Into::into), role: role.map(Into::into), ..Default::default() }
+        ModKnowledge {
+            tier: tier.map(Into::into),
+            role: role.map(Into::into),
+            ..Default::default()
+        }
     }
 
     #[test]
     fn user_beats_community_beats_heuristic() {
         let t = Taxonomy::builtin();
-        let r = resolve(&t, Some(&k(Some("ui"), None)), Some(&k(Some("units"), Some("submod"))), &k(Some("battle"), Some("assets")));
+        let r = resolve(
+            &t,
+            Some(&k(Some("ui"), None)),
+            Some(&k(Some("units"), Some("submod"))),
+            &k(Some("battle"), Some("assets")),
+        );
         assert_eq!((r.tier.as_str(), r.tier_source), ("ui", Source::User));
-        assert_eq!((r.role.as_str(), r.role_source), ("submod", Source::Community));
+        assert_eq!(
+            (r.role.as_str(), r.role_source),
+            ("submod", Source::Community)
+        );
     }
 
     #[test]
     fn unknown_keys_fall_through_to_defaults() {
         let t = Taxonomy::builtin();
-        let r = resolve(&t, Some(&k(Some("nonsense"), Some("nope"))), None, &ModKnowledge::default());
+        let r = resolve(
+            &t,
+            Some(&k(Some("nonsense"), Some("nope"))),
+            None,
+            &ModKnowledge::default(),
+        );
         assert_eq!((r.tier.as_str(), r.tier_source), ("core", Source::Default));
-        assert_eq!((r.role.as_str(), r.role_source), ("content", Source::Default));
+        assert_eq!(
+            (r.role.as_str(), r.role_source),
+            ("content", Source::Default)
+        );
     }
 
     #[test]
@@ -207,7 +269,10 @@ mod tests {
         let mut info = ModInfo::unknown(WorkshopId(1));
         info.title = "Variant Selector Support for Mixu's mods".into();
         info.steam_tags = vec!["mod".into(), "ui".into()];
-        let h = heuristic(&info, &["!ab_mixu_mods_variant_selector_submod.pack".into()]);
+        let h = heuristic(
+            &info,
+            &["!ab_mixu_mods_variant_selector_submod.pack".into()],
+        );
         assert_eq!(h.role.as_deref(), Some("submod"));
         assert_eq!(h.tier.as_deref(), Some("ui"));
     }
@@ -215,7 +280,14 @@ mod tests {
     #[test]
     fn kb_round_trips_and_rejects_future_formats() {
         let mut kb = KnowledgeBase::new();
-        kb.mods.insert(WorkshopId(42), ModKnowledge { title: "x".into(), tier: Some("ui".into()), ..Default::default() });
+        kb.mods.insert(
+            WorkshopId(42),
+            ModKnowledge {
+                title: "x".into(),
+                tier: Some("ui".into()),
+                ..Default::default()
+            },
+        );
         assert_eq!(KnowledgeBase::parse(&kb.to_json()).unwrap(), kb);
         assert!(KnowledgeBase::parse(r#"{"format": 99, "mods": {}}"#).is_err());
     }

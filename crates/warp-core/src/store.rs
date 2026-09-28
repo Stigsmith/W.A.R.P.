@@ -87,7 +87,9 @@ impl Store {
         let version: i64 = conn.pragma_query_value(None, "user_version", |r| r.get(0))?;
         let version = usize::try_from(version).unwrap_or(0);
         if version > MIGRATIONS.len() {
-            return Err(Error::Format("this database was created by a newer WARP".into()));
+            return Err(Error::Format(
+                "this database was created by a newer WARP".into(),
+            ));
         }
         let tx = conn.transaction()?;
         for (i, sql) in MIGRATIONS.iter().enumerate().skip(version) {
@@ -99,7 +101,10 @@ impl Store {
     }
 
     /// Runs `f` in one transaction: all of it lands, or none of it.
-    pub fn transaction<T>(&mut self, f: impl FnOnce(&Tx<'_>) -> Result<T, Error>) -> Result<T, Error> {
+    pub fn transaction<T>(
+        &mut self,
+        f: impl FnOnce(&Tx<'_>) -> Result<T, Error>,
+    ) -> Result<T, Error> {
         let tx = Tx(self.conn.transaction()?);
         let out = f(&tx)?;
         tx.0.commit()?;
@@ -107,17 +112,24 @@ impl Store {
     }
 
     pub fn mods(&self) -> Result<Vec<(ModInfo, bool)>, Error> {
-        let mut stmt = self.conn.prepare("SELECT info, subscribed FROM mods ORDER BY id")?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT info, subscribed FROM mods ORDER BY id")?;
         let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, bool>(1)?)))?;
         rows.map(|row| {
             let (json, subscribed) = row?;
-            Ok((serde_json::from_str(&json).map_err(|e| Error::Format(e.to_string()))?, subscribed))
+            Ok((
+                serde_json::from_str(&json).map_err(|e| Error::Format(e.to_string()))?,
+                subscribed,
+            ))
         })
         .collect()
     }
 
     pub fn packs(&self) -> Result<HashMap<WorkshopId, Vec<String>>, Error> {
-        let mut stmt = self.conn.prepare("SELECT mod_id, name FROM packs ORDER BY mod_id, name")?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT mod_id, name FROM packs ORDER BY mod_id, name")?;
         let mut out: HashMap<WorkshopId, Vec<String>> = HashMap::new();
         for row in stmt.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?)))? {
             let (id, name) = row?;
@@ -127,18 +139,26 @@ impl Store {
     }
 
     pub fn user_knowledge(&self) -> Result<HashMap<WorkshopId, ModKnowledge>, Error> {
-        let mut stmt = self.conn.prepare("SELECT mod_id, data FROM user_knowledge")?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT mod_id, data FROM user_knowledge")?;
         let rows = stmt.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?)))?;
         rows.map(|row| {
             let (id, json) = row?;
-            Ok((WorkshopId(id as u64), serde_json::from_str(&json).map_err(|e| Error::Format(e.to_string()))?))
+            Ok((
+                WorkshopId(id as u64),
+                serde_json::from_str(&json).map_err(|e| Error::Format(e.to_string()))?,
+            ))
         })
         .collect()
     }
 
     pub fn set_user_knowledge(&self, id: WorkshopId, k: &ModKnowledge) -> Result<(), Error> {
         if k.is_empty() {
-            self.conn.execute("DELETE FROM user_knowledge WHERE mod_id = ?1", params![id.0 as i64])?;
+            self.conn.execute(
+                "DELETE FROM user_knowledge WHERE mod_id = ?1",
+                params![id.0 as i64],
+            )?;
         } else {
             self.conn.execute(
                 "INSERT INTO user_knowledge (mod_id, data) VALUES (?1, ?2)
@@ -154,9 +174,16 @@ impl Store {
             .conn
             .prepare("SELECT name FROM sets ORDER BY name COLLATE NOCASE")?
             .query_map([], |r| r.get::<_, String>(0))?
-            .map(|name| Ok(ModSet { name: name?, members: Vec::new() }))
+            .map(|name| {
+                Ok(ModSet {
+                    name: name?,
+                    members: Vec::new(),
+                })
+            })
             .collect::<Result<_, Error>>()?;
-        let mut stmt = self.conn.prepare("SELECT set_name, mod_id FROM set_members ORDER BY mod_id")?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT set_name, mod_id FROM set_members ORDER BY mod_id")?;
         for row in stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)))? {
             let (name, id) = row?;
             if let Some(set) = sets.iter_mut().find(|s| s.name.eq_ignore_ascii_case(&name)) {
@@ -172,27 +199,39 @@ impl Store {
     }
 
     pub fn rename_set(&self, from: &str, to: &str) -> Result<(), Error> {
-        self.conn.execute("UPDATE sets SET name = ?2 WHERE name = ?1", params![from, to.trim()])?;
+        self.conn.execute(
+            "UPDATE sets SET name = ?2 WHERE name = ?1",
+            params![from, to.trim()],
+        )?;
         Ok(())
     }
 
     pub fn delete_set(&self, name: &str) -> Result<(), Error> {
-        self.conn.execute("DELETE FROM sets WHERE name = ?1", params![name])?;
+        self.conn
+            .execute("DELETE FROM sets WHERE name = ?1", params![name])?;
         Ok(())
     }
 
     pub fn profiles(&self) -> Result<Vec<ProfileDef>, Error> {
-        let mut stmt = self.conn.prepare("SELECT data FROM profiles ORDER BY name COLLATE NOCASE")?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT data FROM profiles ORDER BY name COLLATE NOCASE")?;
         let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
-        rows.map(|row| serde_json::from_str(&row?).map_err(|e| Error::Format(e.to_string()))).collect()
+        rows.map(|row| serde_json::from_str(&row?).map_err(|e| Error::Format(e.to_string())))
+            .collect()
     }
 
     pub fn profile(&self, name: &str) -> Result<Option<ProfileDef>, Error> {
         let json: Option<String> = self
             .conn
-            .query_row("SELECT data FROM profiles WHERE name = ?1", params![name], |r| r.get(0))
+            .query_row(
+                "SELECT data FROM profiles WHERE name = ?1",
+                params![name],
+                |r| r.get(0),
+            )
             .optional()?;
-        json.map(|j| serde_json::from_str(&j).map_err(|e| Error::Format(e.to_string()))).transpose()
+        json.map(|j| serde_json::from_str(&j).map_err(|e| Error::Format(e.to_string())))
+            .transpose()
     }
 
     pub fn save_profile(&mut self, profile: &ProfileDef) -> Result<(), Error> {
@@ -200,7 +239,8 @@ impl Store {
     }
 
     pub fn delete_profile(&self, name: &str) -> Result<(), Error> {
-        self.conn.execute("DELETE FROM profiles WHERE name = ?1", params![name])?;
+        self.conn
+            .execute("DELETE FROM profiles WHERE name = ?1", params![name])?;
         Ok(())
     }
 }
@@ -219,15 +259,22 @@ impl Tx<'_> {
     }
 
     pub fn set_subscribed(&self, id: WorkshopId, subscribed: bool) -> Result<(), Error> {
-        self.0.execute("UPDATE mods SET subscribed = ?2 WHERE id = ?1", params![id.0 as i64, subscribed])?;
+        self.0.execute(
+            "UPDATE mods SET subscribed = ?2 WHERE id = ?1",
+            params![id.0 as i64, subscribed],
+        )?;
         Ok(())
     }
 
     /// Replaces the packs recorded for a mod.
     pub fn set_packs(&self, id: WorkshopId, packs: &[String]) -> Result<(), Error> {
-        self.0.execute("DELETE FROM packs WHERE mod_id = ?1", params![id.0 as i64])?;
+        self.0
+            .execute("DELETE FROM packs WHERE mod_id = ?1", params![id.0 as i64])?;
         for p in packs {
-            self.0.execute("INSERT OR IGNORE INTO packs (mod_id, name) VALUES (?1, ?2)", params![id.0 as i64, p])?;
+            self.0.execute(
+                "INSERT OR IGNORE INTO packs (mod_id, name) VALUES (?1, ?2)",
+                params![id.0 as i64, p],
+            )?;
         }
         Ok(())
     }
@@ -237,8 +284,12 @@ impl Tx<'_> {
         if name.is_empty() {
             return Err(Error::Invalid("a set needs a name".into()));
         }
-        self.0.execute("INSERT OR IGNORE INTO sets (name) VALUES (?1)", params![name])?;
-        self.0.execute("DELETE FROM set_members WHERE set_name = ?1", params![name])?;
+        self.0.execute(
+            "INSERT OR IGNORE INTO sets (name) VALUES (?1)",
+            params![name],
+        )?;
+        self.0
+            .execute("DELETE FROM set_members WHERE set_name = ?1", params![name])?;
         for id in &set.members {
             self.0.execute(
                 "INSERT OR IGNORE INTO set_members (set_name, mod_id) VALUES (?1, ?2)",
@@ -266,7 +317,9 @@ fn to_json<T: Serialize>(v: &T) -> String {
 }
 
 fn now() -> i64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs() as i64)
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs() as i64)
 }
 
 #[cfg(test)]
@@ -287,11 +340,26 @@ mod tests {
         assert_eq!(store.mods().unwrap(), vec![(info.clone(), false)]);
         assert_eq!(store.packs().unwrap()[&info.id], ["a.pack", "b.pack"]);
 
-        store.save_set(&ModSet { name: "Base v1".into(), members: vec![info.id] }).unwrap();
+        store
+            .save_set(&ModSet {
+                name: "Base v1".into(),
+                members: vec![info.id],
+            })
+            .unwrap();
         store.rename_set("base V1", "Base v2").unwrap();
-        assert_eq!(store.sets().unwrap(), vec![ModSet { name: "Base v2".into(), members: vec![info.id] }]);
+        assert_eq!(
+            store.sets().unwrap(),
+            vec![ModSet {
+                name: "Base v2".into(),
+                members: vec![info.id]
+            }]
+        );
 
-        let p = ProfileDef { name: "Solo Chaos".into(), sets: vec!["Base v2".into()], ..Default::default() };
+        let p = ProfileDef {
+            name: "Solo Chaos".into(),
+            sets: vec!["Base v2".into()],
+            ..Default::default()
+        };
         store.save_profile(&p).unwrap();
         assert_eq!(store.profile("solo chaos").unwrap(), Some(p));
 
@@ -302,10 +370,15 @@ mod tests {
     #[test]
     fn empty_user_knowledge_is_deleted() {
         let store = Store::open_in_memory().unwrap();
-        let k = ModKnowledge { tier: Some("ui".into()), ..Default::default() };
+        let k = ModKnowledge {
+            tier: Some("ui".into()),
+            ..Default::default()
+        };
         store.set_user_knowledge(WorkshopId(1), &k).unwrap();
         assert_eq!(store.user_knowledge().unwrap().len(), 1);
-        store.set_user_knowledge(WorkshopId(1), &ModKnowledge::default()).unwrap();
+        store
+            .set_user_knowledge(WorkshopId(1), &ModKnowledge::default())
+            .unwrap();
         assert!(store.user_knowledge().unwrap().is_empty());
     }
 }

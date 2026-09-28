@@ -12,17 +12,26 @@ use crate::model::{ModInfo, WorkshopId};
 /// Total War: WARHAMMER III.
 pub const APP_ID: u32 = 1_142_710;
 
-const DETAILS_URL: &str = "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/";
+const DETAILS_URL: &str =
+    "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/";
 const BATCH: usize = 100;
 
 /// Fetches details for any number of items, in batches. Items Steam doesn't know
 /// (deleted, private) come back with `available = false`.
 pub fn fetch_details(ids: &[WorkshopId]) -> Result<Vec<ModInfo>, Error> {
-    let agent: ureq::Agent = ureq::Agent::config_builder().timeout_global(Some(Duration::from_secs(30))).build().into();
+    let agent: ureq::Agent = ureq::Agent::config_builder()
+        .timeout_global(Some(Duration::from_secs(30)))
+        .build()
+        .into();
     let mut out = Vec::with_capacity(ids.len());
     for chunk in ids.chunks(BATCH) {
         let mut form = vec![("itemcount".to_owned(), chunk.len().to_string())];
-        form.extend(chunk.iter().enumerate().map(|(i, id)| (format!("publishedfileids[{i}]"), id.to_string())));
+        form.extend(
+            chunk
+                .iter()
+                .enumerate()
+                .map(|(i, id)| (format!("publishedfileids[{i}]"), id.to_string())),
+        );
         let body: Value = with_retry(|| {
             agent
                 .post(DETAILS_URL)
@@ -45,7 +54,10 @@ fn with_retry<T>(mut f: impl FnMut() -> Result<T, ureq::Error>) -> Result<T, Err
             }
         }
     }
-    Err(Error::Steam(format!("Steam didn't answer: {}", last.expect("attempted"))))
+    Err(Error::Steam(format!(
+        "Steam didn't answer: {}",
+        last.expect("attempted")
+    )))
 }
 
 /// Parses a `GetPublishedFileDetails` response.
@@ -67,7 +79,11 @@ fn parse_item(v: &Value) -> Option<ModInfo> {
     info.description = clean_description(v["description"].as_str().unwrap_or_default());
     info.steam_tags = v["tags"]
         .as_array()
-        .map(|tags| tags.iter().filter_map(|t| t["tag"].as_str().map(str::to_owned)).collect())
+        .map(|tags| {
+            tags.iter()
+                .filter_map(|t| t["tag"].as_str().map(str::to_owned))
+                .collect()
+        })
         .unwrap_or_default();
     info.file_size = as_u64(&v["file_size"]).unwrap_or(0);
     info.time_created = as_u64(&v["time_created"]).unwrap_or(0) as i64;
@@ -86,7 +102,8 @@ fn as_u64(v: &Value) -> Option<u64> {
 
 /// Workshop descriptions are BBCode with stray HTML; reduce them to plain text.
 pub fn clean_description(text: &str) -> String {
-    static BBCODE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\[/?[a-zA-Z*][^\]]*\]").expect("valid"));
+    static BBCODE: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"\[/?[a-zA-Z*][^\]]*\]").expect("valid"));
     static HTML: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<[^>]+>").expect("valid"));
     let text = BBCODE.replace_all(text, " ");
     let text = HTML.replace_all(&text, " ");

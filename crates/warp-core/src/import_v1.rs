@@ -41,14 +41,20 @@ pub struct V1Import {
 
 /// Reads a v1 workbook from an `.xlsm`/`.xlsx`, or from a `.zip` containing one.
 pub fn read(path: &Path) -> Result<V1Import, Error> {
-    let bytes = if path.extension().is_some_and(|e| e.eq_ignore_ascii_case("zip")) {
-        let mut zip = zip::ZipArchive::new(File::open(path)?).map_err(|e| Error::Excel(e.to_string()))?;
+    let bytes = if path
+        .extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("zip"))
+    {
+        let mut zip =
+            zip::ZipArchive::new(File::open(path)?).map_err(|e| Error::Excel(e.to_string()))?;
         let name = zip
             .file_names()
             .find(|n| n.to_lowercase().ends_with(".xlsm") || n.to_lowercase().ends_with(".xlsx"))
             .map(str::to_owned)
             .ok_or_else(|| Error::Excel("the zip contains no .xlsm/.xlsx workbook".into()))?;
-        let mut entry = zip.by_name(&name).map_err(|e| Error::Excel(e.to_string()))?;
+        let mut entry = zip
+            .by_name(&name)
+            .map_err(|e| Error::Excel(e.to_string()))?;
         let mut buf = Vec::new();
         entry.read_to_end(&mut buf)?;
         buf
@@ -59,20 +65,44 @@ pub fn read(path: &Path) -> Result<V1Import, Error> {
 }
 
 fn parse(bytes: Vec<u8>) -> Result<V1Import, Error> {
-    let mut wb: Xlsx<_> = open_workbook_from_rs(Cursor::new(bytes)).map_err(|e: calamine::XlsxError| Error::Excel(e.to_string()))?;
-    let dump = wb.worksheet_range("Dump").map_err(|e: calamine::XlsxError| Error::Excel(format!("sheet 'Dump': {e}")))?;
+    let mut wb: Xlsx<_> = open_workbook_from_rs(Cursor::new(bytes))
+        .map_err(|e: calamine::XlsxError| Error::Excel(e.to_string()))?;
+    let dump = wb
+        .worksheet_range("Dump")
+        .map_err(|e: calamine::XlsxError| Error::Excel(format!("sheet 'Dump': {e}")))?;
     let mut rows = dump.rows();
-    let header = rows.next().ok_or_else(|| Error::Excel("sheet 'Dump' is empty".into()))?;
-    let col: HashMap<String, usize> = header.iter().enumerate().map(|(i, c)| (text(c), i)).collect();
-    let need = |name: &str| col.get(name).copied().ok_or_else(|| Error::Excel(format!("column '{name}' not found")));
+    let header = rows
+        .next()
+        .ok_or_else(|| Error::Excel("sheet 'Dump' is empty".into()))?;
+    let col: HashMap<String, usize> = header
+        .iter()
+        .enumerate()
+        .map(|(i, c)| (text(c), i))
+        .collect();
+    let need = |name: &str| {
+        col.get(name)
+            .copied()
+            .ok_or_else(|| Error::Excel(format!("column '{name}' not found")))
+    };
     let (c_id, c_pack, c_title) = (need("PublishedFileId")?, need("Pack_File")?, need("Title")?);
-    let get = |row: &[Data], name: &str| col.get(name).and_then(|&i| row.get(i)).map(text).unwrap_or_default();
-    let get_num = |row: &[Data], name: &str| col.get(name).and_then(|&i| row.get(i)).and_then(number);
+    let get = |row: &[Data], name: &str| {
+        col.get(name)
+            .and_then(|&i| row.get(i))
+            .map(text)
+            .unwrap_or_default()
+    };
+    let get_num =
+        |row: &[Data], name: &str| col.get(name).and_then(|&i| row.get(i)).and_then(number);
 
     let mut mods = Vec::new();
     let mut dependency_text = Vec::new();
     for row in rows {
-        let Some(id) = row.get(c_id).and_then(number).filter(|n| *n > 0.0).map(|n| WorkshopId(n as u64)) else {
+        let Some(id) = row
+            .get(c_id)
+            .and_then(number)
+            .filter(|n| *n > 0.0)
+            .map(|n| WorkshopId(n as u64))
+        else {
             continue;
         };
         let pack = row.get(c_pack).map(text).unwrap_or_default();
@@ -111,12 +141,24 @@ fn parse(bytes: Vec<u8>) -> Result<V1Import, Error> {
         }
         let component = Some(get(row, "Component")).filter(|c| !c.is_empty());
         let archived = get(row, "Archive").eq_ignore_ascii_case("x");
-        mods.push(V1Mod { info, pack, knowledge, component, archived, source_category, source_subcategory });
+        mods.push(V1Mod {
+            info,
+            pack,
+            knowledge,
+            component,
+            archived,
+            source_category,
+            source_subcategory,
+        });
     }
 
     let unresolved_dependencies = resolve_dependencies(&mut mods, dependency_text);
     let profile = read_profile_builder(&mut wb);
-    Ok(V1Import { mods, profile, unresolved_dependencies })
+    Ok(V1Import {
+        mods,
+        profile,
+        unresolved_dependencies,
+    })
 }
 
 /// Turns v1's free-text Dependency cells into links between mods. Submods get
@@ -132,7 +174,10 @@ fn resolve_dependencies(mods: &mut [V1Mod], deps: Vec<(usize, String)>) -> Vec<(
         let key = normalize(&text);
         let found = exact.get(&key).copied().or_else(|| {
             // Fall back to a unique title containing the text.
-            let mut hits = mods.iter().filter(|m| normalize(&m.info.title).contains(&key)).map(|m| m.info.id);
+            let mut hits = mods
+                .iter()
+                .filter(|m| normalize(&m.info.title).contains(&key))
+                .map(|m| m.info.id);
             match (hits.next(), hits.next()) {
                 (Some(id), None) => Some(id),
                 _ => None,
@@ -141,7 +186,11 @@ fn resolve_dependencies(mods: &mut [V1Mod], deps: Vec<(usize, String)>) -> Vec<(
         match found.filter(|&id| id != mods[i].info.id) {
             Some(target) => {
                 let k = &mut mods[i].knowledge;
-                if k.role.as_deref() == Some("submod") { k.patches.push(target) } else { k.requires.push(target) }
+                if k.role.as_deref() == Some("submod") {
+                    k.patches.push(target)
+                } else {
+                    k.requires.push(target)
+                }
             }
             None => unresolved.push((mods[i].pack.clone(), text)),
         }
@@ -149,7 +198,9 @@ fn resolve_dependencies(mods: &mut [V1Mod], deps: Vec<(usize, String)>) -> Vec<(
     unresolved
 }
 
-fn read_profile_builder<R: std::io::Read + std::io::Seek>(wb: &mut Xlsx<R>) -> Option<(String, Vec<String>)> {
+fn read_profile_builder<R: std::io::Read + std::io::Seek>(
+    wb: &mut Xlsx<R>,
+) -> Option<(String, Vec<String>)> {
     let sheet = wb.worksheet_range("Profile Builder").ok()?;
     let mut name = None;
     let mut components = Vec::new();
@@ -218,12 +269,23 @@ fn strip_number(s: &str) -> &str {
 /// Lowercase, no `.pack`, no leading `!@_` noise, runs of punctuation collapsed to one space.
 fn normalize(s: &str) -> String {
     let s = s.trim();
-    let s = s.strip_suffix(".pack").or_else(|| s.strip_suffix(".PACK")).unwrap_or(s).to_lowercase();
-    s.split(|c: char| !c.is_alphanumeric()).filter(|w| !w.is_empty()).collect::<Vec<_>>().join(" ")
+    let s = s
+        .strip_suffix(".pack")
+        .or_else(|| s.strip_suffix(".PACK"))
+        .unwrap_or(s)
+        .to_lowercase();
+    s.split(|c: char| !c.is_alphanumeric())
+        .filter(|w| !w.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 fn split_list(s: &str) -> Vec<String> {
-    s.split(',').map(str::trim).filter(|t| !t.is_empty()).map(str::to_owned).collect()
+    s.split(',')
+        .map(str::trim)
+        .filter(|t| !t.is_empty())
+        .map(str::to_owned)
+        .collect()
 }
 
 fn dedup(v: &mut Vec<String>) {
@@ -279,15 +341,30 @@ mod tests {
         assert_eq!(map_subcategory("07_Fixes"), (Some("fix"), vec![]));
         assert_eq!(map_subcategory("00_Assets"), (Some("assets"), vec![]));
         assert_eq!(map_subcategory("04_Framework"), (Some("framework"), vec![]));
-        assert_eq!(map_subcategory("03_AI Behaviour"), (None, vec!["AI behaviour".to_owned()]));
-        assert_eq!(map_subcategory("04_AI Behavior"), (None, vec!["AI behaviour".to_owned()]));
-        assert_eq!(map_subcategory("06_Camera 2"), (None, vec!["Camera".to_owned()]));
-        assert_eq!(map_subcategory("02_Traits & Technologies"), (None, vec!["Traits & Technologies".to_owned()]));
+        assert_eq!(
+            map_subcategory("03_AI Behaviour"),
+            (None, vec!["AI behaviour".to_owned()])
+        );
+        assert_eq!(
+            map_subcategory("04_AI Behavior"),
+            (None, vec!["AI behaviour".to_owned()])
+        );
+        assert_eq!(
+            map_subcategory("06_Camera 2"),
+            (None, vec!["Camera".to_owned()])
+        );
+        assert_eq!(
+            map_subcategory("02_Traits & Technologies"),
+            (None, vec!["Traits & Technologies".to_owned()])
+        );
     }
 
     #[test]
     fn normalize_matches_pack_names_to_titles() {
-        assert_eq!(normalize("ZC_MODDING_ASSETS.pack"), normalize("ZC MODDING ASSETS"));
+        assert_eq!(
+            normalize("ZC_MODDING_ASSETS.pack"),
+            normalize("ZC MODDING ASSETS")
+        );
         assert_eq!(normalize("!wh1_texture_proj.pack"), "wh1 texture proj");
     }
 
