@@ -16,7 +16,7 @@ use crate::launch::{self, ModListEntry};
 use crate::model::{ModInfo, WorkshopId, pack_key};
 use crate::mp::{self, ListDiff, ShareEntry, ShareList};
 use crate::order::{self, OrderItem, OrderResult};
-use crate::pack_index::{self, PackIndex};
+use crate::pack_index::{self, Contents, PackIndex};
 use crate::steam;
 use crate::store::{ModSet, ProfileDef, Store};
 use crate::taxonomy::Taxonomy;
@@ -38,6 +38,8 @@ pub struct LibraryEntry {
     pub user: Option<ModKnowledge>,
     /// What the community knowledge base says, if anything.
     pub community: Option<ModKnowledge>,
+    /// What WARP guessed from the packs' contents, headers and Steam tags.
+    pub guessed: ModKnowledge,
     pub sets: Vec<String>,
     /// Version on disk (Steam's `time_updated` when downloaded); `None` if not installed.
     pub installed_version: Option<i64>,
@@ -97,6 +99,7 @@ impl Library {
         let user = self.store.user_knowledge()?;
         let installed = self.store.installed()?;
         let summaries = self.store.pack_summaries()?;
+        let contents = self.store.pack_contents()?;
         let declared = self.declared_requires(&packs)?;
         let mut sets_of: HashMap<WorkshopId, Vec<String>> = HashMap::new();
         for set in self.store.sets()? {
@@ -111,7 +114,12 @@ impl Library {
             .map(|(info, subscribed)| {
                 let id = info.id;
                 let packs = packs.get(&id).cloned().unwrap_or_default();
-                let mut derived = knowledge::heuristic(&info, &packs);
+                let parts: Vec<_> = packs
+                    .iter()
+                    .filter_map(|p| contents.get(&pack_key(p)))
+                    .collect();
+                let merged = (!parts.is_empty()).then(|| Contents::merge(parts));
+                let mut derived = knowledge::guess(&info, &packs, merged.as_ref());
                 derived.requires = declared.get(&id).cloned().unwrap_or_default();
                 LibraryEntry {
                     knowledge: knowledge::resolve(
@@ -122,6 +130,7 @@ impl Library {
                     ),
                     user: user.get(&id).cloned(),
                     community: self.kb.mods.get(&id).cloned(),
+                    guessed: derived,
                     sets: sets_of.remove(&id).unwrap_or_default(),
                     installed_version: installed.get(&id).copied(),
                     files: packs

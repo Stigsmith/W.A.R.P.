@@ -13,7 +13,7 @@ use crate::Error;
 use crate::knowledge::ModKnowledge;
 use crate::model::{ModInfo, WorkshopId, pack_key};
 use crate::order::Pin;
-use crate::pack_index::{self, PackIndex};
+use crate::pack_index::{self, Contents, PackIndex};
 
 /// Schema migrations, applied in order. Never edit a released entry; append a new one.
 const MIGRATIONS: &[&str] = &[
@@ -74,6 +74,10 @@ const MIGRATIONS: &[&str] = &[
         profile  TEXT NOT NULL,
         packs    TEXT NOT NULL
     );
+",
+    r"
+    -- Content fingerprint per pack (facet counts + DB tables), for guessing tiers.
+    ALTER TABLE pack_index ADD COLUMN contents TEXT NOT NULL DEFAULT '{}';
 ",
 ];
 
@@ -356,6 +360,20 @@ impl Store {
         Ok(out)
     }
 
+    /// Content fingerprint of every indexed pack, by lowercase pack name.
+    pub fn pack_contents(&self) -> Result<HashMap<String, Contents>, Error> {
+        let mut stmt = self.conn.prepare("SELECT name, contents FROM pack_index")?;
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?;
+        rows.map(|row| {
+            let (name, json) = row?;
+            Ok((
+                pack_key(&name),
+                serde_json::from_str(&json).unwrap_or_default(),
+            ))
+        })
+        .collect()
+    }
+
     /// Per-pack summaries (no file lists): name, file count, kind.
     pub fn pack_summaries(&self) -> Result<HashMap<String, (usize, String)>, Error> {
         let mut stmt = self
@@ -469,11 +487,11 @@ impl Tx<'_> {
         index: &PackIndex,
     ) -> Result<(), Error> {
         self.0.execute(
-            "INSERT INTO pack_index (path, name, mod_id, size, modified, kind, dependencies, file_count, files, version)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
+            "INSERT INTO pack_index (path, name, mod_id, size, modified, kind, dependencies, file_count, files, version, contents)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
              ON CONFLICT (path) DO UPDATE SET name = excluded.name, mod_id = excluded.mod_id,
                 size = excluded.size, modified = excluded.modified, kind = excluded.kind,
-                version = excluded.version,
+                version = excluded.version, contents = excluded.contents,
                 dependencies = excluded.dependencies, file_count = excluded.file_count, files = excluded.files",
             params![
                 path,
@@ -486,6 +504,7 @@ impl Tx<'_> {
                 index.files.len() as i64,
                 index.files_blob(),
                 pack_index::INDEX_VERSION,
+                to_json(&index.contents()),
             ],
         )?;
         Ok(())

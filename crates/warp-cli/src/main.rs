@@ -98,6 +98,13 @@ enum Command {
     /// Write sample data for running the app UI in a browser (development only).
     #[command(hide = true)]
     DevFixture { out: PathBuf },
+    /// How often WARP's guessed tier matches the community's (development only).
+    #[command(hide = true)]
+    ClassifyReport {
+        /// Also list every mod where they differ.
+        #[arg(long)]
+        misses: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -185,6 +192,7 @@ fn main() -> Result<()> {
             println!("Refreshed {n} mods from Steam");
         }
         Command::DevFixture { out } => dev_fixture(&lib, &out)?,
+        Command::ClassifyReport { misses } => classify_report(&lib, misses)?,
         Command::Sync { offline } => {
             let install = Install::locate()?;
             let started = std::time::Instant::now();
@@ -408,6 +416,81 @@ fn print_diff(a: &ShareList, b: &ShareList, d: &mp::ListDiff) {
             println!("  {}  - {who}", v.pack);
         }
     }
+}
+
+/// Compares guessed tiers with community tiers: agreement and a confusion matrix.
+fn classify_report(lib: &Library, misses: bool) -> Result<()> {
+    use std::collections::BTreeMap;
+    let fallback = lib.taxonomy.fallback_tier().key.clone();
+    let mut matrix: BTreeMap<(String, String), usize> = BTreeMap::new();
+    let mut missed = Vec::new();
+    let entries = lib.entries()?;
+    for e in &entries {
+        let Some(truth) = e.community.as_ref().and_then(|c| c.tier.clone()) else {
+            continue;
+        };
+        let guess = e.guessed.tier.clone().unwrap_or_else(|| fallback.clone());
+        if guess != truth {
+            missed.push((truth.clone(), guess.clone(), e.info.title.clone()));
+        }
+        *matrix.entry((truth, guess)).or_insert(0) += 1;
+    }
+    let total: usize = matrix.values().sum();
+    let hits: usize = matrix
+        .iter()
+        .filter(|((t, g), _)| t == g)
+        .map(|(_, n)| n)
+        .sum();
+    println!(
+        "Guessed tier matches the community tier for {hits} of {total} mods ({}%)",
+        hits * 100 / total.max(1)
+    );
+    // Rows: community tier. Columns: guess. Top of the load order first.
+    let mut tiers: Vec<(i32, &str)> = lib
+        .taxonomy
+        .tiers
+        .iter()
+        .map(|t| (-t.priority, t.key.as_str()))
+        .collect();
+    tiers.sort();
+    let tiers: Vec<&str> = tiers.into_iter().map(|(_, k)| k).collect();
+    // Columns are numbered like the rows; tier names don't fit in a column.
+    print!("\n{:<17}", "kb / guess");
+    for i in 1..=tiers.len() {
+        print!("{i:>5}");
+    }
+    println!();
+    for (i, row) in tiers.iter().enumerate() {
+        print!("{:>2} {row:<14}", i + 1);
+        for col in &tiers {
+            match matrix.get(&(row.to_string(), col.to_string())) {
+                Some(n) => print!("{n:>5}"),
+                None => print!("{:>5}", "."),
+            }
+        }
+        println!();
+    }
+
+    // Only a few roles are ever guessed, so list just those guesses.
+    let mut roles: BTreeMap<(String, String), usize> = BTreeMap::new();
+    for e in &entries {
+        let truth = e.community.as_ref().and_then(|c| c.role.clone());
+        if let (Some(guess), Some(truth)) = (e.guessed.role.clone(), truth) {
+            *roles.entry((guess, truth)).or_insert(0) += 1;
+        }
+    }
+    println!("\nGuessed roles (guess -> community):");
+    for ((guess, truth), n) in &roles {
+        println!("  {guess:>10} -> {truth:<10} {n}");
+    }
+    if misses {
+        println!();
+        missed.sort();
+        for (truth, guess, title) in missed {
+            println!("{truth:>13} -> {guess:<13} {title}");
+        }
+    }
+    Ok(())
 }
 
 /// Real data from the library, shaped like the app's command results, plus a

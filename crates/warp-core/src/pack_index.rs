@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 use crate::Error;
 
 /// Bump when what [`read`] extracts changes, so cached indexes are re-read.
-pub const INDEX_VERSION: i64 = 2;
+pub const INDEX_VERSION: i64 = 3;
 
 /// What a pack contains, as far as load order is concerned.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -38,13 +38,9 @@ pub struct PackIndex {
 }
 
 impl PackIndex {
-    /// Files per kind of content, the pack's "fingerprint".
-    pub fn contents(&self) -> BTreeMap<ContentKind, usize> {
-        let mut out = BTreeMap::new();
-        for f in &self.files {
-            *out.entry(ContentKind::of(f)).or_insert(0) += 1;
-        }
-        out
+    /// The pack's content fingerprint.
+    pub fn contents(&self) -> Contents {
+        Contents::of(&self.files)
     }
 
     /// The file list packed for storage.
@@ -87,6 +83,102 @@ pub enum ContentKind {
     /// Models, textures, animations, effects, sound, video.
     Art,
     Other,
+}
+
+/// Finer content groups than [`ContentKind`], for guessing what kind of mod a pack is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Facet {
+    Db,
+    Script,
+    Text,
+    Ui,
+    Map,
+    Startpos,
+    Anim,
+    Terrain,
+    Audio,
+    Vfx,
+    Art,
+    Other,
+}
+
+impl Facet {
+    pub fn of(path: &str) -> Self {
+        if path.ends_with("startpos.esf") {
+            return Self::Startpos;
+        }
+        let top = path.split('/').next().unwrap_or("");
+        let ext = path.rsplit_once('.').map_or("", |(_, e)| e);
+        match top {
+            "db" => Self::Db,
+            "script" | "script_data" => Self::Script,
+            "text" => Self::Text,
+            "ui" => Self::Ui,
+            "campaign_maps" => Self::Map,
+            "animations" => Self::Anim,
+            "battleterrain" | "terrain" | "prefabs" => Self::Terrain,
+            "audio" | "audioprojects" => Self::Audio,
+            "weather" | "lut" | "particles" | "vfx" | "skyboxes" | "shaders" => Self::Vfx,
+            _ if matches!(ext, "anim" | "frg") => Self::Anim,
+            _ if matches!(ext, "wem" | "bnk") => Self::Audio,
+            _ if ContentKind::of(path) == ContentKind::Art => Self::Art,
+            _ => Self::Other,
+        }
+    }
+}
+
+/// A pack's content fingerprint: files per [`Facet`] and the DB tables it touches.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Contents {
+    pub files: usize,
+    pub facets: BTreeMap<Facet, usize>,
+    /// Distinct DB table folders, e.g. `land_units_tables`, sorted.
+    pub tables: Vec<String>,
+}
+
+impl Contents {
+    pub fn of(files: &[String]) -> Self {
+        let mut out = Self {
+            files: files.len(),
+            ..Self::default()
+        };
+        let mut tables = std::collections::BTreeSet::new();
+        for f in files {
+            *out.facets.entry(Facet::of(f)).or_insert(0) += 1;
+            // `db/<table>/<file>`; loose files straight under `db/` are notes, not tables.
+            if let Some((table, _)) = f.strip_prefix("db/").and_then(|rest| rest.split_once('/')) {
+                tables.insert(table.to_owned());
+            }
+        }
+        out.tables = tables.into_iter().collect();
+        out
+    }
+
+    /// Several packs (one mod) as one fingerprint.
+    pub fn merge<'a>(parts: impl IntoIterator<Item = &'a Contents>) -> Self {
+        let mut out = Self::default();
+        let mut tables = std::collections::BTreeSet::new();
+        for c in parts {
+            out.files += c.files;
+            for (k, n) in &c.facets {
+                *out.facets.entry(*k).or_insert(0) += n;
+            }
+            tables.extend(c.tables.iter().cloned());
+        }
+        out.tables = tables.into_iter().collect();
+        out
+    }
+
+    /// Share of files in this facet, 0..=1.
+    pub fn share(&self, facet: Facet) -> f64 {
+        if self.files == 0 {
+            0.0
+        } else {
+            self.facets.get(&facet).copied().unwrap_or(0) as f64 / self.files as f64
+        }
+    }
 }
 
 /// Top-level folders that only hold assets.
@@ -286,6 +378,35 @@ mod tests {
         assert!(
             !is_tool_file("script/readme_parser/data.txt"),
             "nested data files still count"
+        );
+    }
+
+    #[test]
+    fn contents_fingerprint() {
+        let files: Vec<String> = [
+            "db/land_units_tables/my_mod",
+            "db/land_units_tables/my_mod_2",
+            "db/main_units_tables/my_mod",
+            "animations/battle/x.anim",
+            "variantmeshes/a.dds",
+            "campaigns/wh3_main_combi/startpos.esf",
+        ]
+        .map(String::from)
+        .to_vec();
+        let c = Contents::of(&files);
+        assert_eq!(c.files, 6);
+        assert_eq!(c.tables, ["land_units_tables", "main_units_tables"]);
+        assert_eq!(c.facets[&Facet::Db], 3);
+        assert!((c.share(Facet::Db) - 0.5).abs() < 1e-9);
+        assert_eq!(c.facets[&Facet::Startpos], 1);
+        let both = Contents::merge([&c, &c]);
+        assert_eq!(both.files, 12);
+        assert_eq!(both.tables.len(), 2);
+        let json = serde_json::to_string(&c).unwrap();
+        assert_eq!(serde_json::from_str::<Contents>(&json).unwrap(), c);
+        assert_eq!(
+            serde_json::from_str::<Contents>("{}").unwrap(),
+            Contents::default()
         );
     }
 

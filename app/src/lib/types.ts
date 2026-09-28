@@ -51,6 +51,8 @@ export interface LibraryEntry {
   knowledge: Resolved;
   user: ModKnowledge | null;
   community: ModKnowledge | null;
+  /** What WARP guessed from the packs' contents, headers and Steam tags. */
+  guessed: ModKnowledge;
   sets: string[];
   /** Version on disk (Steam's time_updated when downloaded); null if not installed. */
   installed_version: number | null;
