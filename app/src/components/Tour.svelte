@@ -4,6 +4,7 @@
   // `data-tour="<target>"`; if one isn't on screen, the step is shown centred.
   import { onMount, tick } from "svelte";
   import type { View } from "../lib/views";
+  import WarpShard from "./WarpShard.svelte";
 
   type Step = { target?: string; view?: View; title: string; speech: string; plain: string };
 
@@ -160,7 +161,7 @@
 
   <div class="card forged bubble" style={cardStyle}>
     <div class="head">
-      <span class="rat" aria-hidden="true">🐀</span>
+      <span class="sigil"><WarpShard size={30} pulse /></span>
       <div>
         <span class="label">Warlock-Engineer Snikkit · {index + 1}/{steps.length}</span>
         <h3>{step.title}</h3>
@@ -232,9 +233,14 @@
     align-items: center;
   }
 
-  .rat {
-    font-size: 30px;
-    filter: drop-shadow(0 0 8px rgb(168 242 63 / 0.5));
+  .sigil {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--brass-dim);
+    background: radial-gradient(circle, rgb(168 242 63 / 0.18), transparent 70%);
   }
 
   .skaven {

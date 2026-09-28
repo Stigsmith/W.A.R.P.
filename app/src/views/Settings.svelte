@@ -3,6 +3,7 @@
   import { app } from "../lib/state.svelte";
   import { KOFI_URL } from "../lib/links";
   import { HEADING_FONTS, settings } from "../lib/settings.svelte";
+  import WarpShard from "../components/WarpShard.svelte";
 
   let { ontour }: { ontour: () => void } = $props();
 </script>
@@ -44,7 +45,7 @@
   <section>
     <span class="label">Tutorial</span>
     <div class="row">
-      <button onclick={ontour}>🐀 Replay the Warlock-Engineer's tour</button>
+      <button onclick={ontour}><WarpShard size={15} /> Replay the Warlock-Engineer's tour</button>
     </div>
   </section>
 
@@ -63,7 +64,7 @@
   <section>
     <span class="label">Support</span>
     <div class="row">
-      <button class="kofi" onclick={async () => (await api()).openUrl(KOFI_URL)}>☕ Feed the Warlock-Engineer on Ko-fi</button>
+      <button class="kofi" onclick={async () => (await api()).openUrl(KOFI_URL)}><WarpShard size={15} /> Feed the Warlock-Engineer on Ko-fi</button>
       <span class="skaven faint">"Every coin buys one (1) warpstone shard. Probably."</span>
     </div>
   </section>

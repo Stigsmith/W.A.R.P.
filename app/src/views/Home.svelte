@@ -4,6 +4,7 @@
   import { count } from "../lib/format";
   import { KOFI_URL } from "../lib/links";
   import type { ImportSummary } from "../lib/types";
+  import WarpShard from "../components/WarpShard.svelte";
 
   import type { View } from "../lib/views";
 
@@ -102,10 +103,10 @@
 
   <div class="footer">
     <button class="ghost" onclick={ontour}>
-      <span class="rat">🐀</span> Take the tour, guided by a Warlock-Engineer
+      <WarpShard size={16} /> Take the tour, guided by a Warlock-Engineer
     </button>
     <button class="kofi" data-tour="kofi" onclick={kofi}>
-      <span class="cup">☕</span>
+      <WarpShard size={26} pulse />
       <span>
         <strong>Feed the Warlock-Engineer</strong>
         <small class="skaven">"Warpstone does not grow on trees, man-thing. Yes-yes, tip on Ko-fi!"</small>
@@ -213,10 +214,6 @@
     margin-top: auto;
   }
 
-  .rat {
-    font-size: 16px;
-  }
-
   .kofi {
     gap: 12px;
     padding: 10px 16px;
@@ -237,9 +234,6 @@
     color: var(--muted);
   }
 
-  .cup {
-    font-size: 22px;
-  }
 
   @media (max-width: 900px) {
     .tiles {

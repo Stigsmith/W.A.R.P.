@@ -81,7 +81,7 @@
         </button>
       {/if}
       <button class="nav settings-link" class:active={view === "settings"} onclick={() => (view = "settings")}>
-        <span>⚙ Settings</span>
+        <span>Settings</span>
       </button>
       <div class="faint small-print">
         {#if app.install}Game found{:else if app.loaded}Game not found{/if}

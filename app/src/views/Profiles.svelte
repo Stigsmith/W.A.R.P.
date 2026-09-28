@@ -238,7 +238,7 @@
 
       <div class="layers">
         <div class="mods-row">
-          <button onclick={() => (picking = true)}>✚ Pick mods…</button>
+          <button onclick={() => (picking = true)}>+ Pick mods…</button>
           {#if resolved && resolved.order.placements.length === 0}
             <button class="primary" onclick={addAllInstalled}>Add all installed mods</button>
           {/if}
