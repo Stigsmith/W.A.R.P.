@@ -111,7 +111,7 @@ cargo test --workspace                # core tests
 cargo run -p warp-cli -- --help       # the command-line tool
 npm --prefix app install
 npm --prefix app run tauri dev        # the desktop app
-npm --prefix app run tauri build      # the installer
+npm --prefix app run release         # the installer, with your folder paths stripped
 ```
 
 Checks run locally before every commit (format, lints, tests, UI types, changelog). Turn them on once per clone:
