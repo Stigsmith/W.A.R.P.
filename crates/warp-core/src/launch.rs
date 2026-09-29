@@ -5,14 +5,22 @@
 //! `add_working_directory "<dir>";`, then `mod "<pack>";` lines list the packs,
 //! top of the load order first. WARP writes its own file so it never overwrites the
 //! `used_mods.txt` of CA's launcher or mod manager.
+//!
+//! A game started outside Steam can hand itself back to Steam (after a patch, until
+//! it has once run from Steam). Steam then asks about "custom arguments" and opens
+//! CA's launcher with nothing ticked. Valve's `steam_appid.txt` next to the exe, and
+//! the app id Steam itself sets in the environment, let the game run on its own.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 
 use crate::Error;
 use crate::install::Install;
+use crate::log;
+use crate::steam::APP_ID;
 
 pub const MOD_LIST_FILE: &str = "warp_mods.txt";
+pub const STEAM_APPID_FILE: &str = "steam_appid.txt";
 
 /// A pack to load and the folder it lives in (`None`: the game's own `data` folder).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -58,6 +66,19 @@ pub fn write_mod_list(install: &Install, entries: &[ModListEntry]) -> Result<Pat
     Ok(path)
 }
 
+/// Writes `steam_appid.txt` into the game folder, so the game started directly doesn't
+/// hand itself back to Steam. A failure is logged, not fatal: the game often starts anyway.
+pub fn allow_direct_start(install: &Install) {
+    let path = install.game_dir.join(STEAM_APPID_FILE);
+    let id = APP_ID.to_string();
+    if std::fs::read_to_string(&path).is_ok_and(|t| t.trim() == id) {
+        return;
+    }
+    if let Err(e) = std::fs::write(&path, &id) {
+        log::line(format!("can't write {}: {e}", path.display()));
+    }
+}
+
 /// The game's arguments. The semicolons belong to the game's own argument syntax.
 pub fn game_args(continue_save: Option<&str>) -> Vec<String> {
     let mut args = Vec::new();
@@ -83,30 +104,29 @@ pub fn launch(install: &Install, continue_save: Option<&str>) -> Result<(), Erro
             exe.display()
         )));
     }
-    spawn_detached(&exe, &install.game_dir, &game_args(continue_save))
-        .map_err(|e| Error::Install(format!("the game didn't start: {e}")))
+    allow_direct_start(install);
+    let mut cmd = Command::new(&exe);
+    let id = APP_ID.to_string();
+    cmd.args(game_args(continue_save))
+        .current_dir(&install.game_dir)
+        .env("SteamAppId", &id)
+        .env("SteamGameId", &id);
+    spawn_detached(cmd).map_err(|e| Error::Install(format!("the game didn't start: {e}")))
 }
 
 #[cfg(windows)]
-fn spawn_detached(exe: &Path, cwd: &Path, args: &[String]) -> std::io::Result<()> {
+fn spawn_detached(mut cmd: Command) -> std::io::Result<()> {
     use std::os::windows::process::CommandExt;
     const DETACHED_PROCESS: u32 = 0x0000_0008;
     const CREATE_NEW_PROCESS_GROUP: u32 = 0x0000_0200;
-    Command::new(exe)
-        .args(args)
-        .current_dir(cwd)
-        .creation_flags(DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP)
+    cmd.creation_flags(DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP)
         .spawn()
         .map(drop)
 }
 
 #[cfg(not(windows))]
-fn spawn_detached(exe: &Path, cwd: &Path, args: &[String]) -> std::io::Result<()> {
-    Command::new(exe)
-        .args(args)
-        .current_dir(cwd)
-        .spawn()
-        .map(drop)
+fn spawn_detached(mut cmd: Command) -> std::io::Result<()> {
+    cmd.spawn().map(drop)
 }
 
 #[cfg(test)]
@@ -137,6 +157,28 @@ mod tests {
              mod \"second.pack\";\r\n\
              mod \"local.pack\";\r\n"
         );
+    }
+
+    #[test]
+    fn steam_appid_written_once() {
+        let dir = std::env::temp_dir().join(format!("warp-appid-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let install = Install::in_library(&dir, &dir);
+        allow_direct_start(&install);
+        let path = dir.join(STEAM_APPID_FILE);
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "1142710");
+        std::fs::write(
+            &path, "1142710
+",
+        )
+        .unwrap();
+        allow_direct_start(&install);
+        assert_eq!(
+            std::fs::read_to_string(&path).unwrap(),
+            "1142710
+"
+        );
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]

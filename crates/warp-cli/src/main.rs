@@ -270,6 +270,7 @@ fn main() -> Result<()> {
                     }
                 }
                 let path = warp_core::launch::write_mod_list(&install, &entries)?;
+                warp_core::launch::allow_direct_start(&install);
                 println!(
                     "Wrote {} ({} packs). Game not started.",
                     path.display(),

@@ -7,6 +7,14 @@ export type RoadmapItem = { title: string; what: string };
 
 export const RELEASES: Release[] = [
   {
+    version: "0.2.2",
+    date: "2026-09-29",
+    name: "No detours",
+    changes: [
+      "Play goes straight into the game. After a game patch, Steam used to intercept it, ask about \"custom arguments\" and open CA's launcher with nothing ticked. W.A.R.P. now leaves Valve's steam_appid.txt next to the game, so the game runs on its own. Steam still sees you playing.",
+    ],
+  },
+  {
     version: "0.2.1",
     date: "2026-09-29",
     name: "Rat-hunting season",

@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/warp-core", "crates/warp-cli", "app/src-tauri"]
 
 [workspace.package]
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 license = "MIT"
 rust-version = "1.90"

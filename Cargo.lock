@@ -5694,7 +5694,7 @@ dependencies = [
 
 [[package]]
 name = "warp-app"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -5708,7 +5708,7 @@ dependencies = [
 
 [[package]]
 name = "warp-cli"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "anyhow",
  "clap",
@@ -5719,7 +5719,7 @@ dependencies = [
 
 [[package]]
 name = "warp-core"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "base64 0.23.1",
  "calamine",
