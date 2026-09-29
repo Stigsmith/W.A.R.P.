@@ -15,3 +15,11 @@ cargo test --workspace --quiet
 
 echo "pre-commit: svelte-check"
 (cd app && npx --no-install svelte-check --tsconfig ./tsconfig.json --threshold error --output human)
+
+echo "pre-commit: changelog"
+app_version=$(sed -n 's/^  "version": "\(.*\)",$/\1/p' app/src-tauri/tauri.conf.json | head -1)
+log_version=$(sed -n 's/^ *version: "\(.*\)",$/\1/p' app/src/lib/changelog.ts | head -1)
+if [ "$app_version" != "$log_version" ]; then
+  echo "The app is $app_version but app/src/lib/changelog.ts starts at $log_version: add this version's changes."
+  exit 1
+fi

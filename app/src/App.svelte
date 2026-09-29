@@ -11,6 +11,7 @@
   import Home from "./views/Home.svelte";
   import Guide from "./views/Guide.svelte";
   import Library from "./views/Library.svelte";
+  import News from "./views/News.svelte";
   import Profiles from "./views/Profiles.svelte";
   import Multiplayer from "./views/Multiplayer.svelte";
   import Settings from "./views/Settings.svelte";
@@ -84,6 +85,12 @@
           {app.syncing ? "Syncing…" : "Sync with game"}
         </button>
       {/if}
+      <button class="nav settings-link" class:active={view === "news"} onclick={() => (view = "news")}>
+        <span>
+          What's new
+          {#if app.version && settings.seenVersion !== app.version}<span class="new-dot" title="New in {app.version}"></span>{/if}
+        </span>
+      </button>
       <button class="nav settings-link" class:active={view === "settings"} onclick={() => (view = "settings")}>
         <span>Settings</span>
       </button>
@@ -111,6 +118,8 @@
       <div class="empty skaven">Sharpening whiskers…</div>
     {:else if view === "settings"}
       <Settings ontour={startTour} />
+    {:else if view === "news"}
+      <News />
     {:else if !hasMods || view === "home"}
       <Home onnavigate={(v) => (view = v)} ontour={startTour} />
     {:else if view === "library"}
@@ -335,6 +344,24 @@
 
   .settings-link span {
     font-size: 15px;
+  }
+
+  .new-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-left: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    vertical-align: middle;
+    animation: dot-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes dot-pulse {
+    50% {
+      box-shadow: 0 0 14px var(--accent);
+    }
   }
 
   .small-print {

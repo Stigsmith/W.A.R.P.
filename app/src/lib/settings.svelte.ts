@@ -34,12 +34,14 @@ const STORAGE_KEY = "warp.settings";
 
 export type LibraryMode = "details" | "sets";
 
-type Stored = { headingFont: string; textFont: string; speechFont: string; motes: boolean; tourDone: boolean; libraryMode: LibraryMode };
+type Stored = { headingFont: string; textFont: string; speechFont: string; seenVersion: string; motes: boolean; tourDone: boolean; libraryMode: LibraryMode };
 
 class Settings {
   headingFont = $state(HEADING_FONTS[0].key);
   speechFont = $state(SPEECH_FONTS[0].key);
   textFont = $state(TEXT_FONTS[0].key);
+  /** The version whose "What's new" the user has opened. */
+  seenVersion = $state("");
   /** Floating warpstone motes and fog. */
   motes = $state(true);
   tourDone = $state(false);
@@ -52,6 +54,7 @@ class Settings {
       if (HEADING_FONTS.some((f) => f.key === saved.headingFont)) this.headingFont = saved.headingFont!;
       if (SPEECH_FONTS.some((f) => f.key === saved.speechFont)) this.speechFont = saved.speechFont!;
       if (TEXT_FONTS.some((f) => f.key === saved.textFont)) this.textFont = saved.textFont!;
+      if (typeof saved.seenVersion === "string") this.seenVersion = saved.seenVersion;
       if (typeof saved.motes === "boolean") this.motes = saved.motes;
       if (typeof saved.tourDone === "boolean") this.tourDone = saved.tourDone;
       if (saved.libraryMode === "sets" || saved.libraryMode === "details") this.libraryMode = saved.libraryMode;
@@ -81,6 +84,7 @@ class Settings {
         headingFont: this.headingFont,
         speechFont: this.speechFont,
         textFont: this.textFont,
+        seenVersion: this.seenVersion,
         motes: this.motes,
         tourDone: this.tourDone,
         libraryMode: this.libraryMode,

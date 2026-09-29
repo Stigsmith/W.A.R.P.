@@ -1,0 +1,69 @@
+// What's new and what's next, shown on the "What's new" page. Keep the newest
+// release first, and its version equal to the app's (tauri.conf.json).
+
+export type Release = { version: string; date: string; name: string; changes: string[] };
+
+export type RoadmapItem = { title: string; what: string };
+
+export const RELEASES: Release[] = [
+  {
+    version: "0.2.0",
+    date: "2026-09-29",
+    name: "The playtest build",
+    changes: [
+      "Sets as a spreadsheet: in the Library, tick mods into a column per set, drag down a column to tick many, and edit whole selections at once.",
+      "Profiles keep their own copy of each set and ask before taking a set's changes: update, dismiss, later, or stop asking.",
+      "Mods the community list doesn't know get a guessed tier, read from what's inside their packs. Hover \"guess\" to see why.",
+      "A warning when two installed mods look like two versions of the same mod (SFO and vanilla editions, a compilation and its parts).",
+      "A Load order page that explains every tier, a tier picker with hints, and a sortable Library with a From column.",
+      "A playtest checklist, Copy report for sending feedback, a log file, and a friendly screen instead of a crash if something breaks at startup.",
+      "Pick your own fonts for headings, text and Snikkit's voice. Buttons and checkboxes are now warpstone behind frosted glass.",
+      "A proper Windows installer. No admin rights needed.",
+    ],
+  },
+  {
+    version: "0.1.0",
+    date: "2026-09-28",
+    name: "First light",
+    changes: [
+      "The load-order engine: tiers and roles put specific mods on top and foundations at the bottom; mods that need or patch another sit above it.",
+      "Multiplayer: share your list as a short code, paste a friend's, and see exactly what's missing, extra, out of order or outdated.",
+      "Reads your installed mods from Steam and looks inside every pack.",
+      "A conflict map: which mods ship the same files, who wins, and how risky it is.",
+      "Play: starts Warhammer III with your profile's load order.",
+      "Imports the old W.A.R.P. v1 spreadsheet.",
+      "The start page, Snikkit's tour, and the Skaven look.",
+    ],
+  },
+];
+
+export const ROADMAP: { stage: "now" | "next" | "later"; label: string; items: RoadmapItem[] }[] = [
+  {
+    stage: "now",
+    label: "Now",
+    items: [
+      {
+        title: "Playtesting",
+        what: "The first run on other people's PCs: does Play start the game with the mods, and does comparing lists with a friend work? Your Copy report helps.",
+      },
+    ],
+  },
+  {
+    stage: "next",
+    label: "Next",
+    items: [
+      { title: "Creative Assembly's mod manager", what: "Import and export profiles of the official launcher's mod manager." },
+      { title: "Share your tier fixes", what: "Send the tiers you corrected to the community list, so everyone's guesses get better." },
+      { title: "Keep A above B", what: "Pin one mod above another by hand, for the rare cases the tiers get wrong." },
+    ],
+  },
+  {
+    stage: "later",
+    label: "Later",
+    items: [
+      { title: "Crash helper", what: "Remember the last list that worked, and narrow down which mod makes the game crash." },
+      { title: "Community list updates", what: "Get new tiers and relations without installing a new version." },
+      { title: "A signed installer", what: "No more \"Windows protected your PC\" warning." },
+    ],
+  },
+];
