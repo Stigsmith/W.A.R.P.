@@ -32,6 +32,7 @@ interface Fixture {
 const EMPTY: Fixture = {
   bootstrap: {
     version: "0.0.0-mock",
+    restorable: null,
     taxonomy: { tier: [{ key: "core", name: "Core", priority: 0, description: "", hint: "" }], role: [{ key: "content", name: "Content", priority: 20, description: "", hint: "" }] },
     mod_count: 0,
     data_dir: "(mock)",
@@ -196,6 +197,12 @@ export async function mockApi(): Promise<Api> {
     diagnostics: async (extra) =>
       `W.A.R.P. ${fx.bootstrap.version ?? "mock"} report (browser preview)\nLibrary: ${fx.library.length} mods, ${fx.sets.length} sets, ${fx.profiles.length} profiles\n\n${extra}\n`,
     logUi: async (line) => console.info("mock log:", line),
+    backups: () =>
+      delay([
+        { path: "C:\\mock\\backups\\warp-1790000000.db", at: Math.floor(Date.now() / 1000) - 3600, mods: fx.library.length, sets: fx.sets.length, profiles: fx.profiles.length },
+        { path: "C:\\mock\\backups\\warp-1789900000.db", at: Math.floor(Date.now() / 1000) - 90000, mods: fx.library.length, sets: fx.sets.length - 1, profiles: 1 },
+      ]),
+    restoreBackup: async (path) => console.info("mock: would restore", path),
     pickFile: async () => "C:\\demo\\WARP Database.zip",
     pickSavePath: async (name) => `C:\\demo\\${name}`,
     confirm: async (message) => window.confirm(message),

@@ -9,9 +9,14 @@ export const RELEASES: Release[] = [
   {
     version: "0.2.1",
     date: "2026-09-29",
-    name: "Snikkit keeps his promises",
+    name: "Rat-hunting season",
     changes: [
-      "The tour no longer explains an empty page: without a profile it skips the profile part, and shows it as soon as your first profile has mods.",
+      "Rat-hunting (what lesser races call bug-fixing): the mod picker no longer opens somewhere far below the window, the set menu closes when you click elsewhere and never opens off-screen, and \"Show only its mods\" has a way back. More rats to come. There are always more rats.",
+      "Your lists are safe: W.A.R.P. backs up your library each time it starts (the last seven are kept), checks the database before using it, and offers to restore a backup if it's damaged or suddenly empty. Settings lists every backup.",
+      "Only one W.A.R.P. at a time: starting it again brings the open window forward.",
+      "The tour no longer explains an empty page: without a profile it skips that part, and shows it once your first profile has mods.",
+      "The start page fits on one screen: the logo makes room.",
+      "A hidden playtest checklist can be brought back from the start page.",
       "Snikkit has opinions about campaigns that aren't Skaven.",
     ],
   },

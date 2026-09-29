@@ -4,6 +4,7 @@
   import { KOFI_URL } from "../lib/links";
   import { HEADING_FONTS, SPEECH_FONTS, TEXT_FONTS, settings } from "../lib/settings.svelte";
   import { copyReport, playtest } from "../lib/playtest.svelte";
+  import BackupList from "../components/BackupList.svelte";
   import WarpShard from "../components/WarpShard.svelte";
 
   let { ontour }: { ontour: () => void } = $props();
@@ -112,6 +113,15 @@
         <button class="small" onclick={() => playtest.update({ hidden: false })}>Show the playtest checklist on the start page</button>
       </div>
     {/if}
+  </section>
+
+  <section>
+    <span class="label">Backups</span>
+    <p class="faint">
+      W.A.R.P. copies your library (mods, sets, profiles, tier choices) each time it starts, and keeps the last seven. Restoring
+      one keeps your current library in the backups folder too.
+    </p>
+    <BackupList />
   </section>
 
   <section>

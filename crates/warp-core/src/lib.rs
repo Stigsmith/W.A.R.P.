@@ -8,6 +8,7 @@
 //! - [`sets`]: how profiles keep their own copy of each set and hear about changes
 //! - [`library`]: the user's mods, sets and profiles, tying it all together
 
+pub mod backup;
 pub mod conflicts;
 pub mod import_v1;
 pub mod install;

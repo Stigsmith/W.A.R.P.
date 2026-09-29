@@ -40,12 +40,22 @@
     if (imported) await app.refresh();
   }
 
+  let restoring = $state(false);
+
+  async function restoreLatest() {
+    const b = app.restorable;
+    if (!b) return;
+    restoring = true;
+    if (await app.run(async () => (await api()).restoreBackup(b.path))) location.reload();
+    restoring = false;
+  }
+
   async function kofi() {
     await (await api()).openUrl(KOFI_URL);
   }
 </script>
 
-<div class="home scroll">
+<div class="home scroll" class:with-playtest={!playtest.hidden}>
   <div class="hero">
     <img class="logo" src="/logo.png" alt="W.A.R.P." />
     <p class="expansion">Warhammer Advanced Resource Platform</p>
@@ -53,6 +63,18 @@
       {firstRun ? "Yes-yes! A new warlord! Let the Warlock-Engineer find your mod-things first." : greeting}
     </p>
   </div>
+
+  {#if app.restorable}
+    {@const b = app.restorable}
+    <div class="card forged restorable">
+      <p>
+        <strong>Your library is empty</strong>, but W.A.R.P. has a backup from
+        {new Date(b.at * 1000).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })} with
+        {count(b.mods, "mod")}, {count(b.sets, "set")} and {count(b.profiles, "profile")}.
+      </p>
+      <button class="primary" onclick={restoreLatest} disabled={restoring}>{restoring ? "Restoring…" : "Restore it"}</button>
+    </div>
+  {/if}
 
   {#if firstRun}
     <div class="card forged setup">
@@ -109,9 +131,14 @@
   {/if}
 
   <div class="footer">
-    <button class="ghost" onclick={ontour}>
-      <WarpShard size={16} /> Take the tour, guided by a Warlock-Engineer
-    </button>
+    <div class="links">
+      <button class="ghost" onclick={ontour}>
+        <WarpShard size={16} /> Take the tour, guided by a Warlock-Engineer
+      </button>
+      {#if playtest.hidden}
+        <button class="ghost" onclick={() => playtest.update({ hidden: false })}>Show the playtest checklist</button>
+      {/if}
+    </div>
     <button class="kofi" data-tour="kofi" onclick={kofi}>
       <WarpShard size={26} pulse />
       <span>
@@ -128,8 +155,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 22px;
-    padding: 28px 32px 32px;
+    gap: 18px;
+    padding: 20px 32px 16px;
   }
 
   .hero {
@@ -150,11 +177,17 @@
   }
 
   /* No box: the glow follows the logo's own outline. */
+  /* The logo takes the height the rest of the page leaves, so the start page fits
+     one screen; with the playtest card showing, it gives that card room. */
   .logo {
-    width: min(360px, 42vh);
+    width: clamp(200px, calc(100vh - 430px), 340px);
     height: auto;
     filter: brightness(1.18) contrast(1.06) drop-shadow(0 0 14px rgb(168 242 63 / 0.35)) drop-shadow(0 0 46px rgb(168 242 63 / 0.18));
     animation: logo-pulse 5s ease-in-out infinite;
+  }
+
+  .with-playtest .logo {
+    width: clamp(140px, calc(100vh - 720px), 320px);
   }
 
   @keyframes logo-pulse {
@@ -168,6 +201,22 @@
     text-align: center;
     color: var(--accent);
     text-shadow: 0 0 14px rgb(168 242 63 / 0.35);
+  }
+
+  .restorable {
+    width: min(620px, 100%);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-color: var(--brass-dim);
+    background: var(--brass-faint);
+  }
+
+  .restorable p {
+    margin: 0;
+    flex: 1;
+    font-size: 13.5px;
   }
 
   .setup {
@@ -229,6 +278,13 @@
     justify-content: space-between;
     gap: 12px;
     margin-top: auto;
+  }
+
+  .links {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
   }
 
   .kofi {

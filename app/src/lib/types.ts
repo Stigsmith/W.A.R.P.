@@ -228,8 +228,20 @@ export interface Install {
   manifest: string;
 }
 
+/** One of W.A.R.P.'s automatic database backups. */
+export interface BackupInfo {
+  path: string;
+  /** Unix seconds. */
+  at: number;
+  mods: number;
+  sets: number;
+  profiles: number;
+}
+
 export interface Bootstrap {
   version: string;
+  /** A backup worth offering because the library is empty and it isn't. */
+  restorable: BackupInfo | null;
   taxonomy: Taxonomy;
   mod_count: number;
   data_dir: string;

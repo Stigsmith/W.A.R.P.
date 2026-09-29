@@ -8,6 +8,7 @@
   import Backdrop from "./components/Backdrop.svelte";
   import Tour from "./components/Tour.svelte";
   import WarpShard from "./components/WarpShard.svelte";
+  import BackupList from "./components/BackupList.svelte";
   import Home from "./views/Home.svelte";
   import Guide from "./views/Guide.svelte";
   import Library from "./views/Library.svelte";
@@ -110,9 +111,14 @@
         <p class="skaven">"Something went boom-boom in the warp-engine. Not Snikkit's fault! Tell the man-thing who gave you this."</p>
         <p class="mono">{error}</p>
         <p class="muted">
-          Close any other W.A.R.P. windows and start it again. If it keeps happening, press Copy report and send it along.
+          Close any other W.A.R.P. windows and start it again. If it keeps happening, restore a backup below, or press Copy report
+          and send it along.
         </p>
         <button class="primary" onclick={copyReport}>Copy report</button>
+        <div class="broken-backups">
+          <span class="label">Backups</span>
+          <BackupList limit={4} />
+        </div>
       </div>
     {:else if !app.loaded}
       <div class="empty skaven">Sharpening whiskers…</div>
@@ -201,6 +207,15 @@
 
   .broken p {
     margin: 0;
+  }
+
+  .broken-backups {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
   }
 
   .broken .mono {

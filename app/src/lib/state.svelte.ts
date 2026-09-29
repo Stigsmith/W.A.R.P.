@@ -1,7 +1,7 @@
 // App-wide state, loaded once and refreshed after changes.
 
 import { api } from "./api";
-import type { Install, LibraryEntry, ModSet, ProfileDef, Role, SetUpdate, SyncSummary, Taxonomy, Tier, WorkshopId } from "./types";
+import type { BackupInfo, Install, LibraryEntry, ModSet, ProfileDef, Role, SetUpdate, SyncSummary, Taxonomy, Tier, WorkshopId } from "./types";
 
 type Toast = { text: string; kind: "ok" | "error" };
 
@@ -13,6 +13,8 @@ class AppState {
   /** Set changes each profile hasn't taken or dismissed, by profile name. */
   setUpdates = $state<Record<string, SetUpdate[]>>({});
   version = $state("");
+  /** A backup to offer because the library came up empty and the backup isn't. */
+  restorable = $state<BackupInfo | null>(null);
   dataDir = $state("");
   kaedrinDir = $state<string | null>(null);
   /** The installed game, or why it wasn't found. */
@@ -31,6 +33,7 @@ class AppState {
     const a = await api();
     const boot = await a.bootstrap();
     this.version = boot.version;
+    this.restorable = boot.restorable;
     this.taxonomy = boot.taxonomy;
     this.dataDir = boot.data_dir;
     this.kaedrinDir = boot.kaedrin_dir;

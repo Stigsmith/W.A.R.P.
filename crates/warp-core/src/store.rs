@@ -168,6 +168,20 @@ impl Store {
         Ok(store)
     }
 
+    /// SQLite's quick integrity check: `["ok"]` for a healthy database.
+    pub fn quick_check(&self) -> Result<Vec<String>, Error> {
+        let mut stmt = self.conn.prepare("PRAGMA quick_check")?;
+        let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
+        Ok(rows.collect::<Result<_, _>>()?)
+    }
+
+    /// A consistent copy of the whole database in a new file.
+    pub fn backup_to(&self, path: &Path) -> Result<(), Error> {
+        self.conn
+            .execute("VACUUM INTO ?1", [path.to_string_lossy()])?;
+        Ok(())
+    }
+
     /// Runs `f` in one transaction: all of it lands, or none of it.
     pub fn transaction<T>(
         &mut self,

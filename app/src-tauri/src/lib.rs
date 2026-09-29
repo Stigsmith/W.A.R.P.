@@ -5,7 +5,8 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
-use tauri::State;
+use tauri::{Manager, State};
+use warp_core::backup::{self, BackupInfo};
 use warp_core::conflicts::{ConflictReport, DbOverlap};
 use warp_core::install::Install;
 use warp_core::kaedrin;
@@ -18,9 +19,10 @@ use warp_core::store::{ModSet, ProfileDef, Store};
 use warp_core::taxonomy::Taxonomy;
 use warp_core::{import_v1, log, report, steam};
 
-/// The library, or why its database couldn't be opened. The app still starts
-/// without it, so the user sees what went wrong and can copy a report.
-struct AppState(Result<Mutex<Library>, String>);
+/// The library, or why its database couldn't be opened (or is damaged). The app
+/// still starts without it, so the user sees what went wrong, can restore a
+/// backup (which swaps the library in place) and can copy a report.
+struct AppState(Mutex<Result<Library, String>>);
 
 type CmdResult<T> = Result<T, String>;
 
@@ -30,16 +32,53 @@ fn with_lib<T>(
     state: &State<'_, AppState>,
     f: impl FnOnce(&mut Library) -> Result<T, warp_core::Error>,
 ) -> CmdResult<T> {
-    let lib = state.0.as_ref().map_err(Clone::clone)?;
-    let mut lib = lib
+    let mut guard = state
+        .0
         .lock()
         .map_err(|_| "internal error: library lock poisoned".to_owned())?;
-    f(&mut lib).map_err(|e| e.to_string())
+    let lib = guard.as_mut().map_err(|e| e.clone())?;
+    f(lib).map_err(|e| e.to_string())
+}
+
+/// Opens the database and makes sure it's healthy before anything uses it; takes
+/// a backup of a healthy library. Everything it finds goes into the log.
+fn open_library(db: &Path) -> Result<Library, String> {
+    let store = Store::open(db)
+        .map_err(|e| format!("couldn't open the database at {}: {e}", db.display()))?;
+    let check = store.quick_check().map_err(|e| e.to_string())?;
+    if check.first().map(String::as_str) != Some("ok") {
+        return Err(format!(
+            "the database at {} is damaged ({})",
+            db.display(),
+            // SQLite lists every broken page; the first line says enough.
+            check
+                .first()
+                .and_then(|c| c.lines().find(|l| !l.starts_with("***")))
+                .unwrap_or_default()
+        ));
+    }
+    let lib = Library::new(store, warp_core::builtin_kb());
+    let count =
+        |n: Result<usize, warp_core::Error>| n.map_or_else(|e| e.to_string(), |n| n.to_string());
+    log::line(format_args!(
+        "database: {} mods, {} sets, {} profiles",
+        count(lib.store.mods().map(|m| m.len())),
+        count(lib.store.sets().map(|s| s.len())),
+        count(lib.store.profiles().map(|p| p.len())),
+    ));
+    match backup::take_if_due(&lib.store, db) {
+        Ok(Some(path)) => log::line(format_args!("backup: {}", path.display())),
+        Ok(None) => {}
+        Err(e) => log::line(format_args!("backup failed: {e}")),
+    }
+    Ok(lib)
 }
 
 #[derive(Serialize)]
 struct Bootstrap {
     version: &'static str,
+    /// A backup worth offering when the library is empty but the backup isn't.
+    restorable: Option<BackupInfo>,
     taxonomy: Taxonomy,
     mod_count: usize,
     data_dir: String,
@@ -51,8 +90,17 @@ struct Bootstrap {
 #[tauri::command]
 async fn bootstrap(state: State<'_, AppState>) -> CmdResult<Bootstrap> {
     with_lib(&state, |lib| {
+        let empty = lib.store.mods()?.is_empty() && lib.store.profiles()?.is_empty();
+        let restorable = if empty {
+            backup::list(&warp_core::default_db_path())
+                .into_iter()
+                .find(|b| b.mods > 0)
+        } else {
+            None
+        };
         Ok(Bootstrap {
             version: VERSION,
+            restorable,
             taxonomy: lib.taxonomy.clone(),
             mod_count: lib.store.mods()?.len(),
             data_dir: warp_core::data_dir().display().to_string(),
@@ -108,22 +156,53 @@ async fn play(state: State<'_, AppState>, profile: ProfileDef) -> CmdResult<Stri
 #[tauri::command]
 async fn diagnostics(state: State<'_, AppState>, extra: String) -> CmdResult<String> {
     let install = Install::locate().map_err(|e| e.to_string());
-    let lib = match &state.0 {
-        Ok(m) => Some(
-            m.lock()
-                .map_err(|_| "internal error: library lock poisoned".to_owned())?,
-        ),
-        Err(_) => None,
-    };
+    let guard = state
+        .0
+        .lock()
+        .map_err(|_| "internal error: library lock poisoned".to_owned())?;
     Ok(report::report(
-        lib.as_deref(),
+        guard.as_ref().ok(),
         &report::Context {
             version: VERSION,
             install: &install,
-            library_error: state.0.as_ref().err().map(String::as_str),
+            library_error: guard.as_ref().err().map(String::as_str),
             extra: &extra,
         },
     ))
+}
+
+/// Backups of the database, newest first.
+#[tauri::command]
+async fn backups() -> CmdResult<Vec<BackupInfo>> {
+    Ok(backup::list(&warp_core::default_db_path()))
+}
+
+/// Puts a backup in place of the database, keeping the replaced files, and
+/// reopens the library. Works while the database is damaged, too.
+#[tauri::command]
+async fn restore_backup(state: State<'_, AppState>, path: String) -> CmdResult<()> {
+    let db = warp_core::default_db_path();
+    let backup_path = PathBuf::from(&path);
+    // Only files from our own backups folder.
+    if backup_path.parent() != Some(backup::dir(&db).as_path()) {
+        return Err("that isn't one of W.A.R.P.'s backups".into());
+    }
+    let mut guard = state
+        .0
+        .lock()
+        .map_err(|_| "internal error: library lock poisoned".to_owned())?;
+    // Close the current database before moving its files.
+    *guard = Err("restoring a backup".into());
+    let aside = backup::restore(&backup_path, &db).map_err(|e| e.to_string());
+    match &aside {
+        Ok(dir) => log::line(format_args!(
+            "restored {path}; the replaced files are in {}",
+            dir.display()
+        )),
+        Err(e) => log::line(format_args!("restoring {path} failed: {e}")),
+    }
+    *guard = open_library(&db);
+    aside.and(guard.as_ref().map(drop).map_err(|e| e.clone()))
 }
 
 /// Errors the user saw in the app, so they end up in the log and the report.
@@ -382,25 +461,31 @@ async fn refresh_steam(state: State<'_, AppState>) -> CmdResult<usize> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    log::line(format_args!("W.A.R.P. {VERSION} started"));
     let default_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
         log::line(format_args!("crash: {info}"));
         default_hook(info);
     }));
 
-    let db = warp_core::default_db_path();
-    let opened = Store::open(&db)
-        .map(|store| Mutex::new(Library::new(store, warp_core::builtin_kb())))
-        .map_err(|e| {
-            let msg = format!("couldn't open the database at {}: {e}", db.display());
-            log::line(&msg);
-            msg
-        });
     tauri::Builder::default()
+        // First: a second W.A.R.P. only brings this window forward, so two copies
+        // never share (and fight over) one database.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .manage(AppState(opened))
+        // After the single-instance check, so a second copy quits before it
+        // touches the database.
+        .setup(|app| {
+            log::line(format_args!("W.A.R.P. {VERSION} started"));
+            let opened = open_library(&warp_core::default_db_path()).inspect_err(|e| log::line(e));
+            app.manage(AppState(Mutex::new(opened)));
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             bootstrap,
             library,
@@ -432,6 +517,8 @@ pub fn run() {
             play,
             diagnostics,
             log_ui,
+            backups,
+            restore_backup,
         ])
         .run(tauri::generate_context!())
         .expect("W.A.R.P. failed to start");

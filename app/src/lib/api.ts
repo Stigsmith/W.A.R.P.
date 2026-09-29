@@ -3,6 +3,7 @@
 // UI can be developed and reviewed without building the app.
 
 import type {
+  BackupInfo,
   Bootstrap,
   CompareResult,
   ConflictReport,
@@ -62,6 +63,10 @@ export interface Api {
   diagnostics(extra: string): Promise<string>;
   /** Puts an error the user saw into the log. */
   logUi(line: string): Promise<void>;
+  /** Automatic database backups, newest first. */
+  backups(): Promise<BackupInfo[]>;
+  /** Puts a backup in place of the database (the replaced one is kept) and reopens it. */
+  restoreBackup(path: string): Promise<void>;
   // Platform
   pickFile(filters: FileFilter[]): Promise<string | null>;
   pickSavePath(defaultName: string, filters: FileFilter[]): Promise<string | null>;
@@ -106,6 +111,8 @@ async function tauriApi(): Promise<Api> {
     play: (profile) => invoke("play", { profile }),
     diagnostics: (extra) => invoke("diagnostics", { extra }),
     logUi: (line) => invoke("log_ui", { line }),
+    backups: () => invoke("backups"),
+    restoreBackup: (path) => invoke("restore_backup", { path }),
     pickFile: async (filters) => {
       const picked = await dialog.open({ multiple: false, directory: false, filters });
       return typeof picked === "string" ? picked : null;
