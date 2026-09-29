@@ -1,7 +1,7 @@
 <script lang="ts">
   import { api } from "../lib/api";
   import { app } from "../lib/state.svelte";
-  import { count } from "../lib/format";
+  import { count, notUpdatedLabel } from "../lib/format";
   import { KOFI_URL } from "../lib/links";
   import type { ImportSummary } from "../lib/types";
   import PlaytestCard from "../components/PlaytestCard.svelte";
@@ -20,6 +20,7 @@
   const pending = $derived(
     app.library.filter((e) => e.subscribed && e.installed_version !== null && e.installed_version < e.info.time_updated).length,
   );
+  const notUpdated = $derived(app.library.filter((e) => e.subscribed && e.not_updated));
   const lastProfile = $derived(app.profiles[0] ?? null);
 
   const greetings = [
@@ -121,6 +122,7 @@
         <h3>{count(installed, "mod")} installed</h3>
         <p class="muted">
           {#if pending}<span class="chip warn">{pending} waiting for a Steam update</span>{:else}All up to date with Steam.{/if}
+          {#if notUpdated.length}<span class="chip warn">{notUpdated.length} {notUpdatedLabel(notUpdated[0])}</span>{/if}
         </p>
       </button>
     </div>

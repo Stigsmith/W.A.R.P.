@@ -7,6 +7,15 @@ export type RoadmapItem = { title: string; what: string };
 
 export const RELEASES: Release[] = [
   {
+    version: "0.2.3",
+    date: "2026-09-29",
+    name: "Crash suspects",
+    changes: [
+      "Mods that were kept up to date for 8.x but haven't been updated since game update 9.0 get a \"not updated for 9.0\" flag: on the load order, in the Library, and in a warning on the profile, which can leave them all out in one click. When the game crashes and the load order isn't to blame, look here first. Mods that were already older aren't flagged: they came through 8.0 unchanged.",
+      "The Library can show only those mods, so you can take them out of your sets or check their Workshop pages for news.",
+    ],
+  },
+  {
     version: "0.2.2",
     date: "2026-09-29",
     name: "No detours",

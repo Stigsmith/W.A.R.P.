@@ -21,6 +21,7 @@ pub mod model;
 pub mod mp;
 pub mod order;
 pub mod pack_index;
+pub mod patches;
 pub mod report;
 pub mod sets;
 pub mod steam;

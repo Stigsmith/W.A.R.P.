@@ -1,6 +1,6 @@
 <script lang="ts">
   import { app } from "../lib/state.svelte";
-  import { tierColor } from "../lib/format";
+  import { notUpdatedHint, notUpdatedLabel, tierColor } from "../lib/format";
   import type { Placement, Reason, RuleKind } from "../lib/types";
 
   let { placements, filter = "" }: { placements: Placement[]; filter?: string } = $props();
@@ -74,6 +74,7 @@
             {#if has(p, "raised")}<span class="chip info">raised</span>{/if}
             {#if ruleCount(p) > 0}<span class="chip">{ruleCount(p)} rule{ruleCount(p) > 1 ? "s" : ""}</span>{/if}
             {#if entry && !entry.subscribed}<span class="chip warn">unsubscribed</span>{/if}
+            {#if entry?.not_updated}<span class="chip warn" title={notUpdatedHint(entry)}>{notUpdatedLabel(entry)}</span>{/if}
             <span class="chip role">{app.role(p.role)?.name ?? p.role}</span>
           </span>
         </button>

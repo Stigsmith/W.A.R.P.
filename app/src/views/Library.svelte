@@ -7,7 +7,7 @@
   import { api } from "../lib/api";
   import { app } from "../lib/state.svelte";
   import { settings } from "../lib/settings.svelte";
-  import { count, date } from "../lib/format";
+  import { count, date, notUpdatedHint, notUpdatedLabel } from "../lib/format";
   import ModPanel from "../components/ModPanel.svelte";
   import TierSelect from "../components/TierSelect.svelte";
   import type { LibraryEntry, Source, WorkshopId } from "../lib/types";
@@ -16,6 +16,9 @@
   let tier = $state("");
   let set = $state("");
   let showUnsubscribed = $state(false);
+  let onlyNotUpdated = $state(false);
+  /** Installed mods kept up to date until the latest game update but not since. */
+  const notUpdated = $derived(app.library.filter((e) => e.subscribed && e.not_updated));
   const mode = $derived(settings.libraryMode);
   let openId = $state<string | null>(null);
 
@@ -26,6 +29,7 @@
     const q = query.trim().toLowerCase();
     return app.library
       .filter((e) => showUnsubscribed || e.subscribed)
+      .filter((e) => !onlyNotUpdated || e.not_updated)
       .filter((e) => !tier || e.knowledge.tier === tier)
       .filter((e) => !set || (set === "__none" ? e.sets.length === 0 : e.sets.includes(set)))
       .filter((e) => !q || `${e.info.title} ${e.packs.join(" ")} ${e.knowledge.tags.join(" ")}`.toLowerCase().includes(q))
@@ -251,12 +255,13 @@
   }
 
   // --- Filters. ---------------------------------------------------------------------
-  const filtered = $derived(!!(query.trim() || tier || set));
+  const filtered = $derived(!!(query.trim() || tier || set || onlyNotUpdated));
 
   function showAll() {
     query = "";
     tier = "";
     set = "";
+    onlyNotUpdated = false;
   }
 </script>
 
@@ -304,6 +309,11 @@
           {#each app.sets as s (s.name)}<option value={s.name}>{s.name}</option>{/each}
         </select>
         <label class="check"><input type="checkbox" bind:checked={showUnsubscribed} /> Unsubscribed</label>
+        {#if notUpdated.length}
+          <label class="check" title="Mods kept up to date for the previous game update, but not updated since the latest. Likely suspects if the game crashes, until their authors catch up.">
+            <input type="checkbox" bind:checked={onlyNotUpdated} /> {notUpdatedLabel(notUpdated[0]).replace(/^n/, "N")} ({notUpdated.length})
+          </label>
+        {/if}
         {#if filtered}<button class="small" onclick={showAll}>✕ Show all mods</button>{/if}
         <span class="faint count">{rows.length} shown</span>
       </div>
@@ -391,10 +401,11 @@
               </td>
               <td class="mod">
                 <span class="title">
-                  {e.info.title || e.packs[0]}
+                  <span class="name">{e.info.title || e.packs[0]}</span>
                   {#if e.subscribed && e.installed_version !== null && e.installed_version < e.info.time_updated}
                     <span class="chip warn" title="Steam has a newer version than the one installed">update pending</span>
                   {/if}
+                  {#if e.not_updated}<span class="chip warn" title={notUpdatedHint(e)}>{notUpdatedLabel(e)}</span>{/if}
                 </span>
                 <span class="mono faint">{e.packs[0] ?? "—"}</span>
               </td>
@@ -637,11 +648,28 @@
     min-width: 220px;
   }
 
-  .mod span {
+  .mod > span {
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* The title, then its chips; a long title is cut short, the chips stay whole. */
+  .mod .title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mod .name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mod .title .chip {
+    flex-shrink: 0;
   }
 
   .tier-cell {

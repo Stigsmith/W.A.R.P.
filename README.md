@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version 0.2.2" src="https://img.shields.io/badge/version-0.2.2-7fd630?style=flat-square&labelColor=1a1f14">
+  <img alt="Version 0.2.3" src="https://img.shields.io/badge/version-0.2.3-7fd630?style=flat-square&labelColor=1a1f14">
   <img alt="Status: playtest" src="https://img.shields.io/badge/status-playtest-c9a227?style=flat-square&labelColor=1a1f14">
   <img alt="Windows" src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-7fd630?style=flat-square&labelColor=1a1f14">
   <img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-7fd630?style=flat-square&labelColor=1a1f14">
@@ -68,12 +68,15 @@ short tour by Snikkit walks you through the app.
 
 ### And also
 
+- **Crash suspects after a game update:** mods that were kept up to date for the previous update but haven't been
+  updated since the latest one (9.0 right now) get a flag on the load order and in the Library, and a profile warning
+  can leave them all out in one click.
 - **Play** writes the mod list and starts the game directly. CA's launcher isn't needed.
 - **Kaedrin's Mod Manager:** open one of its profiles to compare against, or export a W.A.R.P. profile to it.
 - **Your lists are safe:** a backup at every start (the last seven are kept), a database check before use, and an
   offer to restore a backup if the database is ever damaged or suddenly empty.
-- **Community knowledge:** mod tiers and relations live in a shared knowledge base ([knowledge/](knowledge/)), so
-  nobody has to tag 400 mods alone.
+- **Community knowledge:** mod tiers and relations, and the list of game updates that break mods, live in a shared
+  knowledge base ([knowledge/](knowledge/)), so nobody has to tag 400 mods alone.
 
 ## Install
 

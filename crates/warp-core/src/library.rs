@@ -17,6 +17,7 @@ use crate::model::{ModInfo, WorkshopId, pack_key};
 use crate::mp::{self, ListDiff, ShareEntry, ShareList};
 use crate::order::{self, OrderItem, OrderResult};
 use crate::pack_index::{self, Contents, PackIndex};
+use crate::patches::{GamePatches, NotUpdated};
 use crate::sets::{self, SetUpdate};
 use crate::steam;
 use crate::store::{ModSet, ProfileDef, Store};
@@ -26,6 +27,7 @@ pub struct Library {
     pub store: Store,
     pub kb: KnowledgeBase,
     pub taxonomy: Taxonomy,
+    pub patches: GamePatches,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -48,6 +50,8 @@ pub struct LibraryEntry {
     pub installed_version: Option<i64>,
     /// Files across the mod's packs, once indexed.
     pub files: usize,
+    /// Kept up to date for the previous game update, but not updated since the latest.
+    pub not_updated: Option<NotUpdated>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -66,6 +70,8 @@ pub struct ResolvedProfile {
     pub incompatibilities: Vec<(WorkshopId, WorkshopId)>,
     /// Pairs in the profile that look like two versions of the same mod.
     pub either_or: Vec<DbOverlap>,
+    /// Mods kept up to date for the previous game update but not since the latest.
+    pub not_updated: Vec<WorkshopId>,
 }
 
 /// What a sync with the installed game found and did.
@@ -96,6 +102,7 @@ impl Library {
             store,
             kb,
             taxonomy: Taxonomy::builtin(),
+            patches: GamePatches::builtin(),
         }
     }
 
@@ -125,6 +132,9 @@ impl Library {
                     .collect();
                 let merged = (!parts.is_empty()).then(|| Contents::merge(parts));
                 let (mut derived, guess_why) = knowledge::guess(&info, &packs, merged.as_ref());
+                let installed_version = installed.get(&id).copied();
+                // The newest version there is: Steam's, or the copy on disk if Steam hasn't said.
+                let newest = info.time_updated.max(installed_version.unwrap_or(0));
                 derived.requires = declared.get(&id).cloned().unwrap_or_default();
                 LibraryEntry {
                     knowledge: knowledge::resolve(
@@ -138,7 +148,8 @@ impl Library {
                     guessed: derived,
                     guess_why,
                     sets: sets_of.remove(&id).unwrap_or_default(),
-                    installed_version: installed.get(&id).copied(),
+                    installed_version,
+                    not_updated: self.patches.not_updated(newest),
                     files: packs
                         .iter()
                         .filter_map(|p| summaries.get(&pack_key(p)))
@@ -242,6 +253,7 @@ impl Library {
             missing_requirements: vec![],
             incompatibilities: vec![],
             either_or: vec![],
+            not_updated: vec![],
         };
         let mut items = Vec::new();
         let mut incompatible = BTreeSet::new();
@@ -252,6 +264,9 @@ impl Library {
             };
             if !e.subscribed {
                 out.unsubscribed.push(*id);
+            }
+            if e.not_updated.is_some() {
+                out.not_updated.push(*id);
             }
             for req in &e.knowledge.requires {
                 if !in_profile.contains(req) {
@@ -942,6 +957,44 @@ mod tests {
         let share = lib.share_list(&def).unwrap();
         assert_eq!(share.entries[0].workshop_id, Some(WorkshopId(2)));
         assert_eq!(share.entries[0].time_updated, 1_700_000_002);
+    }
+
+    #[test]
+    fn profile_lists_mods_not_updated_since_the_latest_game_update() {
+        let mut lib = lib_with(
+            &[
+                (1, "kept_up.pack", "ui", "content"),
+                (2, "updated.pack", "ui", "content"),
+            ],
+            &[],
+        );
+        // Both mods were updated on 2023-11-14, between these two game updates.
+        lib.patches = GamePatches::parse(
+            "[[patch]]\nversion = \"9.0\"\nreleased = \"2023-11-16\"\n[[patch]]\nversion = \"8.0\"\nreleased = \"2023-11-10\"\n",
+        )
+        .unwrap();
+        let mut info = ModInfo::unknown(WorkshopId(2));
+        info.time_updated = 1_700_200_000;
+        lib.store.transaction(|tx| tx.upsert_mod(&info)).unwrap();
+
+        let entries = lib.entries_by_id().unwrap();
+        assert_eq!(
+            entries[&WorkshopId(1)]
+                .not_updated
+                .as_ref()
+                .map(|n| n.patch.as_str()),
+            Some("9.0")
+        );
+        assert_eq!(entries[&WorkshopId(2)].not_updated, None);
+        let def = ProfileDef {
+            name: "p".into(),
+            include: vec![WorkshopId(1), WorkshopId(2)],
+            ..Default::default()
+        };
+        assert_eq!(
+            lib.resolve_profile(&def).unwrap().not_updated,
+            [WorkshopId(1)]
+        );
     }
 
     #[test]

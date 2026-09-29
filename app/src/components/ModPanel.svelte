@@ -1,7 +1,7 @@
 <script lang="ts">
   import { api } from "../lib/api";
   import { app } from "../lib/state.svelte";
-  import { date, size, steamClientUrl } from "../lib/format";
+  import { date, notUpdatedHint, notUpdatedLabel, size, steamClientUrl } from "../lib/format";
   import TierSelect from "./TierSelect.svelte";
   import type { LibraryEntry, ModKnowledge, Source, WorkshopId } from "../lib/types";
 
@@ -55,6 +55,7 @@
       {#if entry.subscribed && entry.installed_version !== null && entry.installed_version < entry.info.time_updated}
         <span class="chip warn" title="Steam has a newer version than the one on disk. In multiplayer, both players need the same one.">update pending</span>
       {/if}
+      {#if entry.not_updated}<span class="chip warn" title={notUpdatedHint(entry)}>{notUpdatedLabel(entry)}</span>{/if}
       {#if !entry.info.available}<span class="chip danger">removed from Workshop</span>{/if}
     </div>
   </div>

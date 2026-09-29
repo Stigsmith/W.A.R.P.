@@ -1,9 +1,28 @@
-import type { WorkshopId } from "./types";
+import type { LibraryEntry, WorkshopId } from "./types";
 
 const dateFmt = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" });
 
 export function date(unix: number): string {
   return unix > 0 ? dateFmt.format(new Date(unix * 1000)) : "—";
+}
+
+const dayFmtUtc = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+
+/** "not updated for 9.0", for a mod kept up to date until the latest game update but not since. */
+export function notUpdatedLabel(e: LibraryEntry): string {
+  return e.not_updated ? `not updated for ${e.not_updated.patch}` : "";
+}
+
+/** Why a mod is flagged as not updated, for its hover text. */
+export function notUpdatedHint(e: LibraryEntry): string {
+  const n = e.not_updated;
+  if (!n) return "";
+  const updated = Math.max(e.info.time_updated, e.installed_version ?? 0);
+  return (
+    `Kept up to date during ${n.previous.split(".")[0]}.x (last update ${date(updated)}), but not updated since game ` +
+    `update ${n.patch} came out on ${dayFmtUtc.format(new Date(n.released * 1000))}. Until its author updates it, ` +
+    "it's a likely suspect if the game crashes."
+  );
 }
 
 export function size(bytes: number): string {

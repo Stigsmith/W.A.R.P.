@@ -1,0 +1,24 @@
+# Game updates that break mods, newest first.
+#
+# W.A.R.P. flags a mod that was kept up to date for the previous update but hasn't
+# been updated since the latest one came out: the likeliest cause of a crash until
+# its author catches up. Mods that were already older aren't flagged. They came
+# through the previous update unchanged, so they're less likely to break now.
+#
+# `released` is the day the update went live for everyone (UTC). A mod updated on
+# that day or later counts as updated for it. Add a new update at the top.
+
+[[patch]]
+version = "9.0"
+name = "Lords of the End Times"
+released = "2026-09-24"
+
+[[patch]]
+version = "8.0"
+name = "Bhashiva Character Pack"
+released = "2026-05-21"
+
+[[patch]]
+version = "7.0"
+name = "Tides of Torment"
+released = "2025-12-04"

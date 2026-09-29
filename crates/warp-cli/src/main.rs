@@ -368,6 +368,12 @@ fn build(lib: &Library, profile: &str, explain: bool) -> Result<()> {
     warn("mods not in library", r.unknown_mods.len());
     warn("mods without a known pack", r.mods_without_packs.len());
     warn("unsubscribed mods", r.unsubscribed.len());
+    if let Some(latest) = lib.patches.patches.first() {
+        warn(
+            &format!("mods not updated since game update {}", latest.version),
+            r.not_updated.len(),
+        );
+    }
     for (m, req) in &r.missing_requirements {
         println!("! {m} requires {req}, which isn't in the profile");
     }

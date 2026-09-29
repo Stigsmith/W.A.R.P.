@@ -165,6 +165,15 @@
     app.notify(`Left out ${app.title(id)}`);
   }
 
+  /** Leaves several mods out of this profile, whether they came from a set or were added. */
+  async function leaveOutAll(ids: string[], what: string) {
+    if (!profile) return;
+    const include = profile.include.filter((i) => !ids.includes(i));
+    const exclude = [...new Set([...profile.exclude, ...ids])];
+    await save({ ...$state.snapshot(profile), include, exclude });
+    app.notify(`Left out ${count(ids.length, what)}`);
+  }
+
   /** Leaves mods that are no longer installed out of this profile. */
   async function dropUninstalled() {
     if (!profile || !resolved) return;
@@ -211,6 +220,20 @@
         kind: "warn",
         text: `${count(resolved.unsubscribed.length, "mod")} in this profile ${resolved.unsubscribed.length === 1 ? "isn't" : "aren't"} installed any more: ${resolved.unsubscribed.map((id) => app.title(id)).join(", ")}.`,
         fixes: [{ label: "Leave them out", run: dropUninstalled }],
+      });
+    }
+    const stale = resolved.not_updated ?? [];
+    const flag = stale.length ? app.byId.get(stale[0])?.not_updated : null;
+    if (flag) {
+      const one = stale.length === 1;
+      const names = stale.slice(0, 6).map((id) => app.title(id)).join(", ") + (stale.length > 6 ? `, and ${stale.length - 6} more` : "");
+      out.push({
+        kind: "warn",
+        text:
+          `${one ? names : `${stale.length} mods here`} ${one ? "was" : "were"} kept up to date for ${flag.previous.split(".")[0]}.x but ` +
+          `${one ? "hasn't" : "haven't"} been updated since game update ${flag.patch}${one ? "" : `: ${names}`}. ` +
+          `If the game crashes, suspect ${one ? "it" : "these"} first.`,
+        fixes: [{ label: one ? "Leave it out" : "Leave them out", run: () => leaveOutAll(stale, "mod") }],
       });
     }
     if (resolved.mods_without_packs.length) {

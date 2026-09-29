@@ -60,6 +60,18 @@ export interface LibraryEntry {
   installed_version: number | null;
   /** Files across the mod's packs, once indexed. */
   files: number;
+  /** Kept up to date for the previous game update, but not updated since the latest. */
+  not_updated: NotUpdated | null;
+}
+
+/** A mod kept up to date for `previous` that hasn't been updated since `patch` came out. */
+export interface NotUpdated {
+  /** The latest game update, "9.0". */
+  patch: string;
+  /** Unix seconds: the day it went live. */
+  released: number;
+  /** The update before it, "8.0". */
+  previous: string;
 }
 
 export interface Tier {
@@ -151,6 +163,8 @@ export interface ResolvedProfile {
   incompatibilities: [WorkshopId, WorkshopId][];
   /** Pairs in the profile that look like two versions of the same mod. */
   either_or: DbOverlap[];
+  /** Mods kept up to date for the previous game update but not since the latest. */
+  not_updated: WorkshopId[];
 }
 
 /** Two mods shipping DB files under identical paths. */
