@@ -3,6 +3,8 @@
   import { app } from "../lib/state.svelte";
   import { count, shortPair } from "../lib/format";
   import { playtest } from "../lib/playtest.svelte";
+  import { settings } from "../lib/settings.svelte";
+  import { untrack } from "svelte";
   import ConflictMap from "../components/ConflictMap.svelte";
   import ModPicker from "../components/ModPicker.svelte";
   import OrderList from "../components/OrderList.svelte";
@@ -12,6 +14,8 @@
 
   let selected = $state<string | null>(app.profiles[0]?.name ?? null);
   const profile = $derived(app.profiles.find((p) => p.name === selected) ?? null);
+
+  let { onprofiletour }: { onprofiletour?: () => void } = $props();
 
   let resolved = $state<ResolvedProfile | null>(null);
   const updates = $derived(profile ? (app.setUpdates[profile.name] ?? []) : []);
@@ -52,6 +56,17 @@
       .finally(() => {
         if (mine === token) loading = false;
       });
+  });
+
+  // The tour skipped the profile part when there was no profile: show it once the
+  // first one has a load order, and the mod picker is out of the way.
+  $effect(() => {
+    if (settings.profileTourPending && resolved?.order.placements.length && !picking && !sharing) {
+      untrack(() => {
+        settings.set("profileTourPending", false);
+        onprofiletour?.();
+      });
+    }
   });
 
   async function save(p: ProfileDef) {
@@ -214,7 +229,7 @@
   <section class="list">
     <div class="list-head">
       <span class="label">Profiles</span>
-      <button class="ghost small" onclick={() => (newName = "")}>+ New</button>
+      <button class="ghost small" data-tour="new-profile" onclick={() => (newName = "")}>+ New</button>
     </div>
     {#if newName !== null}
       <form

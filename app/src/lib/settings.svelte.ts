@@ -34,7 +34,12 @@ const STORAGE_KEY = "warp.settings";
 
 export type LibraryMode = "details" | "sets";
 
-type Stored = { headingFont: string; textFont: string; speechFont: string; seenVersion: string; motes: boolean; tourDone: boolean; libraryMode: LibraryMode };
+type Stored = {
+  headingFont: string;
+  textFont: string;
+  speechFont: string;
+  seenVersion: string;
+  profileTourPending: boolean; motes: boolean; tourDone: boolean; libraryMode: LibraryMode };
 
 class Settings {
   headingFont = $state(HEADING_FONTS[0].key);
@@ -42,6 +47,8 @@ class Settings {
   textFont = $state(TEXT_FONTS[0].key);
   /** The version whose "What's new" the user has opened. */
   seenVersion = $state("");
+  /** The tour skipped its profile part (there was no profile yet); show it once there is one. */
+  profileTourPending = $state(false);
   /** Floating warpstone motes and fog. */
   motes = $state(true);
   tourDone = $state(false);
@@ -55,6 +62,7 @@ class Settings {
       if (SPEECH_FONTS.some((f) => f.key === saved.speechFont)) this.speechFont = saved.speechFont!;
       if (TEXT_FONTS.some((f) => f.key === saved.textFont)) this.textFont = saved.textFont!;
       if (typeof saved.seenVersion === "string") this.seenVersion = saved.seenVersion;
+      if (typeof saved.profileTourPending === "boolean") this.profileTourPending = saved.profileTourPending;
       if (typeof saved.motes === "boolean") this.motes = saved.motes;
       if (typeof saved.tourDone === "boolean") this.tourDone = saved.tourDone;
       if (saved.libraryMode === "sets" || saved.libraryMode === "details") this.libraryMode = saved.libraryMode;
@@ -85,6 +93,7 @@ class Settings {
         speechFont: this.speechFont,
         textFont: this.textFont,
         seenVersion: this.seenVersion,
+        profileTourPending: this.profileTourPending,
         motes: this.motes,
         tourDone: this.tourDone,
         libraryMode: this.libraryMode,

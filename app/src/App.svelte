@@ -18,7 +18,7 @@
 
   let view = $state<View>("home");
   let error = $state<string | null>(null);
-  let touring = $state(false);
+  let touring = $state<"full" | "profile" | null>(null);
 
   const nav: { key: View; label: string; hint: string }[] = [
     { key: "home", label: "Home", hint: "The burrow" },
@@ -39,12 +39,12 @@
     if (hasMods && !settings.tourDone && !touring) startTour();
   });
 
-  function startTour() {
-    touring = true;
+  function startTour(part: "full" | "profile" = "full") {
+    touring = part;
   }
 
   function endTour() {
-    touring = false;
+    touring = null;
     settings.set("tourDone", true);
   }
 </script>
@@ -117,17 +117,17 @@
     {:else if !app.loaded}
       <div class="empty skaven">Sharpening whiskers…</div>
     {:else if view === "settings"}
-      <Settings ontour={startTour} />
+      <Settings ontour={() => startTour()} />
     {:else if view === "news"}
       <News />
     {:else if !hasMods || view === "home"}
-      <Home onnavigate={(v) => (view = v)} ontour={startTour} />
+      <Home onnavigate={(v) => (view = v)} ontour={() => startTour()} />
     {:else if view === "library"}
       <Library />
     {:else if view === "guide"}
       <Guide onnavigate={(v) => (view = v)} />
     {:else if view === "profiles"}
-      <Profiles />
+      <Profiles onprofiletour={() => !touring && startTour("profile")} />
     {:else}
       <Multiplayer />
     {/if}
@@ -151,7 +151,7 @@
 {/if}
 
 {#if touring}
-  <Tour onview={(v) => (view = v)} onclose={endTour} />
+  <Tour part={touring} onview={(v) => (view = v)} onclose={endTour} />
 {/if}
 
 <style>

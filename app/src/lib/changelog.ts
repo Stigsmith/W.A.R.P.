@@ -7,6 +7,15 @@ export type RoadmapItem = { title: string; what: string };
 
 export const RELEASES: Release[] = [
   {
+    version: "0.2.1",
+    date: "2026-09-29",
+    name: "Snikkit keeps his promises",
+    changes: [
+      "The tour no longer explains an empty page: without a profile it skips the profile part, and shows it as soon as your first profile has mods.",
+      "Snikkit has opinions about campaigns that aren't Skaven.",
+    ],
+  },
+  {
     version: "0.2.0",
     date: "2026-09-29",
     name: "The playtest build",
