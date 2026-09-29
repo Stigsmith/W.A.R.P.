@@ -123,9 +123,9 @@
     await editSet(name, [], [...selection].filter((id) => members.has(id)));
   }
 
-  async function setTier(key: string) {
+  /** Moves mods to a tier as the user's own choice (the selection, unless given). */
+  async function setTier(key: string, ids: WorkshopId[] = [...selection]) {
     const a = await api();
-    const ids = [...selection];
     const ok = await app.run(async () => {
       for (const id of ids) {
         const e = app.byId.get(id);
@@ -133,7 +133,12 @@
       }
     });
     await app.refresh();
-    if (ok) app.notify(`${count(ids.length, "mod")} now sit in ${app.tier(key)?.name ?? key}`);
+    if (ok) app.notify(`${ids.length === 1 ? app.title(ids[0]) : count(ids.length, "mod")} now in ${app.tier(key)?.name ?? key}`);
+  }
+
+  /** A row's tier dropdown; on a selected row it moves the whole selection. */
+  function rowTier(id: WorkshopId, key: string) {
+    setTier(key, selection.has(id) ? [...selection] : [id]);
   }
 
   // --- Making, renaming and deleting sets. ----------------------------------------
@@ -323,8 +328,17 @@
                 </span>
                 <span class="mono faint">{e.packs[0] ?? "—"}</span>
               </td>
-              <td>
-                <span class="tier" style:--tier={tierColor(t?.priority ?? 0, maxPriority)}>{t?.name ?? e.knowledge.tier}</span>
+              <td class="tier-cell" onclick={(ev) => ev.stopPropagation()}>
+                <select
+                  class="tier"
+                  style:--tier={tierColor(t?.priority ?? 0, maxPriority)}
+                  value={e.knowledge.tier}
+                  onchange={(ev) => rowTier(id, ev.currentTarget.value)}
+                  aria-label="Tier of {e.info.title}"
+                  title={selection.has(id) && selection.size > 1 ? `Changes all ${selection.size} selected mods` : "Where it goes in the load order"}
+                >
+                  {#each app.taxonomy.tier as tt (tt.key)}<option value={tt.key}>{tt.name}</option>{/each}
+                </select>
                 {#if sourceMark[e.knowledge.tier_source]}<span class="src">{sourceMark[e.knowledge.tier_source]}</span>{/if}
               </td>
               {#if mode === "details"}
@@ -551,11 +565,30 @@
     white-space: nowrap;
   }
 
-  .tier {
+  .tier-cell {
+    white-space: nowrap;
+  }
+
+  /* Reads like the tier's name until hovered; then it's plainly a dropdown. */
+  select.tier {
     color: var(--tier);
     font-weight: 600;
     font-size: 13px;
-    white-space: nowrap;
+    padding: 3px 6px;
+    background: transparent;
+    border-color: transparent;
+    cursor: pointer;
+  }
+
+  select.tier:hover,
+  select.tier:focus-visible {
+    background: rgb(8 11 7 / 0.75);
+    border-color: var(--border-strong);
+  }
+
+  select.tier option {
+    color: var(--text);
+    background: var(--bg-solid);
   }
 
   td.muted {
