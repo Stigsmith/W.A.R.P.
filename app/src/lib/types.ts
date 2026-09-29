@@ -225,6 +225,7 @@ export interface Install {
 }
 
 export interface Bootstrap {
+  version: string;
   taxonomy: Taxonomy;
   mod_count: number;
   data_dir: string;

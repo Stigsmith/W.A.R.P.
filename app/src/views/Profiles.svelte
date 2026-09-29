@@ -2,6 +2,7 @@
   import { api } from "../lib/api";
   import { app } from "../lib/state.svelte";
   import { count, shortPair } from "../lib/format";
+  import { playtest } from "../lib/playtest.svelte";
   import ConflictMap from "../components/ConflictMap.svelte";
   import ModPicker from "../components/ModPicker.svelte";
   import OrderList from "../components/OrderList.svelte";
@@ -113,7 +114,10 @@
     launching = true;
     const path = await app.attempt(() => a.play($state.snapshot(profile)));
     launching = false;
-    if (path) app.notify("Starting Warhammer III… May the Horned Rat smile upon you.");
+    if (path) {
+      playtest.mark("play");
+      app.notify("Starting Warhammer III… May the Horned Rat smile upon you.");
+    }
   }
 
   async function addAllInstalled() {
@@ -335,7 +339,7 @@
           <button role="tab" data-tour="order-tab" class:active={tab === "order"} aria-selected={tab === "order"} onclick={() => (tab = "order")}>
             Load order <span class="faint">· top wins</span>
           </button>
-          <button role="tab" data-tour="conflicts-tab" class:active={tab === "conflicts"} aria-selected={tab === "conflicts"} onclick={() => (tab = "conflicts")}>
+          <button role="tab" data-tour="conflicts-tab" class:active={tab === "conflicts"} aria-selected={tab === "conflicts"} onclick={() => ((tab = "conflicts"), playtest.mark("conflicts"))}>
             Conflicts
             {#if conflicts}
               {@const serious = conflicts.pairs.filter((p) => !p.intended && p.severity !== "low").length}

@@ -58,6 +58,10 @@ export interface Api {
   eitherOrPairs(): Promise<DbOverlap[]>;
   /** Writes the profile's modlist and starts the game; resolves to the modlist path. */
   play(profile: ProfileDef): Promise<string>;
+  /** Everything W.A.R.P. sees on this PC as plain text, with `extra` added. */
+  diagnostics(extra: string): Promise<string>;
+  /** Puts an error the user saw into the log. */
+  logUi(line: string): Promise<void>;
   // Platform
   pickFile(filters: FileFilter[]): Promise<string | null>;
   pickSavePath(defaultName: string, filters: FileFilter[]): Promise<string | null>;
@@ -100,6 +104,8 @@ async function tauriApi(): Promise<Api> {
     conflicts: (profile) => invoke("conflicts", { profile }),
     eitherOrPairs: () => invoke("either_or_pairs"),
     play: (profile) => invoke("play", { profile }),
+    diagnostics: (extra) => invoke("diagnostics", { extra }),
+    logUi: (line) => invoke("log_ui", { line }),
     pickFile: async (filters) => {
       const picked = await dialog.open({ multiple: false, directory: false, filters });
       return typeof picked === "string" ? picked : null;

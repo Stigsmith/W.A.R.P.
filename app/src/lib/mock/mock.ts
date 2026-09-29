@@ -31,6 +31,7 @@ interface Fixture {
 
 const EMPTY: Fixture = {
   bootstrap: {
+    version: "0.0.0-mock",
     taxonomy: { tier: [{ key: "core", name: "Core", priority: 0, description: "" }], role: [{ key: "content", name: "Content", priority: 20, description: "" }] },
     mod_count: 0,
     data_dir: "(mock)",
@@ -192,6 +193,9 @@ export async function mockApi(): Promise<Api> {
       console.info("mock: would start the game");
       return "Ok" in fx.bootstrap.install ? `${fx.bootstrap.install.Ok.game_dir}/warp_mods.txt` : "warp_mods.txt";
     },
+    diagnostics: async (extra) =>
+      `W.A.R.P. ${fx.bootstrap.version ?? "mock"} report (browser preview)\nLibrary: ${fx.library.length} mods, ${fx.sets.length} sets, ${fx.profiles.length} profiles\n\n${extra}\n`,
+    logUi: async (line) => console.info("mock log:", line),
     pickFile: async () => "C:\\demo\\WARP Database.zip",
     pickSavePath: async (name) => `C:\\demo\\${name}`,
     confirm: async (message) => window.confirm(message),

@@ -4,7 +4,9 @@
   import { count } from "../lib/format";
   import { KOFI_URL } from "../lib/links";
   import type { ImportSummary } from "../lib/types";
+  import PlaytestCard from "../components/PlaytestCard.svelte";
   import WarpShard from "../components/WarpShard.svelte";
+  import { playtest } from "../lib/playtest.svelte";
 
   import type { View } from "../lib/views";
 
@@ -100,6 +102,10 @@
         </p>
       </button>
     </div>
+  {/if}
+
+  {#if !playtest.hidden}
+    <PlaytestCard />
   {/if}
 
   <div class="footer">

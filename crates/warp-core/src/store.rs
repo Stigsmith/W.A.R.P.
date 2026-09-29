@@ -425,6 +425,22 @@ impl Store {
         .collect()
     }
 
+    /// When the game was last started from WARP: time, profile, pack count.
+    pub fn last_launch(&self) -> Result<Option<(i64, String, usize)>, Error> {
+        let row: Option<(i64, String, String)> = self
+            .conn
+            .query_row(
+                "SELECT at, profile, packs FROM launches ORDER BY at DESC, id DESC LIMIT 1",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )
+            .optional()?;
+        Ok(row.map(|(at, profile, packs)| {
+            let n = serde_json::from_str::<Vec<String>>(&packs).map_or(0, |p| p.len());
+            (at, profile, n)
+        }))
+    }
+
     pub fn record_launch(&self, profile: &str, packs: &[String]) -> Result<(), Error> {
         self.conn.execute(
             "INSERT INTO launches (at, profile, packs) VALUES (?1, ?2, ?3)",

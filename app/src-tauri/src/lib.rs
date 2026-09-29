@@ -16,18 +16,22 @@ use warp_core::mp::{self, ListDiff, ShareList};
 use warp_core::sets::SetUpdate;
 use warp_core::store::{ModSet, ProfileDef, Store};
 use warp_core::taxonomy::Taxonomy;
-use warp_core::{import_v1, steam};
+use warp_core::{import_v1, log, report, steam};
 
-struct AppState(Mutex<Library>);
+/// The library, or why its database couldn't be opened. The app still starts
+/// without it, so the user sees what went wrong and can copy a report.
+struct AppState(Result<Mutex<Library>, String>);
 
 type CmdResult<T> = Result<T, String>;
+
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn with_lib<T>(
     state: &State<'_, AppState>,
     f: impl FnOnce(&mut Library) -> Result<T, warp_core::Error>,
 ) -> CmdResult<T> {
-    let mut lib = state
-        .0
+    let lib = state.0.as_ref().map_err(Clone::clone)?;
+    let mut lib = lib
         .lock()
         .map_err(|_| "internal error: library lock poisoned".to_owned())?;
     f(&mut lib).map_err(|e| e.to_string())
@@ -35,6 +39,7 @@ fn with_lib<T>(
 
 #[derive(Serialize)]
 struct Bootstrap {
+    version: &'static str,
     taxonomy: Taxonomy,
     mod_count: usize,
     data_dir: String,
@@ -47,6 +52,7 @@ struct Bootstrap {
 async fn bootstrap(state: State<'_, AppState>) -> CmdResult<Bootstrap> {
     with_lib(&state, |lib| {
         Ok(Bootstrap {
+            version: VERSION,
             taxonomy: lib.taxonomy.clone(),
             mod_count: lib.store.mods()?.len(),
             data_dir: warp_core::data_dir().display().to_string(),
@@ -62,7 +68,18 @@ async fn bootstrap(state: State<'_, AppState>) -> CmdResult<Bootstrap> {
 #[tauri::command]
 async fn sync_install(state: State<'_, AppState>, check_steam: bool) -> CmdResult<SyncSummary> {
     let install = Install::locate().map_err(|e| e.to_string())?;
-    with_lib(&state, |lib| lib.sync_install(&install, check_steam))
+    let result = with_lib(&state, |lib| lib.sync_install(&install, check_steam));
+    match &result {
+        Ok(s) => log::line(format_args!(
+            "sync: {} installed, {} new, {} packs read, {} unreadable",
+            s.installed,
+            s.new_mods.len(),
+            s.packs_indexed,
+            s.pack_errors.len()
+        )),
+        Err(e) => log::line(format_args!("sync failed: {e}")),
+    }
+    result
 }
 
 #[tauri::command]
@@ -74,7 +91,46 @@ async fn conflicts(state: State<'_, AppState>, profile: ProfileDef) -> CmdResult
 #[tauri::command]
 async fn play(state: State<'_, AppState>, profile: ProfileDef) -> CmdResult<String> {
     let install = Install::locate().map_err(|e| e.to_string())?;
-    with_lib(&state, |lib| lib.play(&profile, &install, None)).map(|p| p.display().to_string())
+    let result = with_lib(&state, |lib| lib.play(&profile, &install, None));
+    match &result {
+        Ok(path) => log::line(format_args!(
+            "play: \"{}\", wrote {}",
+            profile.name,
+            path.display()
+        )),
+        Err(e) => log::line(format_args!("play: \"{}\" failed: {e}", profile.name)),
+    }
+    result.map(|p| p.display().to_string())
+}
+
+/// Everything W.A.R.P. sees on this PC as plain text, for the user to send back.
+/// Works even when the database couldn't be opened.
+#[tauri::command]
+async fn diagnostics(state: State<'_, AppState>, extra: String) -> CmdResult<String> {
+    let install = Install::locate().map_err(|e| e.to_string());
+    let lib = match &state.0 {
+        Ok(m) => Some(
+            m.lock()
+                .map_err(|_| "internal error: library lock poisoned".to_owned())?,
+        ),
+        Err(_) => None,
+    };
+    Ok(report::report(
+        lib.as_deref(),
+        &report::Context {
+            version: VERSION,
+            install: &install,
+            library_error: state.0.as_ref().err().map(String::as_str),
+            extra: &extra,
+        },
+    ))
+}
+
+/// Errors the user saw in the app, so they end up in the log and the report.
+#[tauri::command]
+async fn log_ui(line: String) -> CmdResult<()> {
+    log::line(format_args!("ui: {line}"));
+    Ok(())
 }
 
 /// Installed mods that look like two versions of the same mod.
@@ -326,16 +382,25 @@ async fn refresh_steam(state: State<'_, AppState>) -> CmdResult<usize> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    log::line(format_args!("W.A.R.P. {VERSION} started"));
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        log::line(format_args!("crash: {info}"));
+        default_hook(info);
+    }));
+
     let db = warp_core::default_db_path();
-    let store = Store::open(&db)
-        .unwrap_or_else(|e| panic!("can't open the WARP database at {}: {e}", db.display()));
+    let opened = Store::open(&db)
+        .map(|store| Mutex::new(Library::new(store, warp_core::builtin_kb())))
+        .map_err(|e| {
+            let msg = format!("couldn't open the database at {}: {e}", db.display());
+            log::line(&msg);
+            msg
+        });
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .manage(AppState(Mutex::new(Library::new(
-            store,
-            warp_core::builtin_kb(),
-        ))))
+        .manage(AppState(opened))
         .invoke_handler(tauri::generate_handler![
             bootstrap,
             library,
@@ -365,6 +430,8 @@ pub fn run() {
             conflicts,
             either_or_pairs,
             play,
+            diagnostics,
+            log_ui,
         ])
         .run(tauri::generate_context!())
         .expect("W.A.R.P. failed to start");

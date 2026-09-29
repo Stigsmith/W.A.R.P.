@@ -3,6 +3,7 @@
   import { app } from "../lib/state.svelte";
   import { KOFI_URL } from "../lib/links";
   import { HEADING_FONTS, settings } from "../lib/settings.svelte";
+  import { copyReport, playtest } from "../lib/playtest.svelte";
   import WarpShard from "../components/WarpShard.svelte";
 
   let { ontour }: { ontour: () => void } = $props();
@@ -62,11 +63,32 @@
   </section>
 
   <section>
+    <span class="label">Something wrong?</span>
+    <div class="row">
+      <button class="primary" onclick={copyReport}>Copy report</button>
+      <span class="muted">What W.A.R.P. sees on this PC (game, mods, profiles, recent errors), ready to paste into Discord.</span>
+    </div>
+    {#if playtest.hidden}
+      <div class="row">
+        <button class="small" onclick={() => playtest.update({ hidden: false })}>Show the playtest checklist on the start page</button>
+      </div>
+    {/if}
+  </section>
+
+  <section>
     <span class="label">Support</span>
     <div class="row">
       <button class="kofi" onclick={async () => (await api()).openUrl(KOFI_URL)}><WarpShard size={15} /> Feed the Warlock-Engineer on Ko-fi</button>
       <span class="skaven faint">"Every coin buys one (1) warpstone shard. Probably."</span>
     </div>
+  </section>
+
+  <section class="about">
+    <span class="label">About</span>
+    <p>
+      <strong>W.A.R.P.</strong> <span class="muted">· Warhammer Advanced Resource Platform · version {app.version}</span>
+    </p>
+    <p class="faint">A mod manager for Total War: WARHAMMER III, made by Stigsmith. Not affiliated with Creative Assembly or Games Workshop.</p>
   </section>
 </div>
 
@@ -84,6 +106,10 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+  }
+
+  .about p {
+    margin: 0;
   }
 
   .fonts {

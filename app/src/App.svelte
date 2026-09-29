@@ -3,9 +3,11 @@
   import { isDesktop } from "./lib/api";
   import { app } from "./lib/state.svelte";
   import { settings } from "./lib/settings.svelte";
+  import { copyReport, playtest } from "./lib/playtest.svelte";
   import type { View } from "./lib/views";
   import Backdrop from "./components/Backdrop.svelte";
   import Tour from "./components/Tour.svelte";
+  import WarpShard from "./components/WarpShard.svelte";
   import Home from "./views/Home.svelte";
   import Library from "./views/Library.svelte";
   import Profiles from "./views/Profiles.svelte";
@@ -84,6 +86,7 @@
         <span>Settings</span>
       </button>
       <div class="faint small-print">
+        {#if app.version}v{app.version} ·{/if}
         {#if app.install}Game found{:else if app.loaded}Game not found{/if}
         · {app.library.length} mods{#if !isDesktop}&nbsp;· preview{/if}
       </div>
@@ -92,9 +95,15 @@
 
   <main>
     {#if error}
-      <div class="empty">
+      <div class="empty broken">
+        <WarpShard size={40} pulse />
         <h2>W.A.R.P. couldn't start</h2>
+        <p class="skaven">"Something went boom-boom in the warp-engine. Not Snikkit's fault! Tell the man-thing who gave you this."</p>
         <p class="mono">{error}</p>
+        <p class="muted">
+          Close any other W.A.R.P. windows and start it again. If it keeps happening, press Copy report and send it along.
+        </p>
+        <button class="primary" onclick={copyReport}>Copy report</button>
       </div>
     {:else if !app.loaded}
       <div class="empty skaven">Sharpening whiskers…</div>
@@ -116,11 +125,76 @@
   {/if}
 </div>
 
+{#if playtest.unsent !== null}
+  <div class="report-overlay" role="presentation" onclick={(e) => e.target === e.currentTarget && (playtest.unsent = null)}>
+    <div class="card forged report" role="dialog" aria-modal="true" aria-label="Report">
+      <h3>Your report</h3>
+      <p class="muted">The clipboard wouldn't take it. Click in the box, press Ctrl+A then Ctrl+C, and paste it to whoever sent you W.A.R.P.</p>
+      <!-- svelte-ignore a11y_autofocus -->
+      <textarea readonly autofocus onfocus={(e) => e.currentTarget.select()}>{playtest.unsent}</textarea>
+      <div class="row"><button class="primary" onclick={() => (playtest.unsent = null)}>Done</button></div>
+    </div>
+  </div>
+{/if}
+
 {#if touring}
   <Tour onview={(v) => (view = v)} onclose={endTour} />
 {/if}
 
 <style>
+  .report-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: grid;
+    place-items: center;
+    padding: 28px;
+    background: rgb(0 0 0 / 0.6);
+  }
+
+  .report {
+    width: min(760px, 100%);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgb(10 14 9 / 0.97);
+  }
+
+  .report p {
+    margin: 0;
+  }
+
+  .report textarea {
+    height: min(420px, 55vh);
+    font-family: var(--mono);
+    font-size: 12px;
+    resize: none;
+  }
+
+  .report .row {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .broken {
+    max-width: 620px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .broken p {
+    margin: 0;
+  }
+
+  .broken .mono {
+    color: var(--danger);
+    word-break: break-word;
+  }
+
   .shell {
     position: relative;
     z-index: 1;

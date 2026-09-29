@@ -12,6 +12,7 @@ class AppState {
   profiles = $state<ProfileDef[]>([]);
   /** Set changes each profile hasn't taken or dismissed, by profile name. */
   setUpdates = $state<Record<string, SetUpdate[]>>({});
+  version = $state("");
   dataDir = $state("");
   kaedrinDir = $state<string | null>(null);
   /** The installed game, or why it wasn't found. */
@@ -29,6 +30,7 @@ class AppState {
   async load() {
     const a = await api();
     const boot = await a.bootstrap();
+    this.version = boot.version;
     this.taxonomy = boot.taxonomy;
     this.dataDir = boot.data_dir;
     this.kaedrinDir = boot.kaedrin_dir;
@@ -83,6 +85,8 @@ class AppState {
 
   notify(text: string, kind: Toast["kind"] = "ok") {
     this.toast = { text, kind };
+    // Errors the user saw go into the log, so a report shows them.
+    if (kind === "error") api().then((a) => a.logUi(text)).catch(() => {});
     clearTimeout(this.#toastTimer);
     this.#toastTimer = setTimeout(() => (this.toast = null), kind === "error" ? 7000 : 3500);
   }

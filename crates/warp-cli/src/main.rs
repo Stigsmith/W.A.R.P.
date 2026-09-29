@@ -90,6 +90,8 @@ enum Command {
     },
     /// Installed mods that look like two versions of the same mod.
     EitherOr,
+    /// Everything WARP sees on this PC, as the app's "Copy report" gives it.
+    Report,
     /// Start the game with a profile.
     Play {
         profile: String,
@@ -217,6 +219,21 @@ fn main() -> Result<()> {
             for (path, err) in &s.pack_errors {
                 println!("! couldn't read {path}: {err}");
             }
+        }
+        Command::Report => {
+            let install = Install::locate().map_err(|e| e.to_string());
+            print!(
+                "{}",
+                warp_core::report::report(
+                    Some(&lib),
+                    &warp_core::report::Context {
+                        version: env!("CARGO_PKG_VERSION"),
+                        install: &install,
+                        library_error: None,
+                        extra: "",
+                    },
+                )
+            );
         }
         Command::EitherOr => {
             let titles: std::collections::HashMap<_, _> = lib
@@ -596,6 +613,7 @@ fn dev_fixture(lib: &Library, out: &Path) -> Result<()> {
 
     let fixture = json!({
         "bootstrap": {
+            "version": env!("CARGO_PKG_VERSION"),
             "taxonomy": lib.taxonomy,
             "mod_count": lib.store.mods()?.len(),
             "data_dir": r"C:\Users\you\AppData\Roaming\WARP",

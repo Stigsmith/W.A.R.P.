@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api, isDesktop } from "../lib/api";
+  import { playtest } from "../lib/playtest.svelte";
   import { app } from "../lib/state.svelte";
   import { count, date, steamClientUrl } from "../lib/format";
   import type { CompareResult, ShareList, VersionMismatch, WorkshopId } from "../lib/types";
@@ -36,6 +37,7 @@
         const theirs: ShareList = await a.loadList(theirFile ? { kind: "file", path: theirFile } : { kind: "code", text: theirCode });
         return a.compare(mine, theirs, checkSteam);
       })) ?? null;
+    if (result) playtest.mark("compare");
     busy = false;
   }
 
