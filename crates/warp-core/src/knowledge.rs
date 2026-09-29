@@ -201,19 +201,7 @@ pub fn heuristic(info: &ModInfo, pack_names: &[String]) -> ModKnowledge {
         None
     };
 
-    // Workshop tags authors pick from a fixed list; map the unambiguous ones.
-    let tags: Vec<String> = info.steam_tags.iter().map(|t| t.to_lowercase()).collect();
-    let tier = [
-        ("ui", "ui"),
-        ("units", "units"),
-        ("graphical", "graphics"),
-        ("overhaul", "overhaul"),
-        ("battle", "battle"),
-        ("campaign", "campaign"),
-    ]
-    .iter()
-    .find(|(tag, _)| tags.iter().any(|t| t == tag))
-    .map(|(_, tier)| *tier);
+    let tier = steam_tag_tier(info).map(|(_, tier)| tier);
 
     ModKnowledge {
         tier: tier.map(str::to_owned),
@@ -222,15 +210,48 @@ pub fn heuristic(info: &ModInfo, pack_names: &[String]) -> ModKnowledge {
     }
 }
 
+/// Workshop tags authors pick from a fixed list; the unambiguous ones map to a
+/// tier. Returns the tag as the author wrote it, and the tier.
+fn steam_tag_tier(info: &ModInfo) -> Option<(&str, &'static str)> {
+    const TAG_TIERS: [(&str, &str); 6] = [
+        ("ui", "ui"),
+        ("units", "units"),
+        ("graphical", "graphics"),
+        ("overhaul", "overhaul"),
+        ("battle", "battle"),
+        ("campaign", "campaign"),
+    ];
+    TAG_TIERS.iter().find_map(|(tag, tier)| {
+        info.steam_tags
+            .iter()
+            .find(|t| t.eq_ignore_ascii_case(tag))
+            .map(|t| (t.as_str(), *tier))
+    })
+}
+
 /// The guessed layer for a mod nobody has described: the tier from its packs'
-/// contents when they say something clear, else from its Steam tags.
-pub fn guess(info: &ModInfo, pack_names: &[String], contents: Option<&Contents>) -> ModKnowledge {
+/// contents when they say something clear, else from its Steam tags. Also says
+/// why, in words for the user ("82% of its files are animations").
+pub fn guess(
+    info: &ModInfo,
+    pack_names: &[String],
+    contents: Option<&Contents>,
+) -> (ModKnowledge, Option<String>) {
     let mut out = heuristic(info, pack_names);
     let asset_pack = out.role.as_deref() == Some("assets");
-    if let Some(tier) = contents.and_then(|c| classify_contents(c, asset_pack)) {
-        out.tier = Some(tier.to_owned());
+    if let Some(g) = contents.and_then(|c| classify_contents(c, asset_pack)) {
+        out.tier = Some(g.tier.to_owned());
+        return (out, Some(g.why));
     }
-    out
+    let why = steam_tag_tier(info).map(|(tag, _)| format!("its Steam tag is \"{tag}\""));
+    (out, why)
+}
+
+/// A tier guessed from a pack's contents, and the reason in plain words.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Guess {
+    pub tier: &'static str,
+    pub why: String,
 }
 
 const UNIT_TABLES: &[&str] = &[
@@ -270,58 +291,116 @@ const BATTLE_TABLES: &[&str] = &[
 /// The rules come from measuring 415 hand-sorted mods; they agree with the
 /// hand-sorted tier about two times in three (`warp classify-report`). Mostly
 /// one kind of file decides it; DB-only mods are judged by the tables they touch.
-pub fn classify_contents(c: &Contents, asset_pack: bool) -> Option<&'static str> {
+pub fn classify_contents(c: &Contents, asset_pack: bool) -> Option<Guess> {
     if c.files == 0 {
         return None;
     }
     let share = |f: Facet| c.share(f);
-    let count = |prefixes: &[&str]| {
+    let pct = |f: Facet| format!("{:.0}%", c.share(f) * 100.0);
+    let matching = |prefixes: &[&str]| -> Vec<&str> {
         c.tables
             .iter()
             .filter(|t| prefixes.iter().any(|p| t.starts_with(p)))
-            .count()
+            .map(|t| t.trim_end_matches("_tables"))
+            .collect()
     };
+    // A couple of table names, so the reason can be checked against the mod.
+    let examples = |names: &[&str]| names.iter().take(2).copied().collect::<Vec<_>>().join(", ");
+    let count = |prefixes: &[&str]| matching(prefixes).len();
     let tables = c.tables.len();
+    let guess = |tier: &'static str, why: String| Some(Guess { tier, why });
 
-    let tier = if share(Facet::Anim) >= 0.6 {
-        "animations"
-    } else if share(Facet::Terrain) >= 0.6 || c.tables.iter().any(|t| t == "battles_tables") {
-        "battle_maps"
+    if share(Facet::Anim) >= 0.6 {
+        guess(
+            "animations",
+            format!("{} of its files are animations", pct(Facet::Anim)),
+        )
+    } else if c.tables.iter().any(|t| t == "battles_tables") {
+        guess("battle_maps", "it adds battle maps".into())
+    } else if share(Facet::Terrain) >= 0.6 {
+        guess(
+            "battle_maps",
+            format!("{} of its files are battle terrain", pct(Facet::Terrain)),
+        )
     } else if share(Facet::Ui) >= 0.6 {
-        "ui"
+        guess("ui", format!("{} of its files are UI", pct(Facet::Ui)))
     } else if share(Facet::Audio) >= 0.5 {
-        "audio"
+        guess(
+            "audio",
+            format!("{} of its files are sounds", pct(Facet::Audio)),
+        )
     } else if share(Facet::Vfx) >= 0.3 {
-        "graphics"
+        guess(
+            "graphics",
+            format!(
+                "{} of its files are visual effects (weather, particles, lighting)",
+                pct(Facet::Vfx)
+            ),
+        )
     } else if share(Facet::Startpos) > 0.0 {
         // A new campaign start position: a total conversion everything else sits on.
-        "core"
-    } else if share(Facet::Map) >= 0.05 || (share(Facet::Terrain) >= 0.2 && share(Facet::Db) < 0.5)
-    {
-        "campaign_map"
+        guess(
+            "core",
+            "it has its own campaign start position, like a total conversion".into(),
+        )
+    } else if share(Facet::Map) >= 0.05 {
+        guess("campaign_map", "it has campaign map files".into())
+    } else if share(Facet::Terrain) >= 0.2 && share(Facet::Db) < 0.5 {
+        guess(
+            "campaign_map",
+            format!("{} of its files are terrain", pct(Facet::Terrain)),
+        )
     } else if tables >= 80 && count(LORD_TABLES) >= 2 {
-        "overhaul"
+        guess(
+            "overhaul",
+            format!("it changes {tables} DB tables, including lords and heroes"),
+        )
     } else if share(Facet::Art) >= 0.5 {
         // Models and textures: a reskin or new units, unless it's a shared asset pack.
         if asset_pack && tables <= 1 {
-            "core"
+            guess(
+                "core",
+                "it's an asset pack: models and textures other mods build on".into(),
+            )
         } else {
-            "units"
+            guess(
+                "units",
+                format!("{} of its files are models and textures", pct(Facet::Art)),
+            )
         }
     } else if tables == 0 {
         if share(Facet::Script) + share(Facet::Text) > 0.0 {
-            "campaign"
+            guess("campaign", "it only has scripts and text".into())
         } else {
-            return None;
+            None
         }
     } else if count(UNIT_TABLES) >= 2 || (count(UNIT_TABLES) >= 1 && share(Facet::Art) >= 0.2) {
-        "units"
+        guess(
+            "units",
+            format!(
+                "its DB tables are about units ({})",
+                examples(&matching(UNIT_TABLES))
+            ),
+        )
     } else if count(MAP_TABLES) >= 1 && count(MAP_TABLES) >= count(BATTLE_TABLES) {
-        "campaign_map"
+        guess(
+            "campaign_map",
+            format!(
+                "its DB tables are about buildings and regions ({})",
+                examples(&matching(MAP_TABLES))
+            ),
+        )
     } else {
-        "campaign"
-    };
-    Some(tier)
+        let all: Vec<&str> = c
+            .tables
+            .iter()
+            .map(|t| t.trim_end_matches("_tables"))
+            .collect();
+        guess(
+            "campaign",
+            format!("its DB tables change campaign rules ({})", examples(&all)),
+        )
+    }
 }
 
 #[cfg(test)]
@@ -406,7 +485,7 @@ mod tests {
 
     #[test]
     fn contents_decide_the_tier() {
-        let guess = |files: &[&str]| classify_contents(&contents(files), false);
+        let guess = |files: &[&str]| classify_contents(&contents(files), false).map(|g| g.tier);
         assert_eq!(
             guess(&["animations/a.anim", "animations/b.anim", "db/x/y"]),
             Some("animations")
@@ -453,10 +532,45 @@ mod tests {
     }
 
     #[test]
+    fn guesses_say_why() {
+        let g = classify_contents(
+            &contents(&[
+                "animations/a.anim",
+                "animations/b.anim",
+                "animations/c.anim",
+                "db/x/y",
+            ]),
+            false,
+        )
+        .unwrap();
+        assert_eq!(g.why, "75% of its files are animations");
+        let g = classify_contents(
+            &contents(&[
+                "db/land_units_tables/m",
+                "db/main_units_tables/m",
+                "text/db/m.loc",
+            ]),
+            false,
+        )
+        .unwrap();
+        assert_eq!(
+            g.why,
+            "its DB tables are about units (land_units, main_units)"
+        );
+
+        let mut info = ModInfo::unknown(WorkshopId(1));
+        info.steam_tags = vec!["Graphical".into()];
+        let (k, why) = guess(&info, &[], None);
+        assert_eq!(k.tier.as_deref(), Some("graphics"));
+        assert_eq!(why.as_deref(), Some("its Steam tag is \"Graphical\""));
+        assert_eq!(guess(&ModInfo::unknown(WorkshopId(2)), &[], None).1, None);
+    }
+
+    #[test]
     fn asset_packs_sit_at_the_bottom() {
         let art = contents(&["variantmeshes/a.dds", "variantmeshes/b.dds"]);
-        assert_eq!(classify_contents(&art, true), Some("core"));
-        assert_eq!(classify_contents(&art, false), Some("units"));
+        assert_eq!(classify_contents(&art, true).unwrap().tier, "core");
+        assert_eq!(classify_contents(&art, false).unwrap().tier, "units");
     }
 
     #[test]
@@ -464,11 +578,11 @@ mod tests {
         let mut info = ModInfo::unknown(WorkshopId(1));
         info.steam_tags = vec!["Units".into()];
         let ui = contents(&["ui/a.png", "ui/b.png"]);
-        assert_eq!(guess(&info, &[], Some(&ui)).tier.as_deref(), Some("ui"));
-        assert_eq!(guess(&info, &[], None).tier.as_deref(), Some("units"));
+        assert_eq!(guess(&info, &[], Some(&ui)).0.tier.as_deref(), Some("ui"));
+        assert_eq!(guess(&info, &[], None).0.tier.as_deref(), Some("units"));
         let unclear = contents(&["readme.md"]);
         assert_eq!(
-            guess(&info, &[], Some(&unclear)).tier.as_deref(),
+            guess(&info, &[], Some(&unclear)).0.tier.as_deref(),
             Some("units")
         );
     }

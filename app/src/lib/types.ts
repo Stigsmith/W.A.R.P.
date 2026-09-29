@@ -53,6 +53,8 @@ export interface LibraryEntry {
   community: ModKnowledge | null;
   /** What WARP guessed from the packs' contents, headers and Steam tags. */
   guessed: ModKnowledge;
+  /** Why WARP guessed that tier ("82% of its files are animations"), when it guessed one. */
+  guess_why: string | null;
   sets: string[];
   /** Version on disk (Steam's time_updated when downloaded); null if not installed. */
   installed_version: number | null;

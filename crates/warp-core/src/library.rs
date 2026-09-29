@@ -41,6 +41,8 @@ pub struct LibraryEntry {
     pub community: Option<ModKnowledge>,
     /// What WARP guessed from the packs' contents, headers and Steam tags.
     pub guessed: ModKnowledge,
+    /// Why WARP guessed that tier, in words for the user, when it guessed one.
+    pub guess_why: Option<String>,
     pub sets: Vec<String>,
     /// Version on disk (Steam's `time_updated` when downloaded); `None` if not installed.
     pub installed_version: Option<i64>,
@@ -122,7 +124,7 @@ impl Library {
                     .filter_map(|p| contents.get(&pack_key(p)))
                     .collect();
                 let merged = (!parts.is_empty()).then(|| Contents::merge(parts));
-                let mut derived = knowledge::guess(&info, &packs, merged.as_ref());
+                let (mut derived, guess_why) = knowledge::guess(&info, &packs, merged.as_ref());
                 derived.requires = declared.get(&id).cloned().unwrap_or_default();
                 LibraryEntry {
                     knowledge: knowledge::resolve(
@@ -134,6 +136,7 @@ impl Library {
                     user: user.get(&id).cloned(),
                     community: self.kb.mods.get(&id).cloned(),
                     guessed: derived,
+                    guess_why,
                     sets: sets_of.remove(&id).unwrap_or_default(),
                     installed_version: installed.get(&id).copied(),
                     files: packs

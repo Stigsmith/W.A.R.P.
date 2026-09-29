@@ -26,6 +26,15 @@
       plain: "Sync reads your installed mods and what's inside each one. Do it after subscribing to new mods.",
     },
     {
+      target: "tier-col",
+      view: "library",
+      title: "Sniffed-out guesses",
+      speech:
+        "Most mod-things, the clan has already sorted. The rest? Snikkit sniffs inside every pack! Many animation-scrolls: animations. Mostly UI pictures: UI. Unit tables: units. Right two times in three... and the third time, you fix it. Yes-yes, even Snikkit is not perfect. Almost.",
+      plain:
+        "Tiers come from a community list of sorted mods. For mods not on it, W.A.R.P. guesses from what's inside the packs, or from their Steam tags; those say \"guess\". Hover to see why, and pick another tier in the dropdown if it's wrong. Sort by the From column to see all guesses together.",
+    },
+    {
       target: "sets-mode",
       view: "library",
       title: "Clan sets",

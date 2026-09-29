@@ -74,6 +74,12 @@
       </select>
       <span class="chip" class:accent={k.role_source === "user"}>{sourceText[k.role_source]}</span>
     </div>
+    {#if k.tier_source === "heuristic"}
+      <p class="hint guess">
+        Nobody has sorted this mod yet, so W.A.R.P. guessed{entry.guess_why ? `: ${entry.guess_why}` : " from its Steam tags"}. Pick a
+        tier to set it yourself.
+      </p>
+    {/if}
     <p class="hint faint">{app.tier(k.tier)?.description}</p>
     {#if entry.user && (entry.user.tier || entry.user.role)}
       <button class="ghost small" onclick={resetToCommunity}>Reset to community values</button>
@@ -204,6 +210,10 @@
 
   .hint {
     font-size: 12.5px;
+  }
+
+  .hint.guess {
+    color: var(--info);
   }
 
   .rel {

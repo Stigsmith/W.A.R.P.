@@ -9,7 +9,7 @@
   import { settings } from "../lib/settings.svelte";
   import { count, date, tierColor } from "../lib/format";
   import ModPanel from "../components/ModPanel.svelte";
-  import type { Source, WorkshopId } from "../lib/types";
+  import type { LibraryEntry, Source, WorkshopId } from "../lib/types";
 
   let query = $state("");
   let tier = $state("");
@@ -29,10 +29,57 @@
       .filter((e) => !tier || e.knowledge.tier === tier)
       .filter((e) => !set || (set === "__none" ? e.sets.length === 0 : e.sets.includes(set)))
       .filter((e) => !q || `${e.info.title} ${e.packs.join(" ")} ${e.knowledge.tags.join(" ")}`.toLowerCase().includes(q))
-      .sort((a, b) => priority(b.knowledge.tier) - priority(a.knowledge.tier) || a.info.title.localeCompare(b.info.title));
+      .sort((a, b) => sort.dir * compare(sort.key, a, b) || byTier(a, b) || a.info.title.localeCompare(b.info.title));
   });
 
+  // --- Sorting: click a column's header; click again to reverse. ------------------
+  type SortKey = "title" | "tier" | "from" | "role" | "sets" | "updated";
+  let sort = $state<{ key: SortKey; dir: 1 | -1 }>({ key: "tier", dir: 1 });
+
+  // Guesses first: they're the ones worth a look.
+  const fromOrder: Record<Source, number> = { heuristic: 0, default: 1, user: 2, community: 3 };
+  const byTier = (a: LibraryEntry, b: LibraryEntry) => priority(b.knowledge.tier) - priority(a.knowledge.tier);
+
+  function compare(key: SortKey, a: LibraryEntry, b: LibraryEntry): number {
+    switch (key) {
+      case "title":
+        return (a.info.title || a.packs[0] || "").localeCompare(b.info.title || b.packs[0] || "");
+      case "tier":
+        return byTier(a, b);
+      case "from":
+        return fromOrder[a.knowledge.tier_source] - fromOrder[b.knowledge.tier_source];
+      case "role":
+        return (app.role(b.knowledge.role)?.priority ?? 0) - (app.role(a.knowledge.role)?.priority ?? 0);
+      case "sets":
+        // Mods in no set go last.
+        return (a.sets.length ? 0 : 1) - (b.sets.length ? 0 : 1) || a.sets.join(", ").localeCompare(b.sets.join(", "));
+      case "updated":
+        return b.info.time_updated - a.info.time_updated;
+    }
+  }
+
+  function sortBy(key: SortKey) {
+    sort = { key, dir: sort.key === key ? (-sort.dir as 1 | -1) : 1 };
+  }
+
+  const arrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? "▾" : "▴") : "");
+
   const sourceMark: Record<Source, string> = { user: "you", community: "", heuristic: "guess", default: "?" };
+  const sourceName: Record<Source, string> = { user: "you", community: "community", heuristic: "guess", default: "default" };
+
+  /** Where a mod's tier came from, in words; for guesses, why. */
+  function fromTitle(e: LibraryEntry): string {
+    switch (e.knowledge.tier_source) {
+      case "heuristic":
+        return `Guessed because ${e.guess_why ?? "of its Steam tags"}. Pick a tier to set it yourself.`;
+      case "community":
+        return "From the community's list of sorted mods";
+      case "user":
+        return "Your own choice. Pick the community's tier again to undo it.";
+      case "default":
+        return "Nobody has sorted this mod and W.A.R.P. couldn't guess, so it sits at the bottom";
+    }
+  }
 
   // --- Selection: tick boxes, shift-click for a range. ---------------------------
   const selection = new SvelteSet<WorkshopId>();
@@ -271,12 +318,13 @@
             <th class="pick">
               <input type="checkbox" checked={allShownSelected} onchange={selectAllShown} aria-label="Select all shown" />
             </th>
-            <th>Mod</th>
-            <th>Tier</th>
+            <th class="mod-col"><button class="sort" onclick={() => sortBy("title")}>Mod {arrow("title")}</button></th>
+            <th data-tour="tier-col"><button class="sort" onclick={() => sortBy("tier")}>Tier {arrow("tier")}</button></th>
             {#if mode === "details"}
-              <th>Role</th>
-              <th>Sets</th>
-              <th class="right">Updated</th>
+              <th><button class="sort" onclick={() => sortBy("from")} title="Where the tier comes from: the community's list, a guess, or you">From {arrow("from")}</button></th>
+              <th><button class="sort" onclick={() => sortBy("role")}>Role {arrow("role")}</button></th>
+              <th><button class="sort" onclick={() => sortBy("sets")}>Sets {arrow("sets")}</button></th>
+              <th class="right"><button class="sort" onclick={() => sortBy("updated")}>Updated {arrow("updated")}</button></th>
             {:else}
               {#each app.sets as s (s.name)}
                 <th class="setcol" class:open={menuFor === s.name}>
@@ -339,9 +387,12 @@
                 >
                   {#each app.taxonomy.tier as tt (tt.key)}<option value={tt.key}>{tt.name}</option>{/each}
                 </select>
-                {#if sourceMark[e.knowledge.tier_source]}<span class="src">{sourceMark[e.knowledge.tier_source]}</span>{/if}
+                {#if mode === "sets" && sourceMark[e.knowledge.tier_source]}
+                  <span class="src" title={fromTitle(e)}>{sourceMark[e.knowledge.tier_source]}</span>
+                {/if}
               </td>
               {#if mode === "details"}
+                <td class="from {e.knowledge.tier_source}" title={fromTitle(e)}>{sourceName[e.knowledge.tier_source]}</td>
                 <td class="muted">{app.role(e.knowledge.role)?.name ?? e.knowledge.role}</td>
                 <td class="sets muted">{e.sets.join(", ")}</td>
                 <td class="right faint">{date(e.info.time_updated)}</td>
@@ -549,17 +600,18 @@
     opacity: 0.55;
   }
 
+  /* The mod column takes whatever the others leave, and cuts long names short. */
   .mod {
-    display: flex;
-    flex-direction: column;
-    max-width: 520px;
+    width: 100%;
+    max-width: 0;
   }
 
-  .sets-mode .mod {
-    max-width: 380px;
+  th.mod-col {
+    min-width: 220px;
   }
 
   .mod span {
+    display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -599,6 +651,43 @@
     margin-left: 6px;
     font-size: 11px;
     color: var(--info);
+    cursor: help;
+  }
+
+  /* Header labels are buttons: click to sort, again to reverse. */
+  .sort {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .sort:hover {
+    color: var(--accent);
+  }
+
+  td.from {
+    font-size: 12.5px;
+    white-space: nowrap;
+    cursor: help;
+    color: var(--faint);
+  }
+
+  td.from.heuristic {
+    color: var(--info);
+  }
+
+  td.from.user {
+    color: var(--accent);
+  }
+
+  td.from.default {
+    color: var(--warn);
   }
 
   .sets {
