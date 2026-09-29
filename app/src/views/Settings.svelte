@@ -2,7 +2,7 @@
   import { api } from "../lib/api";
   import { app } from "../lib/state.svelte";
   import { KOFI_URL } from "../lib/links";
-  import { HEADING_FONTS, settings } from "../lib/settings.svelte";
+  import { HEADING_FONTS, SPEECH_FONTS, settings } from "../lib/settings.svelte";
   import { copyReport, playtest } from "../lib/playtest.svelte";
   import WarpShard from "../components/WarpShard.svelte";
 
@@ -29,7 +29,25 @@
         </button>
       {/each}
     </div>
-    <p class="faint">The Warlock-Engineer's speech always uses IM Fell English.</p>
+  </section>
+
+  <section>
+    <span class="label">Snikkit's voice</span>
+    <div class="fonts" role="radiogroup" aria-label="Font for the Warlock-Engineer's speech">
+      {#each SPEECH_FONTS as f (f.key)}
+        <button
+          class="font card"
+          class:on={settings.speechFont === f.key}
+          role="radio"
+          aria-checked={settings.speechFont === f.key}
+          onclick={() => settings.set("speechFont", f.key)}
+        >
+          <span class="speech-sample" style:font-family={f.family} style:font-style={f.style} style:font-size="{f.size}px">"Yes-yes, quick-quick, man-thing!"</span>
+          <span class="name">{f.name}</span>
+          <span class="faint note">{f.note}</span>
+        </button>
+      {/each}
+    </div>
   </section>
 
   <section>
@@ -136,6 +154,16 @@
     font-size: 24px;
     line-height: 1.15;
     color: var(--text);
+  }
+
+  .speech-sample {
+    line-height: 1.3;
+    color: var(--text);
+  }
+
+  .font.on .speech-sample {
+    color: var(--accent);
+    text-shadow: var(--glow-text);
   }
 
   .font.on .sample {

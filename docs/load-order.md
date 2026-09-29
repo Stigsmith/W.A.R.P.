@@ -57,9 +57,10 @@ which rule put it there:
   what it builds on).
 - **patches**: a patch or submod sits above the mod it patches.
 - **pins**: explicit "A above B" choices by the user.
-- *(planned)* **collisions**: once WARP can read pack contents, packs that ship
-  the same files are checked against the rules above, and surprising winners are
-  flagged.
+
+Collisions don't move packs, but WARP shows them: the conflict map lists every
+pair of packs that ship the same files, who wins, and how risky that is, and
+flags mods that look like two versions of the same mod.
 
 When a hard rule conflicts with the default, WARP moves the *dependent* up to sit
 directly above what it depends on, rather than pulling the (usually large) parent

@@ -7,8 +7,9 @@
   import { api } from "../lib/api";
   import { app } from "../lib/state.svelte";
   import { settings } from "../lib/settings.svelte";
-  import { count, date, tierColor } from "../lib/format";
+  import { count, date } from "../lib/format";
   import ModPanel from "../components/ModPanel.svelte";
+  import TierSelect from "../components/TierSelect.svelte";
   import type { LibraryEntry, Source, WorkshopId } from "../lib/types";
 
   let query = $state("");
@@ -19,7 +20,6 @@
   let openId = $state<string | null>(null);
 
   const opened = $derived(openId ? app.byId.get(openId) : undefined);
-  const maxPriority = $derived(Math.max(1, ...app.taxonomy.tier.map((t) => t.priority)));
   const priority = (key: string) => app.tier(key)?.priority ?? -1;
 
   const rows = $derived.by(() => {
@@ -361,7 +361,6 @@
         </thead>
         <tbody>
           {#each rows as e (e.info.id)}
-            {@const t = app.tier(e.knowledge.tier)}
             {@const id = e.info.id}
             <tr class:active={id === openId} class:picked={selection.has(id)} class:off={!e.subscribed} onclick={() => (openId = id)}>
               <td class="pick" onclick={(ev) => ev.stopPropagation()}>
@@ -377,16 +376,12 @@
                 <span class="mono faint">{e.packs[0] ?? "—"}</span>
               </td>
               <td class="tier-cell" onclick={(ev) => ev.stopPropagation()}>
-                <select
-                  class="tier"
-                  style:--tier={tierColor(t?.priority ?? 0, maxPriority)}
+                <TierSelect
                   value={e.knowledge.tier}
-                  onchange={(ev) => rowTier(id, ev.currentTarget.value)}
-                  aria-label="Tier of {e.info.title}"
-                  title={selection.has(id) && selection.size > 1 ? `Changes all ${selection.size} selected mods` : "Where it goes in the load order"}
-                >
-                  {#each app.taxonomy.tier as tt (tt.key)}<option value={tt.key}>{tt.name}</option>{/each}
-                </select>
+                  onpick={(key) => rowTier(id, key)}
+                  label="Tier of {e.info.title}"
+                  note={selection.has(id) && selection.size > 1 ? `changes all ${selection.size} selected mods` : ""}
+                />
                 {#if mode === "sets" && sourceMark[e.knowledge.tier_source]}
                   <span class="src" title={fromTitle(e)}>{sourceMark[e.knowledge.tier_source]}</span>
                 {/if}
@@ -621,27 +616,7 @@
     white-space: nowrap;
   }
 
-  /* Reads like the tier's name until hovered; then it's plainly a dropdown. */
-  select.tier {
-    color: var(--tier);
-    font-weight: 600;
-    font-size: 13px;
-    padding: 3px 6px;
-    background: transparent;
-    border-color: transparent;
-    cursor: pointer;
-  }
 
-  select.tier:hover,
-  select.tier:focus-visible {
-    background: rgb(8 11 7 / 0.75);
-    border-color: var(--border-strong);
-  }
-
-  select.tier option {
-    color: var(--text);
-    background: var(--bg-solid);
-  }
 
   td.muted {
     white-space: nowrap;

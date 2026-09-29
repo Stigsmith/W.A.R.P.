@@ -32,7 +32,7 @@ interface Fixture {
 const EMPTY: Fixture = {
   bootstrap: {
     version: "0.0.0-mock",
-    taxonomy: { tier: [{ key: "core", name: "Core", priority: 0, description: "" }], role: [{ key: "content", name: "Content", priority: 20, description: "" }] },
+    taxonomy: { tier: [{ key: "core", name: "Core", priority: 0, description: "", hint: "" }], role: [{ key: "content", name: "Content", priority: 20, description: "", hint: "" }] },
     mod_count: 0,
     data_dir: "(mock)",
     kaedrin_dir: null,

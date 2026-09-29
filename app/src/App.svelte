@@ -9,6 +9,7 @@
   import Tour from "./components/Tour.svelte";
   import WarpShard from "./components/WarpShard.svelte";
   import Home from "./views/Home.svelte";
+  import Guide from "./views/Guide.svelte";
   import Library from "./views/Library.svelte";
   import Profiles from "./views/Profiles.svelte";
   import Multiplayer from "./views/Multiplayer.svelte";
@@ -23,6 +24,7 @@
     { key: "profiles", label: "Profiles", hint: "Build load orders" },
     { key: "multiplayer", label: "Multiplayer", hint: "Share & compare lists" },
     { key: "library", label: "Library", hint: "All your mods" },
+    { key: "guide", label: "Load order", hint: "How the tiers work" },
   ];
 
   const hasMods = $derived(app.loaded && app.library.length > 0);
@@ -113,6 +115,8 @@
       <Home onnavigate={(v) => (view = v)} ontour={startTour} />
     {:else if view === "library"}
       <Library />
+    {:else if view === "guide"}
+      <Guide onnavigate={(v) => (view = v)} />
     {:else if view === "profiles"}
       <Profiles />
     {:else}

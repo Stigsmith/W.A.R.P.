@@ -14,6 +14,9 @@ pub struct Tier {
     pub priority: i32,
     #[serde(default)]
     pub description: String,
+    /// A few words, for tooltips.
+    #[serde(default)]
+    pub hint: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -24,6 +27,9 @@ pub struct Role {
     pub priority: i32,
     #[serde(default)]
     pub description: String,
+    /// A few words, for tooltips.
+    #[serde(default)]
+    pub hint: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

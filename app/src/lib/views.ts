@@ -1,2 +1,2 @@
 // The app's screens.
-export type View = "home" | "profiles" | "multiplayer" | "library" | "settings";
+export type View = "home" | "profiles" | "multiplayer" | "library" | "guide" | "settings";

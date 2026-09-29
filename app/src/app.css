@@ -42,6 +42,8 @@
   --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   --font-display: "Grenze Gotisch", "Segoe UI", serif;
   --font-skaven: "IM Fell English", Georgia, serif;
+  --font-skaven-style: italic;
+  --font-skaven-size: 17px;
   --mono: "Cascadia Mono", "Cascadia Code", Consolas, monospace;
 
   color-scheme: dark;
@@ -124,8 +126,8 @@ a {
 /* Skaven speech: the Warlock-Engineer's pamphlet voice. */
 .skaven {
   font-family: var(--font-skaven);
-  font-style: italic;
-  font-size: 17px;
+  font-style: var(--font-skaven-style);
+  font-size: var(--font-skaven-size);
   line-height: 1.5;
 }
 

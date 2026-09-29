@@ -12,100 +12,117 @@
 key = "experimental"
 name = "Experimental"
 priority = 110
-description = "Mods being trialled. Kept on top so their effect is never masked."
+description = "Mods you're trialling. Kept on top so nothing masks their effect; move them to their real tier once they've earned a place."
+hint = "Mods you're trying out. Always on top."
 
 [[tier]]
 key = "audio"
 name = "Audio"
 priority = 100
-description = "Sound, music and voice mods."
+description = "Sound, music and voice mods. Their files rarely collide with anything else, so they can sit high without harm."
+hint = "Sounds, music and voices."
 
 [[tier]]
 key = "ui"
 name = "UI"
 priority = 90
-description = "Interface changes. Very specific files, so they win over everything below."
+description = "Interface changes: icons, unit cards, panels, portraits. UI files are very specific, so they must win over the bigger mods below that ship UI of their own."
+hint = "Interface: icons, cards, panels."
 
 [[tier]]
 key = "battle_maps"
 name = "Battle maps"
 priority = 80
-description = "Custom and replacement battle maps."
+description = "Custom and replacement battle and siege maps."
+hint = "Battle and siege maps."
 
 [[tier]]
 key = "battle"
 name = "Battle"
 priority = 70
-description = "Battle mechanics, battle AI and battle quality of life."
+description = "Battle mechanics, abilities, battle AI and battle quality of life."
+hint = "How battles play: abilities, AI."
 
 [[tier]]
 key = "graphics"
 name = "Graphics"
 priority = 60
-description = "Visual effects, weather, lighting, LOD, fog and dust."
+description = "Visual effects, weather, lighting, LOD, fog and dust: small cosmetic changes that should beat the bigger mods below."
+hint = "Effects, weather, lighting."
 
 [[tier]]
 key = "animations"
 name = "Animations"
 priority = 50
 description = "Combat animations and matched combat."
+hint = "Combat and matched animations."
 
 [[tier]]
 key = "campaign_map"
 name = "Campaign map"
 priority = 40
-description = "Campaign map visuals: terrain, landmarks, camera, borders."
+description = "Campaign map visuals: terrain, landmarks, camera, borders and fog."
+hint = "How the campaign map looks."
 
 [[tier]]
 key = "units"
 name = "Units"
 priority = 30
-description = "New units, lords and heroes, reskins, variants and unit overhauls."
+description = "New units, lords and heroes, reskins and variants. They sit above the campaign and faction mods that recruit them."
+hint = "Units, lords, heroes, reskins."
 
 [[tier]]
 key = "campaign"
 name = "Campaign"
 priority = 20
-description = "Campaign mechanics, traits, technologies, diplomacy and campaign AI."
+description = "Campaign mechanics: traits, technologies, diplomacy, economy and campaign AI."
+hint = "Campaign rules, techs, traits, AI."
 
 [[tier]]
 key = "overhaul"
 name = "Overhaul"
 priority = 10
-description = "New factions and faction overhauls: large mods that others build on."
+description = "New factions and faction overhauls: large mods that the smaller ones above build on or tweak."
+hint = "New or reworked factions."
 
 [[tier]]
 key = "core"
 name = "Core"
 priority = 0
-description = "Frameworks, shared assets, game modes and tooling. The foundation, so it sits at the bottom."
+description = "Frameworks, shared asset packs, total conversions and tools. The foundation everything else builds on, so it sits at the bottom and loses every collision."
+hint = "Frameworks, asset packs, game modes."
 
 [[role]]
 key = "submod"
 name = "Submod / patch"
 priority = 40
 description = "Changes or extends another mod. Must win over what it changes."
+hint = "Changes another mod; beats it."
 
 [[role]]
 key = "fix"
 name = "Fix"
 priority = 30
 description = "Standalone fixes for vanilla or general problems."
+hint = "A standalone fix."
 
 [[role]]
 key = "content"
 name = "Content"
 priority = 20
 description = "A regular mod. The default when nothing else is known."
+hint = "A regular mod."
 
 [[role]]
 key = "framework"
 name = "Framework"
 priority = 10
 description = "Systems other mods build on (MCT, script frameworks, game modes)."
+hint = "Something other mods build on."
 
 [[role]]
 key = "assets"
 name = "Assets"
 priority = 0
 description = "Shared models, textures and resources that other mods reference."
+hint = "Shared models and textures."

@@ -58,7 +58,7 @@
       title: "Every rat in its place",
       speech:
         "See? Every mod-thing has its place, and Snikkit tells you WHY. Click one! No more guessing-guessing like a dim-witted clanrat.",
-      plain: "Click any mod in the load order to see why it sits where it does.",
+      plain: "Click any mod in the load order to see why it sits where it does. The Load order page in the menu explains every tier.",
     },
     {
       target: "conflicts-tab",

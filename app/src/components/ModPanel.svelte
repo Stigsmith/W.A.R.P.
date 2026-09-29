@@ -2,6 +2,7 @@
   import { api } from "../lib/api";
   import { app } from "../lib/state.svelte";
   import { date, size, steamClientUrl } from "../lib/format";
+  import TierSelect from "./TierSelect.svelte";
   import type { LibraryEntry, ModKnowledge, Source, WorkshopId } from "../lib/types";
 
   let { entry, onclose }: { entry: LibraryEntry; onclose: () => void } = $props();
@@ -61,10 +62,8 @@
   <section>
     <span class="label">Where it goes</span>
     <div class="field">
-      <label for="tier">Tier</label>
-      <select id="tier" value={k.tier} onchange={(e) => setField("tier", e.currentTarget.value)}>
-        {#each app.taxonomy.tier as t (t.key)}<option value={t.key}>{t.name}</option>{/each}
-      </select>
+      <span class="field-label">Tier</span>
+      <span><TierSelect value={k.tier} onpick={(key) => setField("tier", key)} /></span>
       <span class="chip" class:accent={k.tier_source === "user"}>{sourceText[k.tier_source]}</span>
     </div>
     <div class="field">
@@ -204,7 +203,8 @@
     gap: 8px;
   }
 
-  .field label {
+  .field label,
+  .field-label {
     color: var(--muted);
   }
 

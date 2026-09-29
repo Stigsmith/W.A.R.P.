@@ -67,6 +67,8 @@ export interface Tier {
   name: string;
   priority: number;
   description: string;
+  /** A few words, for tooltips. */
+  hint: string;
 }
 export type Role = Tier;
 
