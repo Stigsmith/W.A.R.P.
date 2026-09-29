@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/logo.jpg" width="220" alt="W.A.R.P. logo: a rat skull over a glowing warpstone shard">
+  <img src="app/public/logo.png" width="360" alt="W.A.R.P. logo: a rat skull over a glowing warpstone shard">
 </p>
 
 <h1 align="center">W.A.R.P.</h1>

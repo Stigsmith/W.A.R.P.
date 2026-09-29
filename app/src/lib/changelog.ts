@@ -12,6 +12,7 @@ export const RELEASES: Release[] = [
     name: "No detours",
     changes: [
       "Play goes straight into the game. After a game patch, Steam used to intercept it, ask about \"custom arguments\" and open CA's launcher with nothing ticked. W.A.R.P. now leaves Valve's steam_appid.txt next to the game, so the game runs on its own. Steam still sees you playing.",
+      "W.A.R.P. is now published as Stigsmith. Coming from 0.2.1? Uninstall it first (Windows Settings, Apps), then install this one. Your sets and profiles stay; your font choices, the tour and the playtest checklist start fresh once, so copy your playtest notes first.",
     ],
   },
   {
