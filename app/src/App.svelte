@@ -86,9 +86,9 @@
         <span>Settings</span>
       </button>
       <div class="faint small-print">
-        {#if app.version}v{app.version} ·{/if}
-        {#if app.install}Game found{:else if app.loaded}Game not found{/if}
-        · {app.library.length} mods{#if !isDesktop}&nbsp;· preview{/if}
+        {#if app.loaded}
+          v{app.version} · {app.install ? "Game found" : "Game not found"} · {app.library.length} mods{#if !isDesktop}&nbsp;· preview{/if}
+        {/if}
       </div>
     </div>
   </aside>
