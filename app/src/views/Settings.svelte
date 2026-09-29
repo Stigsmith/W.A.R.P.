@@ -2,7 +2,7 @@
   import { api } from "../lib/api";
   import { app } from "../lib/state.svelte";
   import { KOFI_URL } from "../lib/links";
-  import { HEADING_FONTS, SPEECH_FONTS, settings } from "../lib/settings.svelte";
+  import { HEADING_FONTS, SPEECH_FONTS, TEXT_FONTS, settings } from "../lib/settings.svelte";
   import { copyReport, playtest } from "../lib/playtest.svelte";
   import WarpShard from "../components/WarpShard.svelte";
 
@@ -24,6 +24,27 @@
           onclick={() => settings.set("headingFont", f.key)}
         >
           <span class="sample" style:font-family={f.family} style:font-weight={f.weight}>W.A.R.P. · Solo Chaos</span>
+          <span class="name">{f.name}</span>
+          <span class="faint note">{f.note}</span>
+        </button>
+      {/each}
+    </div>
+  </section>
+
+  <section>
+    <span class="label">Text font</span>
+    <div class="fonts" role="radiogroup" aria-label="Text font">
+      {#each TEXT_FONTS as f (f.key)}
+        <button
+          class="font card"
+          class:on={settings.textFont === f.key}
+          role="radio"
+          aria-checked={settings.textFont === f.key}
+          onclick={() => settings.set("textFont", f.key)}
+        >
+          <span class="text-sample" style:font-family={f.family}>
+            <strong>Units of the Imperial Provinces</strong><br />428 mods · 22 high-risk conflicts
+          </span>
           <span class="name">{f.name}</span>
           <span class="faint note">{f.note}</span>
         </button>
@@ -154,6 +175,16 @@
     font-size: 24px;
     line-height: 1.15;
     color: var(--text);
+  }
+
+  .text-sample {
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  .font.on .text-sample strong {
+    color: var(--accent);
   }
 
   .speech-sample {

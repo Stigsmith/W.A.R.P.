@@ -11,6 +11,15 @@ import "@fontsource/im-fell-english/latin-400-italic.css";
 import "@fontsource/almendra/latin-400-italic.css";
 import "@fontsource/uncial-antiqua/latin-400.css";
 import "@fontsource/medievalsharp/latin-400.css";
+import "@fontsource/alegreya-sans/latin-400.css";
+import "@fontsource/alegreya-sans/latin-500.css";
+import "@fontsource/alegreya-sans/latin-700.css";
+import "@fontsource/lora/latin-400.css";
+import "@fontsource/lora/latin-600.css";
+import "@fontsource/lora/latin-700.css";
+import "@fontsource/barlow/latin-400.css";
+import "@fontsource/barlow/latin-600.css";
+import "@fontsource/barlow/latin-700.css";
 import "./app.css";
 
 export default mount(App, { target: document.getElementById("app")! });

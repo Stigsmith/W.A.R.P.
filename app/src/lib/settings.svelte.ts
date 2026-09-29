@@ -10,6 +10,16 @@ export const HEADING_FONTS: HeadingFont[] = [
   { key: "metamorphous", name: "Metamorphous", family: "Metamorphous", weight: 400, note: "Old World script. Easiest to read." },
 ];
 
+/** Fonts for everything else: lists, tables, buttons. All calm enough to read all day. */
+export type TextFont = { key: string; name: string; family: string; note: string };
+
+export const TEXT_FONTS: TextFont[] = [
+  { key: "segoe", name: "Segoe UI", family: '"Segoe UI Variable Text", "Segoe UI"', note: "Clean and plain. The default." },
+  { key: "alegreya", name: "Alegreya Sans", family: '"Alegreya Sans"', note: "Old-world lettering, still easy on the eyes." },
+  { key: "lora", name: "Lora", family: "Lora", note: "A book serif, like a well-kept tome." },
+  { key: "barlow", name: "Barlow", family: "Barlow", note: "Industrial, like Skryre engineering plates." },
+];
+
 /** Fonts for the Warlock-Engineer's speech. Some are wider, so each has its own size. */
 export type SpeechFont = { key: string; name: string; family: string; style: "italic" | "normal"; size: number; note: string };
 
@@ -24,11 +34,12 @@ const STORAGE_KEY = "warp.settings";
 
 export type LibraryMode = "details" | "sets";
 
-type Stored = { headingFont: string; speechFont: string; motes: boolean; tourDone: boolean; libraryMode: LibraryMode };
+type Stored = { headingFont: string; textFont: string; speechFont: string; motes: boolean; tourDone: boolean; libraryMode: LibraryMode };
 
 class Settings {
   headingFont = $state(HEADING_FONTS[0].key);
   speechFont = $state(SPEECH_FONTS[0].key);
+  textFont = $state(TEXT_FONTS[0].key);
   /** Floating warpstone motes and fog. */
   motes = $state(true);
   tourDone = $state(false);
@@ -40,6 +51,7 @@ class Settings {
       const saved: Partial<Stored> = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
       if (HEADING_FONTS.some((f) => f.key === saved.headingFont)) this.headingFont = saved.headingFont!;
       if (SPEECH_FONTS.some((f) => f.key === saved.speechFont)) this.speechFont = saved.speechFont!;
+      if (TEXT_FONTS.some((f) => f.key === saved.textFont)) this.textFont = saved.textFont!;
       if (typeof saved.motes === "boolean") this.motes = saved.motes;
       if (typeof saved.tourDone === "boolean") this.tourDone = saved.tourDone;
       if (saved.libraryMode === "sets" || saved.libraryMode === "details") this.libraryMode = saved.libraryMode;
@@ -53,6 +65,10 @@ class Settings {
     return HEADING_FONTS.find((f) => f.key === this.headingFont) ?? HEADING_FONTS[0];
   }
 
+  text(): TextFont {
+    return TEXT_FONTS.find((f) => f.key === this.textFont) ?? TEXT_FONTS[0];
+  }
+
   speech(): SpeechFont {
     return SPEECH_FONTS.find((f) => f.key === this.speechFont) ?? SPEECH_FONTS[0];
   }
@@ -64,6 +80,7 @@ class Settings {
       const data: Stored = {
         headingFont: this.headingFont,
         speechFont: this.speechFont,
+        textFont: this.textFont,
         motes: this.motes,
         tourDone: this.tourDone,
         libraryMode: this.libraryMode,
@@ -79,6 +96,7 @@ class Settings {
     const root = document.documentElement.style;
     root.setProperty("--font-display", `${f.family}, "Segoe UI", serif`);
     root.setProperty("--font-display-weight", String(f.weight));
+    root.setProperty("--font", `${this.text().family}, system-ui, sans-serif`);
     const s = this.speech();
     root.setProperty("--font-skaven", `${s.family}, Georgia, serif`);
     root.setProperty("--font-skaven-style", s.style);

@@ -37,6 +37,16 @@
   --glow: 0 0 18px var(--accent-glow), 0 0 42px var(--accent-haze);
   --glow-text: 0 0 12px rgb(168 242 63 / 0.55), 0 0 28px rgb(168 242 63 / 0.25);
 
+  /* Warpstone behind frosted glass: a dark see-through green that blurs what's
+     behind it, lit softly from within, with a thin warpstone rim and a glow. */
+  --warpstone-glass:
+    radial-gradient(110% 130% at 50% 115%, rgb(150 255 60 / 0.26), rgb(150 255 60 / 0) 62%),
+    linear-gradient(180deg, rgb(52 128 20 / 0.5), rgb(24 72 9 / 0.62));
+  --warpstone-lit: linear-gradient(rgb(168 242 63 / 0.12), rgb(168 242 63 / 0.12));
+  --warpstone-rim: rgb(168 242 63 / 0.7);
+  --warpstone-inner: inset 0 0 14px rgb(150 255 60 / 0.16);
+  --warpstone-glow: 0 0 12px rgb(140 255 50 / 0.35), 0 0 30px rgb(120 255 40 / 0.14);
+
   --radius: 8px;
   --radius-sm: 5px;
   --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
@@ -178,33 +188,43 @@ button:disabled {
   cursor: default;
 }
 
-/* Primary actions are lumps of raw warpstone: they glow and breathe. */
+/* Primary actions are warpstone behind frosted glass: they glow and breathe. */
 button.primary {
-  background: linear-gradient(180deg, var(--accent-strong), var(--accent) 55%, #8bd62a);
-  border-color: var(--accent-strong);
-  color: #0c1504;
+  background: var(--warpstone-glass);
+  border-color: var(--warpstone-rim);
+  color: #eaffcf;
   font-weight: 700;
-  box-shadow: var(--glow);
+  text-shadow: 0 0 10px rgb(168 242 63 / 0.45);
+  box-shadow: var(--warpstone-inner), var(--warpstone-glow);
+  backdrop-filter: blur(6px) saturate(1.3);
   animation: warp-breathe 3.2s ease-in-out infinite;
 }
 
 button.primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #e0ffa0, var(--accent-strong));
+  background: var(--warpstone-lit), var(--warpstone-glass);
+  border-color: var(--accent-strong);
   box-shadow:
-    0 0 24px rgb(168 242 63 / 0.55),
-    0 0 60px rgb(168 242 63 / 0.22);
+    var(--warpstone-inner),
+    0 0 18px rgb(150 255 60 / 0.5),
+    0 0 44px rgb(120 255 40 / 0.2);
+}
+
+button.primary:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 button.primary:disabled {
   animation: none;
-  box-shadow: none;
+  filter: grayscale(0.6) brightness(0.8);
+  box-shadow: var(--warpstone-inner);
 }
 
 @keyframes warp-breathe {
   50% {
     box-shadow:
-      0 0 26px rgb(168 242 63 / 0.5),
-      0 0 56px rgb(168 242 63 / 0.2);
+      var(--warpstone-inner),
+      0 0 18px rgb(150 255 60 / 0.48),
+      0 0 42px rgb(120 255 40 / 0.2);
   }
 }
 
@@ -267,8 +287,58 @@ textarea {
   font-size: 12.5px;
 }
 
+/* Checkboxes: a dark socket; ticked, it's warpstone glass with a glowing mark. */
 input[type="checkbox"] {
-  accent-color: var(--accent);
+  appearance: none;
+  flex: none;
+  display: inline-grid;
+  place-content: center;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.6), rgb(22 30 18 / 0.7));
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.7);
+  cursor: pointer;
+}
+
+input[type="checkbox"]:hover {
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 3px rgb(0 0 0 / 0.7),
+    0 0 8px var(--accent-haze);
+}
+
+input[type="checkbox"]:checked {
+  border-color: var(--warpstone-rim);
+  background: var(--warpstone-glass);
+  box-shadow:
+    var(--warpstone-inner),
+    0 0 8px rgb(140 255 50 / 0.4);
+}
+
+input[type="checkbox"]::after {
+  content: "";
+  width: 4px;
+  height: 8px;
+  margin-top: -2px;
+  border: solid var(--accent-strong);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  filter: drop-shadow(0 0 3px rgb(168 242 63 / 0.9));
+  transition: transform 0.12s ease-out;
+}
+
+input[type="checkbox"]:checked::after {
+  transform: rotate(45deg) scale(1);
+}
+
+input[type="checkbox"]:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 /* ---- Chips & badges ---- */

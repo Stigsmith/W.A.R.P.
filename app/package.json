@@ -10,9 +10,12 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@fontsource/alegreya-sans": "^5.3.0",
     "@fontsource/almendra": "^5.3.0",
+    "@fontsource/barlow": "^5.3.0",
     "@fontsource/grenze-gotisch": "^5.3.0",
     "@fontsource/im-fell-english": "^5.3.0",
+    "@fontsource/lora": "^5.3.0",
     "@fontsource/medievalsharp": "^5.3.0",
     "@fontsource/metamorphous": "^5.3.0",
     "@fontsource/new-rocker": "^5.3.0",

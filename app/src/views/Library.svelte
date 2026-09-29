@@ -774,9 +774,14 @@
       box-shadow 0.1s;
   }
 
+  /* Ticked: a warpstone core behind frosted glass. */
   .box.on {
-    border-color: var(--accent);
-    background: radial-gradient(circle at 40% 35%, var(--accent-strong), var(--accent) 60%, #6aa826);
-    box-shadow: 0 0 8px var(--accent-glow);
+    border-color: var(--warpstone-rim);
+    background:
+      radial-gradient(circle, rgb(190 255 90 / 0.75) 0 3px, rgb(168 242 63 / 0) 6px),
+      var(--warpstone-glass);
+    box-shadow:
+      var(--warpstone-inner),
+      0 0 8px rgb(140 255 50 / 0.45);
   }
 </style>
