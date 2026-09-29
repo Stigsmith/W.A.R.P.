@@ -149,13 +149,21 @@
   onMount(() => {
     const onUp = () => finishPaint();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !(e.target instanceof HTMLInputElement)) selection.clear();
+      if (e.key !== "Escape") return;
+      if (menuFor) menuFor = null;
+      else if (!(e.target instanceof HTMLInputElement)) selection.clear();
+    };
+    // A click anywhere outside the open set menu (or its header) closes it.
+    const onDown = (e: PointerEvent) => {
+      if (menuFor && !(e.target as Element).closest?.("th.setcol.open")) menuFor = null;
     };
     window.addEventListener("pointerup", onUp);
     window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onDown, true);
     return () => {
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onDown, true);
     };
   });
 
@@ -191,6 +199,8 @@
   // --- Making, renaming and deleting sets. ----------------------------------------
   let newSet = $state<string | null>(null);
   let menuFor = $state<string | null>(null);
+  /** The menu opens leftwards when the column is too close to the window's right edge. */
+  let menuLeftwards = $state(false);
   let renameTo = $state("");
 
   async function createSet() {
@@ -232,9 +242,21 @@
     }
   }
 
-  function openMenu(name: string) {
+  function openMenu(name: string, header: HTMLElement) {
     menuFor = menuFor === name ? null : name;
     renameTo = name;
+    // Bring a column that's scrolled half out of view in first, then pick a side.
+    header.scrollIntoView({ block: "nearest", inline: "nearest" });
+    menuLeftwards = header.getBoundingClientRect().left + 250 > window.innerWidth - 12;
+  }
+
+  // --- Filters. ---------------------------------------------------------------------
+  const filtered = $derived(!!(query.trim() || tier || set));
+
+  function showAll() {
+    query = "";
+    tier = "";
+    set = "";
   }
 </script>
 
@@ -282,6 +304,7 @@
           {#each app.sets as s (s.name)}<option value={s.name}>{s.name}</option>{/each}
         </select>
         <label class="check"><input type="checkbox" bind:checked={showUnsubscribed} /> Unsubscribed</label>
+        {#if filtered}<button class="small" onclick={showAll}>✕ Show all mods</button>{/if}
         <span class="faint count">{rows.length} shown</span>
       </div>
 
@@ -328,12 +351,12 @@
             {:else}
               {#each app.sets as s (s.name)}
                 <th class="setcol" class:open={menuFor === s.name}>
-                  <button class="set-name" onclick={() => openMenu(s.name)} title="{s.name}: {count(s.members.length, 'mod')}">
+                  <button class="set-name" onclick={(e) => openMenu(s.name, e.currentTarget)} title="{s.name}: {count(s.members.length, 'mod')}">
                     <span class="rot">{s.name}</span>
                     <span class="n">{s.members.length}</span>
                   </button>
                   {#if menuFor === s.name}
-                    <div class="menu card forged">
+                    <div class="menu card forged" class:leftwards={menuLeftwards}>
                       <form
                         onsubmit={(e) => {
                           e.preventDefault();
@@ -348,7 +371,7 @@
                         <button class="small" onclick={() => (addSelected(s.name), (menuFor = null))}>Put {count(selection.size, "selected mod")} in</button>
                         <button class="small" onclick={() => (removeSelected(s.name), (menuFor = null))}>Take {count(selection.size, "selected mod")} out</button>
                       {/if}
-                      <button class="small" onclick={() => ((set = s.name), (menuFor = null))}>Show only this set</button>
+                      <button class="small" onclick={() => ((set = s.name), (menuFor = null))}>Show only its mods</button>
                       <button class="small danger" onclick={() => deleteSet(s.name)}>Delete set</button>
                     </div>
                   {/if}
@@ -412,7 +435,16 @@
           {/each}
         </tbody>
       </table>
-      {#if rows.length === 0}<div class="empty">No mods match.</div>{/if}
+      {#if rows.length === 0}
+        <div class="empty">
+          {#if set && set !== "__none" && !query.trim() && !tier}
+            <p>Nothing in {set} yet. Switch to Sets and tick mods into its column.</p>
+          {:else}
+            <p>No mods match.</p>
+          {/if}
+          {#if filtered}<button onclick={showAll}>Show all mods</button>{/if}
+        </div>
+      {/if}
     </div>
   </div>
 
@@ -735,6 +767,11 @@
     gap: 6px;
     text-align: left;
     background: rgb(12 16 10 / 0.97);
+  }
+
+  .menu.leftwards {
+    left: auto;
+    right: 0;
   }
 
   .menu form {

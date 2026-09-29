@@ -137,13 +137,16 @@
 </div>
 
 <style>
+  /* Flex, not grid: a grid row would grow to fit every mod in the list and centre
+     the picker far below the window. Here its height is measured against the window. */
   .overlay {
     position: fixed;
     inset: 0;
     z-index: 60;
     background: rgb(0 0 0 / 0.6);
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 28px;
   }
 
